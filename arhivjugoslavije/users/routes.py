@@ -27,9 +27,9 @@ def user_list():
 @users.route('/register_user', methods=['GET', 'POST'])
 @login_required
 def register_user():
-    if current_user.user_type != 'admin':
-        flash('Nemate prava za pristup ovom stranici.', 'danger')
-        return redirect(url_for('main.home'))
+    # if current_user.user_type != 'admin':
+    #     flash('Nemate prava za pristup ovom stranici.', 'danger')
+    #     return redirect(url_for('main.home'))
     name = request.form.get('name').capitalize()
     surname = request.form.get('surname').capitalize()
     email = request.form.get('email')
@@ -51,9 +51,9 @@ def register_user():
 @users.route('/edit_user', methods=['GET', 'POST'])
 @login_required
 def edit_user():
-    if current_user.user_type != 'admin':
-        flash('Nemate prava za pristup ovom stranici.', 'danger')
-        return redirect(url_for('main.home'))
+    # if current_user.user_type != 'admin':
+    #     flash('Nemate prava za pristup ovom stranici.', 'danger')
+    #     return redirect(url_for('main.home'))
     user_id = request.form.get('user_id')
     user = User.query.get_or_404(user_id)
     user.name = request.form.get('name').capitalize()
@@ -69,9 +69,9 @@ def edit_user():
 @users.route('/delete_user', methods=['GET', 'POST'])
 @login_required
 def delete_user():
-    if current_user.user_type != 'admin':
-        flash('Nemate prava za pristup ovom stranici.', 'danger')
-        return redirect(url_for('main.home'))
+    # if current_user.user_type != 'admin':
+    #     flash('Nemate prava za pristup ovom stranici.', 'danger')
+    #     return redirect(url_for('main.home'))
     user_id = request.form.get('delete_user_id')
     user = User.query.get_or_404(user_id)
     db.session.delete(user)
