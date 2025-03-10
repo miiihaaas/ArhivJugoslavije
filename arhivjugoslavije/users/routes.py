@@ -39,8 +39,7 @@ def register_user():
         name=name, 
         surname=surname, 
         email=email, 
-        password=hashed_password, 
-        user_type=request.form.get('authorization')
+        password=hashed_password
     )
     
     db.session.add(new_user)
@@ -60,7 +59,6 @@ def edit_user():
     user.name = request.form.get('name').capitalize()
     user.surname = request.form.get('surname').capitalize()
     user.email = request.form.get('email')
-    user.user_type = request.form.get('authorization')
 
     db.session.commit()
 
