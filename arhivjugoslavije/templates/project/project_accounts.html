@@ -1,0 +1,213 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="content-section">
+    <div class="h1">Račun projekta</div>
+    
+    <div class="card mb-4 shortcut-card">
+        <div class="card-header">
+            <i class="fas fa-project-diagram me-2"></i>Projekat: {{ project.name }}
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    {% if project.note %}
+                    <p><strong>Napomena:</strong> {{ project.note }}</p>
+                    {% endif %}
+                    <p><strong>Godina:</strong> {{ project.year }}</p>
+                    <p><strong>Status:</strong> 
+                        {% if project.archived %}
+                        <span class="badge bg-secondary">Arhivirano</span>
+                        {% else %}
+                        <span class="badge bg-success">Aktivno</span>
+                        {% endif %}
+                    </p>
+                    
+                </div>
+                <!-- Suma po kontima 4 stepena -->
+                <div class="col-md-4">
+                    <h5><i class="fas fa-chart-pie me-2"></i>Suma po kontima 4 stepena</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Konto</th>
+                                    <th>Iznos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for account in sum_data.values() %}
+                                <tr>
+                                    <td>{{ account['account'] }}</td>
+                                    <td>{{ account['amount'] }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="2" class="text-center">Nema podataka za prikaz</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{{ url_for('project.project_list') }}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left me-1"></i> Nazad
+                    </a>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAccountModal">
+                        <i class="fas fa-plus me-1"></i> Dodaj konto
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table report-table table-striped table-hover" id="projectAccountsTable">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-hashtag me-1"></i>ID</th>
+                            <th><i class="fas fa-list-ol me-1"></i>Konto</th>
+                            <th><i class="fas fa-money-bill-wave me-1"></i>Iznos</th>
+                            <th><i class="fas fa-comment me-1"></i>Napomena</th>
+                            <th class="text-center"><i class="fas fa-cogs me-1"></i>Akcije</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for account in project_accounts %}
+                        <tr>
+                            <td>{{ account.id }}</td>
+                            <td>{{ account.account_level_6_number }}</td>
+                            <td>{{ account.amount }}</td>
+                            <td>{{ account.note }}</td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-primary edit-account-btn" 
+                                        data-id="{{ account.id }}">
+                                    <i class="fas fa-edit"></i> Izmeni
+                                </button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center">Nema unetih konta za ovaj projekat</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal za dodavanje konta -->
+<div class="modal fade" id="addAccountModal" tabindex="-1" aria-labelledby="addAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAccountModalLabel">Dodaj konto za projekat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addAccountForm" action="{{ url_for('project.add_project_account') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="account_level_6" class="form-label">Konto nivoa 6</label>
+                        <select class="form-select" id="account_level_6" name="account_level_6_number" required>
+                            <option value="">Izaberite konto nivoa 6</option>
+                            <!-- Ovde će biti učitani konti nivoa 6 -->
+                            {% for account in accounts_list %}
+                            <option value="{{ account.number }}">{{ account.number }} - {{ account.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Iznos</label>
+                        <input type="number" step="0.01" class="form-control" id="amount" name="amount" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="note" class="form-label">Napomena</label>
+                        <textarea class="form-control" id="note" name="note" rows="3"></textarea>
+                    </div>
+                    <input type="hidden" id="project_id" name="project_id" value="{{ project.id }}">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Odustani</button>
+                    <button type="submit" class="btn btn-primary">Sačuvaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicijalizacija tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+    
+    // Inicijalizacija DataTables za konta projekta
+    if ($.fn.DataTable.isDataTable('#projectAccountsTable')) {
+        $('#projectAccountsTable').DataTable().destroy();
+    }
+    
+    // Provera da li tabela ima podatke (više od jednog reda i da prvi red nema colspan)
+    var hasData = $('#projectAccountsTable tbody tr').length > 0 && 
+                 !$('#projectAccountsTable tbody tr:first td[colspan]').length;
+                 
+    if (hasData) {
+        $('#projectAccountsTable').DataTable({
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/sr-SP.json'
+            },
+            pageLength: 10,
+            order: [[0, 'asc']], // Sortiranje po ID-u
+            columnDefs: [
+                { orderable: false, targets: -1 } // Isključi sortiranje za kolonu sa akcijama
+            ],
+            dom: '<"top"lf>rt<"bottom"ip><"clear">'
+        });
+    }
+    
+    // Obrada forme za dodavanje konta projektu
+    document.getElementById('addAccountForm').addEventListener('submit', function(e) {
+        e.preventDefault(); // Sprečava standardno slanje forme
+        
+        // Prikupljanje podataka iz forme
+        const formData = {
+            project_id: document.getElementById('project_id').value,
+            account_level_6_number: document.getElementById('account_level_6').value,
+            amount: document.getElementById('amount').value,
+            note: document.getElementById('note').value
+        };
+        
+        // Slanje podataka kao JSON
+        fetch("{{ url_for('project.add_project_account') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Uspešno dodavanje
+                alert(data.message);
+                // Zatvaranje modala
+                var modal = bootstrap.Modal.getInstance(document.getElementById('addAccountModal'));
+                modal.hide();
+                // Osvežavanje stranice da prikaže nove podatke
+                location.reload();
+            } else {
+                // Greška
+                alert('Greška: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Greška:', error);
+            alert('Došlo je do greške prilikom dodavanja konta projektu.');
+        });
+    });
+});
+</script>
+{% endblock %}

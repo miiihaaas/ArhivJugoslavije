@@ -1,0 +1,111 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="content-section">
+    <div class="h1">{{ legend }}</div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Izmena podataka partnera</h5>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('partner.edit_partner', partner_id=partner.id) }}" method="POST">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name" class="form-label">Naziv partnera *</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ partner.name }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ partner.email }}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="address" class="form-label">Adresa</label>
+                            <input type="text" class="form-control" id="address" name="address" value="{{ partner.address }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="city" class="form-label">Grad</label>
+                            <input type="text" class="form-control" id="city" name="city" value="{{ partner.city }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="country" class="form-label">Država</label>
+                            <input type="text" class="form-control" id="country" name="country" value="{{ partner.country if partner.country else 'Srbija' }}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="account_number" class="form-label">Tekući račun</label>
+                            <input type="text" class="form-control" id="account_number" name="account_number" value="{{ partner.account_number }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="phones" class="form-label">Telefoni</label>
+                            <input type="text" class="form-control" id="phones" name="phones" value="{{ partner.phones }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="fax" class="form-label">Fax</label>
+                            <input type="text" class="form-control" id="fax" name="fax" value="{{ partner.fax }}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="pib" class="form-label">PIB</label>
+                            <input type="text" class="form-control" id="pib" name="pib" value="{{ partner.pib }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="mb" class="form-label">Matični broj</label>
+                            <input type="text" class="form-control" id="mb" name="mb" value="{{ partner.mb }}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="customer" name="customer" {% if partner.customer %}checked{% endif %}>
+                            <label class="form-check-label" for="customer">Kupac</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="supplier" name="supplier" {% if partner.supplier %}checked{% endif %}>
+                            <label class="form-check-label" for="supplier">Dobavljač</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="international" name="international" {% if partner.international %}checked{% endif %}>
+                            <label class="form-check-label" for="international">Strani partner</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <a href="{{ url_for('partner.partners') }}" class="btn btn-secondary">Odustani</a>
+                        <button type="submit" class="btn btn-primary">Sačuvaj izmene</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}

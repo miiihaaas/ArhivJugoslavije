@@ -1,0 +1,217 @@
+{% extends "layout.html" %}
+{% block content %}
+<!-- Header Section -->
+<div class="page-header mb-4">
+    <div class="h1">Podaci Arhiva Jugoslavije</div>
+    <div class="action-buttons">
+        <a class="btn btn-secondary" href="javascript:history.back()">
+            <i class="fa fa-arrow-left me-2"></i>Nazad
+        </a>
+        {% if current_user.user_type == 'admin' %}
+            <button type="button" class="btn btn-primary" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#mySchool"
+                    {% if active_inventory_list %}disabled{% endif %}>
+                <i class="fa fa-edit me-2"></i>Izmenite podatke
+            </button>
+        {% endif %}
+    </div>
+</div>
+<!-- Main Content -->
+<div class="row g-4">
+    <!-- Basic School Info Card -->
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Osnovni podaci</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.csrf_token }}
+                    <!-- School Name and Address -->
+                    <div class="row form-group mb-4">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.name.label(class="form-control-label") }}
+                                <input type="text" class="form-control" value="{{ archive.name }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.address.label(class="form-control-label") }}
+                                <input type="text" class="form-control" value="{{ archive.address }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Location Info -->
+                    <div class="row form-group mb-4">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                {{ form.pib.label(class="form-control-label") }}
+                                <input type="text" class="form-control" value="{{ archive.pib }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                {{ form.mb.label(class="form-control-label") }}
+                                <input type="text" class="form-control" value="{{ archive.mb }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                {{ form.city.label(class="form-control-label") }}
+                                <input type="text" class="form-control" value="{{ archive.city }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                {{ form.country.label(class="form-control-label") }}
+                                <input type="text" class="form-control" value="{{ archive.country }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Card -->
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Podešavanja aplikacije</h5>
+            </div>
+            <div class="card-body">
+                Žiro računi --- ovde dodati
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit School Modal -->
+<div class="modal fade" id="mySchool" tabindex="-1" role="dialog" aria-labelledby="mySchoolLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mySchoolLabel">Izmena podataka škole</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="POST">
+                {{ form.csrf_token }}
+                <div class="modal-body">
+                    <!-- School Name and Address Section -->
+                    <div class="section-title mb-3">Osnovni podaci</div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            {{ form.name.label(class="form-control-label") }}
+                            {% if form.name.errors %}
+                                {{ form.name(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.name.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.name(class="form-control") }}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.address.label(class="form-control-label") }}
+                            {% if form.address.errors %}
+                                {{ form.address(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.address.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.address(class="form-control") }}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Location Section -->
+                    <div class="section-title mb-3">Lokacija</div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            {{ form.city.label(class="form-control-label") }}
+                            {% if form.city.errors %}
+                                {{ form.city(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.city.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.city(class="form-control") }}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.country.label(class="form-control-label") }}
+                            {% if form.country.errors %}
+                                {{ form.country(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.country.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.country(class="form-control") }}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Registration Section -->
+                    <div class="section-title mb-3">Registracioni podaci</div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            {{ form.mb.label(class="form-control-label") }}
+                            {% if form.mb.errors %}
+                                {{ form.mb(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.mb.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.mb(class="form-control") }}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.pib.label(class="form-control-label") }}
+                            {% if form.pib.errors %}
+                                {{ form.pib(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.pib.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.pib(class="form-control") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fa fa-times me-2"></i>Otkažite
+                    </button>
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        $('#show_quantity').change(function () {
+            $('#settingsForm').submit();
+        });
+    });
+</script>
+{% endblock %}

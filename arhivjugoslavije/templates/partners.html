@@ -1,0 +1,275 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="content-section">
+    <div class="h1">{{ legend }}</div>
+    
+    <div class="row mb-3">
+        <div class="col-6 d-flex justify-content-start">
+            <button class="btn btn-outline-primary filter-btn me-2" data-filter="supplier">Filtriraj dobavljače</button>
+            <button class="btn btn-outline-primary filter-btn" data-filter="customer">Filtriraj kupce</button>
+        </div>
+        <div class="col-6 d-flex justify-content-end">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPartnerModal">
+                Dodaj novog partnera
+            </button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table id="partnersTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Naziv</th>
+                    <th>Adresa</th>
+                    <th>Tekući račun</th>
+                    <th>Telefoni</th>
+                    <th>Fax</th>
+                    <th>Email</th>
+                    <th>PIB/MB</th>
+                    <th>Tip partnera</th>
+                    <th>Akcije</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for partner in partners %}
+                <tr class="partner-row" 
+                    data-customer="{{ partner.customer|lower }}"
+                    data-supplier="{{ partner.supplier|lower }}"
+                    data-international="{{ partner.international|lower }}">
+                    <td>{{ partner.id }}</td>
+                    <td>{{ partner.name }}</td>
+                    <td>
+                        {{ partner.address }}{% if partner.address and partner.city %}, {% endif %}{{ partner.city }}
+                    </td>
+                    <td>{{ partner.account_number }}</td>
+                    <td>{{ partner.phones }}</td>
+                    <td>{{ partner.fax }}</td>
+                    <td>{{ partner.email }}</td>
+                    <td>
+                        {% if partner.pib %}PIB: {{ partner.pib }}{% endif %}
+                        {% if partner.pib and partner.mb %}<br>{% endif %}
+                        {% if partner.mb %}MB: {{ partner.mb }}{% endif %}
+                    </td>
+                    <td class="partner-type-cell">
+                        {% if partner.customer %}
+                        <i class="fas fa-shopping-cart partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Kupac"></i>
+                        {% endif %}
+                        {% if partner.supplier %}
+                        <i class="fas fa-truck partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Dobavljač"></i>
+                        {% endif %}
+                        {% if partner.international %}
+                        <i class="fas fa-globe partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Strani partner"></i>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('partner.edit_partner', partner_id=partner.id) }}" 
+                           class="btn btn-outline-secondary btn-sm">
+                            Izmeni
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal za dodavanje novog partnera -->
+<div class="modal fade" id="addPartnerModal" tabindex="-1" aria-labelledby="addPartnerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPartnerModalLabel">Dodaj novog partnera</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('partner.add_partner') }}" method="POST">
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name" class="form-label">Naziv partnera *</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="address" class="form-label">Adresa</label>
+                                <input type="text" class="form-control" id="address" name="address">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="city" class="form-label">Grad</label>
+                                <input type="text" class="form-control" id="city" name="city">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="country" class="form-label">Država</label>
+                                <input type="text" class="form-control" id="country" name="country" value="Srbija">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="account_number" class="form-label">Tekući račun</label>
+                                <input type="text" class="form-control" id="account_number" name="account_number">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="phones" class="form-label">Telefoni</label>
+                                <input type="text" class="form-control" id="phones" name="phones">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="fax" class="form-label">Fax</label>
+                                <input type="text" class="form-control" id="fax" name="fax">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="pib" class="form-label">PIB</label>
+                                <input type="text" class="form-control" id="pib" name="pib">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="mb" class="form-label">Matični broj</label>
+                                <input type="text" class="form-control" id="mb" name="mb">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="customer" name="customer">
+                                <label class="form-check-label" for="customer">Kupac</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="supplier" name="supplier">
+                                <label class="form-check-label" for="supplier">Dobavljač</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="international" name="international">
+                                <label class="form-check-label" for="international">Strani partner</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Odustani</button>
+                    <button type="submit" class="btn btn-primary">Sačuvaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicijalizacija tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    // Uništi postojeću instancu ako postoji
+    if ($.fn.DataTable.isDataTable('#partnersTable')) {
+        $('#partnersTable').DataTable().destroy();
+    }
+    
+    // Inicijalizacija DataTables
+    let table = $('#partnersTable').DataTable({
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/sr-SP.json'
+        },
+        pageLength: 25,
+        order: [[1, 'asc']], // Sortiranje po nazivu (druga kolona)
+        columnDefs: [
+            { orderable: false, targets: -1 } // Isključi sortiranje za kolonu sa akcijama
+        ]
+    });
+
+    // Funkcionalnost filtera
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const filterType = this.dataset.filter;
+            const isCurrentlyActive = this.classList.contains('active');
+            
+            // Ukloni active klasu sa svih dugmića
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Ako dugme nije bilo aktivno, primeni filter i dodaj active klasu
+            if (!isCurrentlyActive) {
+                this.classList.add('active');
+                if (filterType === 'supplier') {
+                    // Filtriraj redove gde je data-supplier="true"
+                    table.rows().every(function() {
+                        const row = this.node();
+                        if ($(row).data('supplier') === true) {
+                            this.nodes().to$().show();
+                        } else {
+                            this.nodes().to$().hide();
+                        }
+                    });
+                } else if (filterType === 'customer') {
+                    // Filtriraj redove gde je data-customer="true"
+                    table.rows().every(function() {
+                        const row = this.node();
+                        if ($(row).data('customer') === true) {
+                            this.nodes().to$().show();
+                        } else {
+                            this.nodes().to$().hide();
+                        }
+                    });
+                }
+            } else {
+                // Ako je dugme bilo aktivno, prikaži sve redove
+                table.rows().every(function() {
+                    this.nodes().to$().show();
+                });
+            }
+            table.draw();
+        });
+    });
+});
+</script>
+
+<style>
+.partner-icon {
+    margin: 0 3px;
+    font-size: 1.1em;
+}
+.fa-shopping-cart {
+    color: #28a745; /* zelena za kupca */
+}
+.fa-truck {
+    color: #007bff; /* plava za dobavljača */
+}
+.fa-globe {
+    color: #6c757d; /* siva za stranog partnera */
+}
+</style>
+{% endblock %}
+{% endblock content %}

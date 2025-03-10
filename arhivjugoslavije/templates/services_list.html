@@ -1,0 +1,241 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="content-section">
+    <div class="h1">{{ legend }}</div>
+    
+    <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-end">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createServiceModal">
+                Kreiraj uslugu
+            </button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table id="servicesTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Naziv usluge (srp)</th>
+                    <th>Naziv usluge (eng)</th>
+                    <th>Napomena</th>
+                    <th>Jedinica mere</th>
+                    <th>Cena</th>
+                    <th>Akcije</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for service in services %}
+                <tr>
+                    <td>{{ service.id }}</td>
+                    <td>{{ service.name_sr }}</td>
+                    <td>{{ service.name_en }}</td>
+                    <td>{{ service.note }}</td>
+                    <td>{% if service.unit_of_measure %}{{ service.unit_of_measure.name_sr }} ({{ service.unit_of_measure.symbol }}){% endif %}</td>
+                    <td>{{ service.price_rsd }}</td>
+                    <td>
+                        <i class="fas fa-edit text-primary cursor-pointer"
+                           role="button"
+                           data-bs-toggle="modal" 
+                           data-bs-target="#editServiceModal"
+                           data-service-id="{{ service.id }}"
+                           data-archived="{{ '1' if service.archived else '0' }}"
+                           title="Izmeni uslugu"></i>
+                        {% if service.archived %}
+                        <i class="fas fa-archive text-secondary ms-2" title="Arhivirano"></i>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Create Service Modal -->
+<div class="modal fade" id="createServiceModal" tabindex="-1" aria-labelledby="createServiceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createServiceModalLabel">Kreiraj novu uslugu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('services.create_service') }}" id="createServiceForm">
+                    {{ register_form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ register_form.service_name_rs.label(class="form-label") }}
+                        {{ register_form.service_name_rs(class="form-control", id="create_service_name_rs") }}
+                        {% if register_form.service_name_rs.errors %}
+                            {% for error in register_form.service_name_rs.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ register_form.service_name_en.label(class="form-label") }}
+                        {{ register_form.service_name_en(class="form-control", id="create_service_name_en") }}
+                        {% if register_form.service_name_en.errors %}
+                            {% for error in register_form.service_name_en.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ register_form.service_description.label(class="form-label") }}
+                        {{ register_form.service_description(class="form-control", id="create_service_description") }}
+                        {% if register_form.service_description.errors %}
+                            {% for error in register_form.service_description.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ register_form.service_unit_of_measure.label(class="form-label") }}
+                        {{ register_form.service_unit_of_measure(class="form-select", id="create_service_unit_of_measure") }}
+                        {% if register_form.service_unit_of_measure.errors %}
+                            {% for error in register_form.service_unit_of_measure.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ register_form.service_value.label(class="form-label") }}
+                        {{ register_form.service_value(class="form-control", id="create_service_value", type="number") }}
+                        {% if register_form.service_value.errors %}
+                            {% for error in register_form.service_value.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zatvori</button>
+                        {{ register_form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Service Modal -->
+<div class="modal fade" id="editServiceModal" tabindex="-1" aria-labelledby="editServiceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editServiceModalLabel">Izmeni uslugu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('services.edit_service', service_id=0) }}" class="needs-validation" novalidate>
+                    {{ edit_form.hidden_tag() }}
+                    <input type="hidden" id="edit_service_id" name="service_id" value="">
+                    <div class="mb-3">
+                        <label for="edit_service_name_rs" class="form-label">Naziv usluge (srp) <span class="text-danger">*</span></label>
+                        {{ edit_form.service_name_rs(class="form-control", id="edit_service_name_rs") }}
+                        <div class="invalid-feedback">Molimo unesite naziv usluge na srpskom.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_service_name_en" class="form-label">Naziv usluge (eng)</label>
+                        {{ edit_form.service_name_en(class="form-control", id="edit_service_name_en") }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_service_description" class="form-label">Napomena</label>
+                        {{ edit_form.service_description(class="form-control", id="edit_service_description") }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_service_unit_of_measure" class="form-label">Jedinica mere <span class="text-danger">*</span></label>
+                        {{ edit_form.service_unit_of_measure(class="form-select", id="edit_service_unit_of_measure") }}
+                        <div class="invalid-feedback">Molimo izaberite jedinicu mere.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_service_value" class="form-label">Cena <span class="text-danger">*</span></label>
+                        {{ edit_form.service_value(class="form-control", id="edit_service_value") }}
+                        <div class="invalid-feedback">Molimo unesite cenu.</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ edit_form.archived(class="form-check-input", id="edit_archived") }}
+                            <label class="form-check-label" for="edit_archived">
+                                Arhivirano
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zatvori</button>
+                        {{ edit_form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DataTables
+    if ($.fn.DataTable.isDataTable('#servicesTable')) {
+        $('#servicesTable').DataTable().destroy();
+    }
+    $('#servicesTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/sr-SP.json'
+        },
+        order: [[0, 'desc']]
+    });
+
+    // Edit modal handler
+    const editModal = document.getElementById('editServiceModal');
+    if (editModal) {
+        editModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const serviceId = button.getAttribute('data-service-id');
+            const isArchived = button.getAttribute('data-archived') === '1';
+            
+            // Update form action URL and service ID
+            const form = editModal.querySelector('form');
+            form.action = form.action.replace('/0', `/${serviceId}`);
+            form.querySelector('#edit_service_id').value = serviceId;
+            
+            // Fetch service data
+            fetch(`/get_service/${serviceId}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Service data:', data);
+                    // Populate form fields
+                    document.getElementById('edit_service_name_rs').value = data.service_name_rs || '';
+                    document.getElementById('edit_service_name_en').value = data.service_name_en || '';
+                    document.getElementById('edit_service_description').value = data.service_description || '';
+                    
+                    // Set unit of measure if it exists
+                    const unitOfMeasureSelect = document.getElementById('edit_service_unit_of_measure');
+                    if (data.service_unit_of_measure && unitOfMeasureSelect) {
+                        unitOfMeasureSelect.value = data.service_unit_of_measure;
+                    }
+                    
+                    document.getElementById('edit_service_value').value = data.service_value || '';
+                    document.getElementById('edit_archived').checked = data.archived || false;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Došlo je do greške prilikom učitavanja podataka o usluzi.');
+                });
+        });
+    }
+
+    // Form validation
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock content %}

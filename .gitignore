@@ -46,4 +46,8 @@ instance/
 *.sqlite3
 
 # Logs
+app_logs/
 *.log
+
+# local folders
+invoice_examples/
