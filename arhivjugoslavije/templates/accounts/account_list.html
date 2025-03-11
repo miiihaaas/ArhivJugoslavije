@@ -183,6 +183,11 @@ document.addEventListener('DOMContentLoaded', function() {
         columnDefs: [
             { orderable: false, targets: -1 } // Isključi sortiranje za kolonu sa akcijama
         ],
+        columns: [
+            { data: 'number' },
+            { data: 'name' },
+            { data: 'actions', orderable: false }
+        ],
         dom: '<"top"lf>rt<"bottom"ip><"clear">'
     });
     
@@ -199,6 +204,12 @@ document.addEventListener('DOMContentLoaded', function() {
         order: [[0, 'asc']], // Sortiranje po broju konta
         columnDefs: [
             { orderable: false, targets: -1 } // Isključi sortiranje za kolonu sa akcijama
+        ],
+        columns: [
+            { data: 'number' },
+            { data: 'name' },
+            { data: 'account_level_4_number' },
+            { data: 'actions', orderable: false }
         ],
         dom: '<"top"lf>rt<"bottom"ip><"clear">'
     });
