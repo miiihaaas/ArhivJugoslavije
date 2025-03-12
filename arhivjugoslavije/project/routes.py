@@ -40,7 +40,7 @@ def create_project():
         db.session.commit()
         flash('Projekat uspešno kreiran.', 'success')
         return redirect(url_for('project.project_list'))
-    return render_template('project_list.html', 
+    return render_template('project/project_list.html', 
                             endpoint=endpoint,
                             create_form=create_form,
                             edit_form=edit_form,

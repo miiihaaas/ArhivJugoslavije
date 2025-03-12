@@ -91,7 +91,7 @@
                     </div>
                     <div class="mb-3">
                         {{ create_form.year.label(class="form-label") }}
-                        {{ create_form.year(class="form-control") }}
+                        {{ create_form.year(class="form-control", type="number") }}
                         {% if create_form.year.errors %}
                             {% for error in create_form.year.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
@@ -149,7 +149,7 @@
                     </div>
                     <div class="mb-3">
                         {{ edit_form.year.label(class="form-label") }}
-                        {{ edit_form.year(class="form-control", id="edit_project_year") }}
+                        {{ edit_form.year(class="form-control", id="edit_project_year", type="number") }}
                         {% if edit_form.year.errors %}
                             {% for error in edit_form.year.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
@@ -217,7 +217,8 @@ document.addEventListener('DOMContentLoaded', function() {
             form.querySelector('#edit_project_id').value = projectId;
             
             // Fetch project data
-            fetch(`/get_project/${projectId}`)
+            // fetch(`/get_project/${projectId}`)
+            fetch(`{{ url_for('project.get_project', project_id=0) }}`.replace('/0', `/${projectId}`))
                 .then(response => response.json())
                 .then(data => {
                     // Populate form fields

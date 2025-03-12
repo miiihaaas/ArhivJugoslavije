@@ -56,9 +56,9 @@ def edit_user():
     #     return redirect(url_for('main.home'))
     user_id = request.form.get('user_id')
     user = User.query.get_or_404(user_id)
-    user.name = request.form.get('name').capitalize()
-    user.surname = request.form.get('surname').capitalize()
-    user.email = request.form.get('email')
+    user.name = request.form.get('edit_name').capitalize()
+    user.surname = request.form.get('edit_surname').capitalize()
+    user.email = request.form.get('edit_email')
 
     db.session.commit()
 
