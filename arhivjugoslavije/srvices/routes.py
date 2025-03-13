@@ -1,4 +1,4 @@
-from arhivjugoslavije.models import Service, UnitOfMeasure
+from arhivjugoslavije.models import Service, UnitOfMeasure, ArchiveSettings
 from arhivjugoslavije.srvices.forms import ServiceRegisterForm, ServiceEditForm
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from arhivjugoslavije import db, app
@@ -15,6 +15,9 @@ def services_list():
     register_form = ServiceRegisterForm()
     edit_form = ServiceEditForm()
     
+    # Dobavljanje postavki arhiva za kurs evra
+    archive_settings = ArchiveSettings.query.first()
+    
     # Inicijalizacija izbora za polje u formi
     register_form.service_unit_of_measure.choices = [(unit.id, f'{unit.name_sr} ({unit.symbol})') for unit in units]
     edit_form.service_unit_of_measure.choices = [(unit.id, f'{unit.name_sr} ({unit.symbol})') for unit in units]
@@ -25,7 +28,8 @@ def services_list():
                             register_form=register_form,
                             edit_form=edit_form,
                             legend='Lista usluga',
-                            title='Usluge')
+                            title='Usluge',
+                            archive_settings=archive_settings)
 
 
 @services.route('/create_service', methods=['GET', 'POST'])

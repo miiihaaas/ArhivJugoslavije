@@ -45,6 +45,10 @@ class ArchiveSettings(db.Model):
     stamp = db.Column(db.String(100), nullable=True)
     facsimile = db.Column(db.String(100), nullable=True)
     use_eur = db.Column(db.Boolean, default=False, nullable=False)
+    eur_rate = db.Column(db.Float, nullable=True)
+    eur_rate_date = db.Column(db.DateTime, nullable=True)
+    city = db.Column(db.String(100), nullable=True)
+    country = db.Column(db.String(100), nullable=True)
     
     # Definišemo vezu sa bank_accounts
     bank_accounts = db.relationship('BankAccount', backref='archive_settings', lazy=True)
@@ -120,7 +124,6 @@ class Project(db.Model):
     __tablename__ = 'project'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    amount = db.Column(db.Numeric(10, 2), nullable=True)
     note = db.Column(db.Text, nullable=True)
     year = db.Column(db.Integer, nullable=True)
     archived = db.Column(db.Boolean, default=False, nullable=False)
@@ -128,6 +131,16 @@ class Project(db.Model):
     # Definišemo veze sa project_account i statement_item
     project_accounts = db.relationship('ProjectAccount', backref='project', lazy=True)
     statement_items = db.relationship('StatementItem', backref='project', lazy=True)
+    
+    @property
+    def amount(self):
+        """Dinamički računa ukupan iznos projekta kao sumu svih povezanih ProjectAccount iznosa"""
+        total = 0
+        if self.project_accounts:
+            for account in self.project_accounts:
+                if account.amount:
+                    total += account.amount
+        return total
     
     def __repr__(self):
         return f"Project('{self.name}', year: '{self.year}', amount: '{self.amount}')"

@@ -3,6 +3,8 @@
 <div class="content-section">
     <div class="h1">Pregled konta</div>
     
+    <!-- Flash poruke će se automatski prikazivati kroz Flask flash sistem -->
+    
     <div class="row">
         <!-- Leva strana - Konta nivoa 4 -->
         <div class="col-md-6">
@@ -11,7 +13,7 @@
                     <i class="fas fa-list-ol me-2"></i>Konta nivoa 4
                 </div>
                 <div class="card-body">
-                    <button type="button" class="btn btn-primary mb-3" id="add-account4-btn">
+                    <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addAccount4Modal">
                         <i class="fas fa-plus me-1"></i> Dodaj konto 4
                     </button>
                     <div class="table-responsive">
@@ -29,8 +31,10 @@
                                     <td>{{ account.number }}</td>
                                     <td>{{ account.name }}</td>
                                     <td class="text-center">
-                                        <button type="button" class="btn btn-sm btn-outline-primary edit-account4-btn" 
-                                                data-id="{{ account.number }}">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                data-bs-toggle="modal" data-bs-target="#editAccount4Modal"
+                                                data-number="{{ account.number }}"
+                                                data-name="{{ account.name }}">
                                             <i class="fas fa-edit"></i> Izmeni
                                         </button>
                                     </td>
@@ -54,7 +58,7 @@
                     <i class="fas fa-list-ol me-2"></i>Konta nivoa 6
                 </div>
                 <div class="card-body">
-                    <button type="button" class="btn btn-primary mb-3" id="add-account6-btn">
+                    <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addAccount6Modal">
                         <i class="fas fa-plus me-1"></i> Dodaj konto 6
                     </button>
                     <div class="table-responsive">
@@ -74,8 +78,11 @@
                                     <td>{{ account.name }}</td>
                                     <td>{{ account.account_level_4_number }}</td>
                                     <td class="text-center">
-                                        <button type="button" class="btn btn-sm btn-outline-primary edit-account6-btn" 
-                                                data-id="{{ account.number }}">
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                                data-bs-toggle="modal" data-bs-target="#editAccount6Modal"
+                                                data-number="{{ account.number }}"
+                                                data-name="{{ account.name }}"
+                                                data-account-level-4-number="{{ account.account_level_4_number }}">
                                             <i class="fas fa-edit"></i> Izmeni
                                         </button>
                                     </td>
@@ -94,23 +101,26 @@
     </div>
 </div>
 
-<!-- Modal za dodavanje/izmenu konta nivoa 4 -->
-<div class="modal fade" id="account4Modal" tabindex="-1" aria-labelledby="account4ModalLabel" aria-hidden="true">
+<!-- Modal za dodavanje konta nivoa 4 -->
+<div class="modal fade" id="addAccount4Modal" tabindex="-1" aria-labelledby="addAccount4ModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="account4ModalLabel">Konto nivoa 4</h5>
+                <h5 class="modal-title" id="addAccount4ModalLabel">Dodaj konto nivoa 4</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="account4Form" method="POST">
+            <form method="POST" action="{{ url_for('account.add_account_level4') }}">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="account4_number" class="form-label">Broj konta (4 cifre)</label>
-                        <input type="text" class="form-control" id="account4_number" name="number" required maxlength="4" pattern="[0-9]{4}">
+                        <label for="add_account4_number" class="form-label">Broj konta</label>
+                        <input type="text" class="form-control" id="add_account4_number" name="number" 
+                               placeholder="Četvorocifreni broj" required maxlength="4" pattern="[0-9]{4}" 
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        <div class="form-text">Unesite četvorocifreni broj konta.</div>
                     </div>
                     <div class="mb-3">
-                        <label for="account4_name" class="form-label">Naziv konta</label>
-                        <input type="text" class="form-control" id="account4_name" name="name" required>
+                        <label for="add_account4_name" class="form-label">Naziv konta</label>
+                        <input type="text" class="form-control" id="add_account4_name" name="name" placeholder="Naziv konta" required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -122,32 +132,96 @@
     </div>
 </div>
 
-<!-- Modal za dodavanje/izmenu konta nivoa 6 -->
-<div class="modal fade" id="account6Modal" tabindex="-1" aria-labelledby="account6ModalLabel" aria-hidden="true">
+<!-- Modal za izmenu konta nivoa 4 -->
+<div class="modal fade" id="editAccount4Modal" tabindex="-1" aria-labelledby="editAccount4ModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="account6ModalLabel">Konto nivoa 6</h5>
+                <h5 class="modal-title" id="editAccount4ModalLabel">Izmeni konto nivoa 4</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="account6Form" method="POST">
+            <form method="POST" action="{{ url_for('account.update_account_level4') }}">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="account6_level4" class="form-label">Konto nivoa 4</label>
-                        <select class="form-select" id="account6_level4" name="account_level_4_number" required>
-                            <option value="">Izaberite konto nivoa 4</option>
+                        <label for="edit_account4_number" class="form-label">Broj konta</label>
+                        <input type="text" class="form-control" id="edit_account4_number" name="number" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_account4_name" class="form-label">Naziv konta</label>
+                        <input type="text" class="form-control" id="edit_account4_name" name="name" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Odustani</button>
+                    <button type="submit" class="btn btn-primary">Sačuvaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal za dodavanje konta nivoa 6 -->
+<div class="modal fade" id="addAccount6Modal" tabindex="-1" aria-labelledby="addAccount6ModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAccount6ModalLabel">Dodaj konto nivoa 6</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('account.add_account_level6') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="add_account6_level4" class="form-label">Konto nivoa 4</label>
+                        <select class="form-select" id="add_account6_level4" name="account_level_4_number" required>
+                            <option value="" selected disabled>Izaberite konto nivoa 4</option>
                             {% for account in accounts4 %}
                             <option value="{{ account.number }}">{{ account.number }} - {{ account.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="account6_number" class="form-label">Broj konta (6 cifara)</label>
-                        <input type="text" class="form-control" id="account6_number" name="number" required maxlength="6" pattern="[0-9]{6}">
+                        <label for="add_account6_number" class="form-label">Broj konta</label>
+                        <input type="text" class="form-control" id="add_account6_number" name="number" 
+                               placeholder="Šestocifreni broj" required maxlength="6" pattern="[0-9]{6}"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        <div class="form-text">Unesite šestocifreni broj konta. Prve 4 cifre moraju odgovarati kontu nivoa 4.</div>
                     </div>
                     <div class="mb-3">
-                        <label for="account6_name" class="form-label">Naziv konta</label>
-                        <input type="text" class="form-control" id="account6_name" name="name" required>
+                        <label for="add_account6_name" class="form-label">Naziv konta</label>
+                        <input type="text" class="form-control" id="add_account6_name" name="name" placeholder="Naziv konta" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Odustani</button>
+                    <button type="submit" class="btn btn-primary">Sačuvaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal za izmenu konta nivoa 6 -->
+<div class="modal fade" id="editAccount6Modal" tabindex="-1" aria-labelledby="editAccount6ModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editAccount6ModalLabel">Izmeni konto nivoa 6</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('account.update_account_level6') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_account6_number" class="form-label">Broj konta</label>
+                        <input type="text" class="form-control" id="edit_account6_number" name="number" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_account6_name" class="form-label">Naziv konta</label>
+                        <input type="text" class="form-control" id="edit_account6_name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_account6_level4" class="form-label">Konto nivoa 4</label>
+                        <input type="text" class="form-control" id="edit_account6_level4" name="account_level_4_number" disabled>
+                        <input type="hidden" id="edit_account6_level4_hidden" name="account_level_4_number">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -163,12 +237,6 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicijalizacija tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-    });
-    
     // Inicijalizacija DataTables za konta nivoa 4
     if ($.fn.DataTable.isDataTable('#accounts4Table')) {
         $('#accounts4Table').DataTable().destroy();
@@ -183,11 +251,6 @@ document.addEventListener('DOMContentLoaded', function() {
         order: [[0, 'asc']], // Sortiranje po broju konta
         columnDefs: [
             { orderable: false, targets: -1 } // Isključi sortiranje za kolonu sa akcijama
-        ],
-        columns: [
-            { data: 'number' },
-            { data: 'name' },
-            { data: 'actions', orderable: false }
         ],
         dom: '<"top"lf>rt<"bottom"ip><"clear">'
     });
@@ -207,203 +270,46 @@ document.addEventListener('DOMContentLoaded', function() {
         columnDefs: [
             { orderable: false, targets: -1 } // Isključi sortiranje za kolonu sa akcijama
         ],
-        columns: [
-            { data: 'number' },
-            { data: 'name' },
-            { data: 'account_level_4_number' },
-            { data: 'actions', orderable: false }
-        ],
         dom: '<"top"lf>rt<"bottom"ip><"clear">'
     });
     
-    // Dodavanje konta nivoa 4
-    document.getElementById('add-account4-btn').addEventListener('click', function() {
-        document.getElementById('account4ModalLabel').textContent = 'Dodaj konto nivoa 4';
-        document.getElementById('account4Form').reset();
-        document.getElementById('account4_number').readOnly = false;
-        new bootstrap.Modal(document.getElementById('account4Modal')).show();
-    });
-    
-    // Dodavanje konta nivoa 6
-    document.getElementById('add-account6-btn').addEventListener('click', function() {
-        document.getElementById('account6ModalLabel').textContent = 'Dodaj konto nivoa 6';
-        document.getElementById('account6Form').reset();
-        document.getElementById('account6_number').readOnly = false;
-        new bootstrap.Modal(document.getElementById('account6Modal')).show();
-    });
-    
-    // Izmena konta nivoa 4
-    document.querySelectorAll('.edit-account4-btn').forEach(function(button) {
-        button.addEventListener('click', function() {
-            var accountId = this.getAttribute('data-id');
-            document.getElementById('account4ModalLabel').textContent = 'Izmeni konto nivoa 4';
-            document.getElementById('account4_number').value = accountId;
-            document.getElementById('account4_number').readOnly = true;
-            // Ovde bi trebalo dodati AJAX poziv za dobavljanje podataka o kontu
-            fetch(`{{ url_for('account.get_account_level4', number='') }}${accountId}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Popunjavanje forme podacima o kontu
-                    document.getElementById('account4_name').value = data.account.name;
-                } else {
-                    // Greška pri dobavljanju podataka
-                    alert(data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Greška:', error);
-                alert('Došlo je do greške prilikom dobavljanja podataka o kontu.');
-            });
-            new bootstrap.Modal(document.getElementById('account4Modal')).show();
-        });
-    });
-    
-    // Izmena konta nivoa 6
-    document.querySelectorAll('.edit-account6-btn').forEach(function(button) {
-        button.addEventListener('click', function() {
-            var accountId = this.getAttribute('data-id');
-            document.getElementById('account6ModalLabel').textContent = 'Izmeni konto nivoa 6';
-            document.getElementById('account6_number').value = accountId;
-            document.getElementById('account6_number').readOnly = true;
-            
-            // AJAX poziv za dobavljanje podataka o kontu
-            fetch(`{{ url_for('account.get_account_level6', number='') }}${accountId}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Popunjavanje forme podacima o kontu
-                    document.getElementById('account6_name').value = data.account.name;
-                    document.getElementById('account6_level4').value = data.account.account_level_4_number;
-                } else {
-                    // Greška pri dobavljanju podataka
-                    alert(data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Greška:', error);
-                alert('Došlo je do greške prilikom dobavljanja podataka o kontu.');
-            });
-            
-            new bootstrap.Modal(document.getElementById('account6Modal')).show();
-        });
-    });
-    
-    // Obrada forme za konto nivoa 4
-    document.getElementById('account4Form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Prikupljanje podataka iz forme
-        const formData = {
-            number: document.getElementById('account4_number').value,
-            name: document.getElementById('account4_name').value
-        };
-        
-        // Određivanje da li je u pitanju dodavanje ili ažuriranje konta
-        const isEditing = document.getElementById('account4_number').readOnly;
-        const url = isEditing ? 
-            '{{ url_for("account.update_account_level4") }}' : 
-            '{{ url_for("account.add_account_level4") }}';
-        
-        // Slanje AJAX zahteva za dodavanje/ažuriranje konta nivoa 4
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Uspešno dodavanje/ažuriranje
-                alert(data.message);
-                // Zatvaranje modala
-                bootstrap.Modal.getInstance(document.getElementById('account4Modal')).hide();
-                // Osvežavanje stranice da bi se prikazao novi/ažurirani konto
-                location.reload();
-            } else {
-                // Greška pri dodavanju/ažuriranju
-                alert(data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Greška:', error);
-            alert('Došlo je do greške prilikom obrade zahteva.');
-        });
-    });
-    
-    // Obrada forme za konto nivoa 6
-    document.getElementById('account6Form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Prikupljanje podataka iz forme
-        const formData = {
-            number: document.getElementById('account6_number').value,
-            name: document.getElementById('account6_name').value,
-            account_level_4_number: document.getElementById('account6_level4').value
-        };
-        
-        // Određivanje da li je u pitanju dodavanje ili ažuriranje konta
-        const isEditing = document.getElementById('account6_number').readOnly;
-        const url = isEditing ? 
-            '{{ url_for("account.update_account_level6") }}' : 
-            '{{ url_for("account.add_account_level6") }}';
-        
-        // Slanje AJAX zahteva za dodavanje/ažuriranje konta nivoa 6
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Uspešno dodavanje/ažuriranje
-                alert(data.message);
-                // Zatvaranje modala
-                bootstrap.Modal.getInstance(document.getElementById('account6Modal')).hide();
-                // Osvežavanje stranice da bi se prikazao novi/ažurirani konto
-                location.reload();
-            } else {
-                // Greška pri dodavanju/ažuriranju
-                alert(data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Greška:', error);
-            alert('Došlo je do greške prilikom obrade zahteva.');
-        });
-    });
-    
     // Automatsko popunjavanje broja konta nivoa 6 na osnovu izabranog konta nivoa 4
-    document.getElementById('account6_level4').addEventListener('change', function() {
+    document.getElementById('add_account6_level4').addEventListener('change', function() {
         const selectedAccount4 = this.value;
         if (selectedAccount4) {
             // Ako je konto nivoa 4 izabran, postavi prve 4 cifre konta nivoa 6
-            const account6NumberField = document.getElementById('account6_number');
+            const account6NumberField = document.getElementById('add_account6_number');
             // Sačuvaj poslednje 2 cifre ako postoje
             const lastTwoDigits = account6NumberField.value.length >= 5 ? 
                                   account6NumberField.value.substring(4) : 
                                   '';
             account6NumberField.value = selectedAccount4 + lastTwoDigits;
         }
+    });
+    
+    // Popunjavanje modala za izmenu konta nivoa 4
+    $('#editAccount4Modal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var number = button.data('number');
+        var name = button.data('name');
+        
+        var modal = $(this);
+        modal.find('#edit_account4_number').val(number);
+        modal.find('#edit_account4_name').val(name);
+    });
+    
+    // Popunjavanje modala za izmenu konta nivoa 6
+    $('#editAccount6Modal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var number = button.data('number');
+        var name = button.data('name');
+        var accountLevel4Number = button.data('account-level-4-number');
+        
+        var modal = $(this);
+        modal.find('#edit_account6_number').val(number);
+        modal.find('#edit_account6_name').val(name);
+        modal.find('#edit_account6_level4').val(accountLevel4Number);
+        modal.find('#edit_account6_level4_hidden').val(accountLevel4Number);
     });
 });
 </script>

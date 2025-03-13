@@ -32,7 +32,6 @@ def create_project():
         new_project = Project(
             name=create_form.name.data,
             note=create_form.note.data,
-            amount=create_form.amount.data,
             year=create_form.year.data,
             archived=False
         )
@@ -56,7 +55,6 @@ def edit_project(project_id):
     
     if edit_form.validate_on_submit():
         project.name = edit_form.name.data
-        project.amount = edit_form.amount.data
         project.note = edit_form.note.data
         project.year = edit_form.year.data
         project.archived = bool(int(edit_form.archived.data))
@@ -179,6 +177,9 @@ def add_project_account():
         db.session.add(new_project_account)
         db.session.commit()
         
+        # Dodajemo flash poruku koja će biti prikazana nakon redirekcije
+        flash(f'Konto uspešno dodat projektu', 'success')
+        
         return jsonify({
             'success': True, 
             'message': f'Konto uspešno dodat projektu',
@@ -193,3 +194,72 @@ def add_project_account():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Greška pri dodavanju konta projektu: {str(e)}'}), 500
+
+
+@project.route('/get_project_account/<int:account_id>', methods=['GET'])
+@login_required
+def get_project_account(account_id):
+    # Pronalazimo konto projekta po ID-u
+    project_account = ProjectAccount.query.get_or_404(account_id)
+    
+    # Vraćamo podatke o kontu kao JSON
+    return jsonify({
+        'success': True,
+        'project_account': {
+            'id': project_account.id,
+            'project_id': project_account.project_id,
+            'account_level_6_number': project_account.account_level_6_number,
+            'amount': float(project_account.amount) if project_account.amount else None,
+            'note': project_account.note
+        }
+    })
+
+
+@project.route('/edit_project_account/<int:account_id>', methods=['POST'])
+@login_required
+def edit_project_account(account_id):
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'success': False, 'message': 'Nema podataka'}), 400
+    
+    account_level_6_number = data.get('account_level_6_number')
+    amount = data.get('amount')
+    note = data.get('note')
+    
+    # Validacija podataka
+    if not account_level_6_number or not amount:
+        return jsonify({'success': False, 'message': 'Konto i iznos su obavezni'}), 400
+    
+    # Pronalazimo konto projekta koji želimo da izmenimo
+    project_account = ProjectAccount.query.get_or_404(account_id)
+    
+    # Provera da li konto postoji
+    account = AccountLevel6.query.get(account_level_6_number)
+    if not account:
+        return jsonify({'success': False, 'message': f'Konto {account_level_6_number} ne postoji'}), 404
+    
+    try:
+        # Ažuriranje konta projekta
+        project_account.account_level_6_number = account_level_6_number
+        project_account.amount = amount
+        project_account.note = note
+        db.session.commit()
+        
+        # Dodajemo flash poruku koja će biti prikazana nakon redirekcije
+        flash(f'Konto uspešno izmenjen', 'success')
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Konto uspešno izmenjen',
+            'project_account': {
+                'id': project_account.id,
+                'project_id': project_account.project_id,
+                'account_level_6_number': project_account.account_level_6_number,
+                'amount': float(project_account.amount),
+                'note': project_account.note
+            }
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Greška pri izmeni konta projekta: {str(e)}'}), 500

@@ -11,13 +11,7 @@ class ProjectRegisterForm(FlaskForm):
             Length(min=2, max=100, message='Naziv mora biti između 2 i 100 karaktera')
             ]
         )
-    amount = StringField(
-        'Vrednost projekta',
-        validators=[
-            Optional(), 
-            Length(max=20, message='Vrednost projekta ne može biti duža od 20 karaktera')
-            ]
-        )
+    # amount polje se uklanja jer će se vrednost računati automatski
     note = TextAreaField(
         'Napomena',
         validators=[

@@ -20,7 +20,8 @@
                     <th>Naziv usluge (eng)</th>
                     <th>Napomena</th>
                     <th>Jedinica mere</th>
-                    <th>Cena</th>
+                    <th>Cena (RSD)</th>
+                    <th>Cena (EUR)</th>
                     <th>Akcije</th>
                 </tr>
             </thead>
@@ -33,6 +34,13 @@
                     <td>{{ service.note }}</td>
                     <td>{% if service.unit_of_measure %}{{ service.unit_of_measure.name_sr }} ({{ service.unit_of_measure.symbol }}){% endif %}</td>
                     <td>{{ service.price_rsd }}</td>
+                    <td>
+                        {% if archive_settings and archive_settings.eur_rate and archive_settings.eur_rate > 0 %}
+                            {{ (service.price_rsd | float / archive_settings.eur_rate | float) | round(2) }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                     <td>
                         <i class="fas fa-edit text-primary cursor-pointer"
                            role="button"
@@ -149,7 +157,7 @@
                         <div class="invalid-feedback">Molimo izaberite jedinicu mere.</div>
                     </div>
                     <div class="mb-3">
-                        <label for="edit_service_value" class="form-label">Cena <span class="text-danger">*</span></label>
+                        <label for="edit_service_value" class="form-label">Cena (RSD)<span class="text-danger">*</span></label>
                         {{ edit_form.service_value(class="form-control", id="edit_service_value") }}
                         <div class="invalid-feedback">Molimo unesite cenu.</div>
                     </div>

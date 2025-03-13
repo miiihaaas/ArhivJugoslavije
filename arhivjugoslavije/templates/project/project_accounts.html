@@ -134,6 +134,45 @@
         </div>
     </div>
 </div>
+
+<!-- Modal za izmenu konta -->
+<div class="modal fade" id="editAccountModal" tabindex="-1" aria-labelledby="editAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editAccountModalLabel">Izmeni konto projekta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editAccountForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_account_level_6" class="form-label">Konto nivoa 6</label>
+                        <select class="form-select" id="edit_account_level_6" name="account_level_6_number" required>
+                            <option value="">Izaberite konto nivoa 6</option>
+                            <!-- Ovde će biti učitani konti nivoa 6 -->
+                            {% for account in accounts_list %}
+                            <option value="{{ account.number }}">{{ account.number }} - {{ account.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_amount" class="form-label">Iznos</label>
+                        <input type="number" step="0.01" class="form-control" id="edit_amount" name="amount" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_note" class="form-label">Napomena</label>
+                        <textarea class="form-control" id="edit_note" name="note" rows="3"></textarea>
+                    </div>
+                    <input type="hidden" id="edit_account_id" name="account_id">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Odustani</button>
+                    <button type="submit" class="btn btn-primary">Sačuvaj izmene</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -191,21 +230,155 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Uspešno dodavanje
-                alert(data.message);
+                // Uspešno dodavanje - zatvaramo modal i osvežavamo stranicu
                 // Zatvaranje modala
                 var modal = bootstrap.Modal.getInstance(document.getElementById('addAccountModal'));
                 modal.hide();
-                // Osvežavanje stranice da prikaže nove podatke
+                // Osvežavanje stranice da prikaže nove podatke i flash poruku
                 location.reload();
             } else {
-                // Greška
-                alert('Greška: ' + data.message);
+                // Neuspešno dodavanje - prikazujemo grešku
+                // Umesto alert-a, dodajemo poruku o grešci u modal
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger';
+                errorDiv.textContent = data.message;
+                
+                // Pronalazimo modal body i dodajemo poruku na početak
+                const modalBody = document.querySelector('#addAccountModal .modal-body');
+                // Uklanjamo prethodne poruke o greškama ako postoje
+                const existingError = modalBody.querySelector('.alert-danger');
+                if (existingError) {
+                    existingError.remove();
+                }
+                modalBody.insertBefore(errorDiv, modalBody.firstChild);
             }
         })
         .catch(error => {
-            console.error('Greška:', error);
-            alert('Došlo je do greške prilikom dodavanja konta projektu.');
+            console.error('Error:', error);
+            // Prikazujemo generičku poruku o grešci u modalu
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger';
+            errorDiv.textContent = 'Došlo je do greške prilikom komunikacije sa serverom.';
+            
+            const modalBody = document.querySelector('#addAccountModal .modal-body');
+            const existingError = modalBody.querySelector('.alert-danger');
+            if (existingError) {
+                existingError.remove();
+            }
+            modalBody.insertBefore(errorDiv, modalBody.firstChild);
+        });
+    });
+    
+    // Obrada forme za izmenu konta projekta
+    document.getElementById('editAccountForm').addEventListener('submit', function(e) {
+        e.preventDefault(); // Sprečava standardno slanje forme
+        
+        // Prikupljanje podataka iz forme
+        const accountId = document.getElementById('edit_account_id').value;
+        const formData = {
+            account_level_6_number: document.getElementById('edit_account_level_6').value,
+            amount: document.getElementById('edit_amount').value,
+            note: document.getElementById('edit_note').value
+        };
+        
+        // Slanje podataka kao JSON
+        fetch(`/edit_project_account/${accountId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Uspešno izmena - zatvaramo modal i osvežavamo stranicu
+                // Zatvaranje modala
+                var modal = bootstrap.Modal.getInstance(document.getElementById('editAccountModal'));
+                modal.hide();
+                // Osvežavanje stranice da prikaže nove podatke i flash poruku
+                location.reload();
+            } else {
+                // Neuspešno izmena - prikazujemo grešku
+                // Umesto alert-a, dodajemo poruku o grešci u modal
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger';
+                errorDiv.textContent = data.message;
+                
+                // Pronalazimo modal body i dodajemo poruku na početak
+                const modalBody = document.querySelector('#editAccountModal .modal-body');
+                // Uklanjamo prethodne poruke o greškama ako postoje
+                const existingError = modalBody.querySelector('.alert-danger');
+                if (existingError) {
+                    existingError.remove();
+                }
+                modalBody.insertBefore(errorDiv, modalBody.firstChild);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Prikazujemo generičku poruku o grešci u modalu
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger';
+            errorDiv.textContent = 'Došlo je do greške prilikom komunikacije sa serverom.';
+            
+            const modalBody = document.querySelector('#editAccountModal .modal-body');
+            const existingError = modalBody.querySelector('.alert-danger');
+            if (existingError) {
+                existingError.remove();
+            }
+            modalBody.insertBefore(errorDiv, modalBody.firstChild);
+        });
+    });
+    
+    // Dodavanje događaja za izmenu konta
+    document.querySelectorAll('.edit-account-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            // Prikupljanje ID-a konta
+            const accountId = button.getAttribute('data-id');
+            
+            // Prikupljanje podataka o kontu
+            fetch(`/get_project_account/${accountId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Postavljanje vrednosti u formi za izmenu
+                    document.getElementById('edit_account_id').value = data.project_account.id;
+                    document.getElementById('edit_account_level_6').value = data.project_account.account_level_6_number;
+                    document.getElementById('edit_amount').value = data.project_account.amount;
+                    document.getElementById('edit_note').value = data.project_account.note || '';
+                    
+                    // Prikazivanje modala za izmenu
+                    var editModal = new bootstrap.Modal(document.getElementById('editAccountModal'));
+                    editModal.show();
+                } else {
+                    // Prikazivanje greške
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'alert alert-danger';
+                    errorDiv.textContent = data.message;
+                    
+                    const modalBody = document.querySelector('#editAccountModal .modal-body');
+                    const existingError = modalBody.querySelector('.alert-danger');
+                    if (existingError) {
+                        existingError.remove();
+                    }
+                    modalBody.insertBefore(errorDiv, modalBody.firstChild);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Prikazivanje generičke greške
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger';
+                errorDiv.textContent = 'Došlo je do greške prilikom komunikacije sa serverom.';
+                
+                const modalBody = document.querySelector('#editAccountModal .modal-body');
+                const existingError = modalBody.querySelector('.alert-danger');
+                if (existingError) {
+                    existingError.remove();
+                }
+                modalBody.insertBefore(errorDiv, modalBody.firstChild);
+            });
         });
     });
 });

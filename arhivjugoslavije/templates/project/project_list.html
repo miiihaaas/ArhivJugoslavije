@@ -80,15 +80,7 @@
                             {% endfor %}
                         {% endif %}
                     </div>
-                    <div class="mb-3">
-                        {{ create_form.amount.label(class="form-label") }}
-                        {{ create_form.amount(class="form-control") }}
-                        {% if create_form.amount.errors %}
-                            {% for error in create_form.amount.errors %}
-                                <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
-                        {% endif %}
-                    </div>
+                    <!-- Polje amount je uklonjeno jer se vrednost računa automatski -->
                     <div class="mb-3">
                         {{ create_form.year.label(class="form-label") }}
                         {{ create_form.year(class="form-control", type="number") }}
@@ -138,15 +130,7 @@
                             {% endfor %}
                         {% endif %}
                     </div>
-                    <div class="mb-3">
-                        {{ edit_form.amount.label(class="form-label") }}
-                        {{ edit_form.amount(class="form-control", id="edit_project_value") }}
-                        {% if edit_form.amount.errors %}
-                            {% for error in edit_form.amount.errors %}
-                                <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
-                        {% endif %}
-                    </div>
+                    <!-- Polje amount je uklonjeno jer se vrednost računa automatski -->
                     <div class="mb-3">
                         {{ edit_form.year.label(class="form-label") }}
                         {{ edit_form.year(class="form-control", id="edit_project_year", type="number") }}
@@ -200,73 +184,59 @@ document.addEventListener('DOMContentLoaded', function() {
         language: {
             url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/sr-SP.json'
         },
-        order: [[0, 'desc']]
+        "order": [[ 0, "desc" ]]
     });
-
-    // Edit modal handler
-    const editModal = document.getElementById('editProjectModal');
-    if (editModal) {
-        editModal.addEventListener('show.bs.modal', function(event) {
+    
+    // Handle Edit Project Modal
+    const editProjectModal = document.getElementById('editProjectModal');
+    if (editProjectModal) {
+        editProjectModal.addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
             const projectId = button.getAttribute('data-project-id');
-            const isArchived = button.getAttribute('data-archived') === '1';
+            const archived = button.getAttribute('data-archived');
             
-            // Update form action URL and project ID
-            const form = editModal.querySelector('form');
+            // Update form action URL
+            const form = document.getElementById('editProjectForm');
             form.action = form.action.replace('/0', `/${projectId}`);
-            form.querySelector('#edit_project_id').value = projectId;
+            
+            // Set project ID in hidden field
+            document.getElementById('edit_project_id').value = projectId;
             
             // Fetch project data
-            // fetch(`/get_project/${projectId}`)
-            fetch(`{{ url_for('project.get_project', project_id=0) }}`.replace('/0', `/${projectId}`))
+            fetch(`/get_project/${projectId}`)
                 .then(response => response.json())
                 .then(data => {
                     // Populate form fields
                     document.getElementById('edit_project_name').value = data.name;
                     document.getElementById('edit_project_note').value = data.note || '';
-                    document.getElementById('edit_project_value').value = data.amount || '';
+                    // Linija koja je postavila vrednost za edit_project_value je uklonjena
                     document.getElementById('edit_project_year').value = data.year || '';
                     document.getElementById('edit_archived').checked = data.archived;
                     
-                    // Popunjavanje tabele sa sum_data
-                    const sumDataTable = document.querySelector('#sum-data-table');
-                    sumDataTable.innerHTML = ''; // Brisanje postojećih redova
-                    
-                    if (data.sum_data && data.sum_data.length > 0) {
-                        // Dodavanje redova za svaki konto
-                        data.sum_data.forEach(account => {
-                            const row = document.createElement('tr');
-                            row.innerHTML = `
-                                <td>${account.account}</td>
-                                <td>${account.amount.toLocaleString('sr-RS')}</td>
-                            `;
-                            sumDataTable.appendChild(row);
-                        });
-                    } else {
-                        // Ako nema podataka, prikaži poruku
-                        const row = document.createElement('tr');
-                        row.innerHTML = '<td colspan="2" class="text-center">Nema podataka za prikaz</td>';
-                        sumDataTable.appendChild(row);
+                    // Populate sum data table
+                    const sumDataTable = document.getElementById('sum-data-table');
+                    if (sumDataTable) {
+                        if (data.sum_data && data.sum_data.length > 0) {
+                            let tableHtml = '';
+                            data.sum_data.forEach(item => {
+                                tableHtml += `<tr>
+                                    <td>${item.account}</td>
+                                    <td>${item.amount.toLocaleString('sr-RS')}</td>
+                                </tr>`;
+                            });
+                            sumDataTable.innerHTML = tableHtml;
+                        } else {
+                            sumDataTable.innerHTML = `<tr>
+                                <td colspan="2" class="text-center">Nema podataka za prikaz</td>
+                            </tr>`;
+                        }
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    alert('Došlo je do greške prilikom učitavanja podataka o projektu.');
+                    console.error('Error fetching project data:', error);
                 });
         });
     }
-
-    // Form validation
-    const forms = document.querySelectorAll('.needs-validation');
-    Array.from(forms).forEach(form => {
-        form.addEventListener('submit', event => {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            form.classList.add('was-validated');
-        });
-    });
 });
 </script>
 {% endblock %}
