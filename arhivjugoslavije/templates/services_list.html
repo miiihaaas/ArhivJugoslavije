@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
             form.querySelector('#edit_service_id').value = serviceId;
             
             // Fetch service data
-            fetch(`/get_service/${serviceId}`)
+            fetch("{{ url_for('services.get_service', service_id=0) }}".replace('0', serviceId))
                 .then(response => response.json())
                 .then(data => {
                     console.log('Service data:', data);

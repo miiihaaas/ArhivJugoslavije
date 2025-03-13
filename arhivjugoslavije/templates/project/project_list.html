@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('edit_project_id').value = projectId;
             
             // Fetch project data
-            fetch(`/get_project/${projectId}`)
+            fetch("{{ url_for('project.get_project', project_id=0) }}".replace('0', projectId))
                 .then(response => response.json())
                 .then(data => {
                     // Populate form fields
