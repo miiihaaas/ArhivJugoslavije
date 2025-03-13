@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         // Slanje podataka kao JSON
-        fetch(`/edit_project_account/${accountId}`, {
+        fetch("{{ url_for('project.edit_project_account', account_id=0) }}".replace('0', accountId), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -338,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const accountId = button.getAttribute('data-id');
             
             // Prikupljanje podataka o kontu
-            fetch(`/get_project_account/${accountId}`)
+            fetch("{{ url_for('project.get_project_account', account_id=0) }}".replace('0', accountId))
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
