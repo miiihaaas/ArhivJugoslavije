@@ -75,6 +75,7 @@ class Partner(db.Model):
     name = db.Column(db.String(100), nullable=False)
     address = db.Column(db.String(200), nullable=True)
     city = db.Column(db.String(50), nullable=True)
+    country = db.Column(db.String(100), nullable=True)
     account_number = db.Column(db.String(50), nullable=True)
     phones = db.Column(db.String(20), nullable=True)
     fax = db.Column(db.String(20), nullable=True)
