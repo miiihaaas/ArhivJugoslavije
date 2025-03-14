@@ -1,0 +1,122 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>{{ legend }}</h2>
+        <div>
+            <a href="{{ url_for('invoices.invoice_list') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Nazad na listu faktura
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-file-invoice me-2"></i>Osnovni podaci fakture</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('invoices.create_customer_invoice') }}">
+                {{ form.hidden_tag() }}
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form.invoice_number.label(class="form-label") }}
+                            {{ form.invoice_number(class="form-control") }}
+                            {% if form.invoice_number.errors %}
+                                {% for error in form.invoice_number.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form.partner_id.label(class="form-label") }}
+                            {{ form.partner_id(class="form-select") }}
+                            {% if form.partner_id.errors %}
+                                {% for error in form.partner_id.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            {{ form.issue_date.label(class="form-label") }}
+                            {{ form.issue_date(class="form-control", type="date") }}
+                            {% if form.issue_date.errors %}
+                                {% for error in form.issue_date.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            {{ form.service_date.label(class="form-label") }}
+                            {{ form.service_date(class="form-control", type="date") }}
+                            {% if form.service_date.errors %}
+                                {% for error in form.service_date.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            {{ form.payment_due_date.label(class="form-label") }}
+                            {{ form.payment_due_date(class="form-control", type="date") }}
+                            {% if form.payment_due_date.errors %}
+                                {% for error in form.payment_due_date.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            {{ form.currency.label(class="form-label") }}
+                            {{ form.currency(class="form-select") }}
+                            {% if form.currency.errors %}
+                                {% for error in form.currency.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <input type="hidden" name="incoming" value="0">
+                
+                <div class="text-end">
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Postavi danau0161nji datum kao podrazumevanu vrednost za datume ako nisu veu0107 postavljeni
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (!document.getElementById('issue_date').value) {
+        document.getElementById('issue_date').value = today;
+    }
+    
+    if (!document.getElementById('service_date').value) {
+        document.getElementById('service_date').value = today;
+    }
+});
+</script>
+{% endblock %}

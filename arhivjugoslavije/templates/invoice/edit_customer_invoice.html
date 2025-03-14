@@ -1,0 +1,317 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>{{ legend }}</h2>
+        <div>
+            <a href="{{ url_for('invoices.invoice_list') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Nazad na listu faktura
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Leva kolona - Osnovni podaci fakture -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-file-invoice me-2"></i>Osnovni podaci fakture</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('invoices.edit_customer_invoice', invoice_id=invoice.id) }}">
+                        {{ form.hidden_tag() }}
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.invoice_number.label(class="form-label") }}
+                                    {{ form.invoice_number(class="form-control") }}
+                                    {% if form.invoice_number.errors %}
+                                        {% for error in form.invoice_number.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.partner_id.label(class="form-label") }}
+                                    {{ form.partner_id(class="form-select") }}
+                                    {% if form.partner_id.errors %}
+                                        {% for error in form.partner_id.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ form.issue_date.label(class="form-label") }}
+                                    {{ form.issue_date(class="form-control", type="date") }}
+                                    {% if form.issue_date.errors %}
+                                        {% for error in form.issue_date.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ form.service_date.label(class="form-label") }}
+                                    {{ form.service_date(class="form-control", type="date") }}
+                                    {% if form.service_date.errors %}
+                                        {% for error in form.service_date.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ form.payment_due_date.label(class="form-label") }}
+                                    {{ form.payment_due_date(class="form-control", type="date") }}
+                                    {% if form.payment_due_date.errors %}
+                                        {% for error in form.payment_due_date.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ form.currency.label(class="form-label") }}
+                                    {{ form.currency(class="form-select") }}
+                                    {% if form.currency.errors %}
+                                        {% for error in form.currency.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label class="form-label">Ukupan iznos</label>
+                                    <div class="form-control bg-light">{{ invoice.total_amount }} {{ invoice.currency }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-end">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Desna kolona - Dodavanje stavki -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-list-ul me-2"></i>Dodavanje stavki</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('invoices.add_invoice_item', invoice_id=invoice.id) }}" id="addItemForm">
+                        {{ item_form.hidden_tag() }}
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    {{ item_form.service_id.label(class="form-label") }}
+                                    {{ item_form.service_id(class="form-select", id="service_id") }}
+                                    {% if item_form.service_id.errors %}
+                                        {% for error in item_form.service_id.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ item_form.quantity.label(class="form-label") }}
+                                    {{ item_form.quantity(class="form-control", id="quantity") }}
+                                    {% if item_form.quantity.errors %}
+                                        {% for error in item_form.quantity.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ item_form.price.label(class="form-label") }}
+                                    {{ item_form.price(class="form-control", id="price") }}
+                                    {% if item_form.price.errors %}
+                                        {% for error in item_form.price.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ item_form.currency.label(class="form-label") }}
+                                    {{ item_form.currency(class="form-select", id="item_currency") }}
+                                    {% if item_form.currency.errors %}
+                                        {% for error in item_form.currency.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ item_form.total.label(class="form-label") }}
+                                    {{ item_form.total(class="form-control", id="total", readonly=true) }}
+                                    {% if item_form.total.errors %}
+                                        {% for error in item_form.total.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                {{ item_form.submit(class="btn btn-success w-100") }}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tabela sa stavkama fakture -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-table me-2"></i>Stavke fakture</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usluga</th>
+                            <th>Koliu010dina</th>
+                            <th>Cena</th>
+                            <th>Valuta</th>
+                            <th>Ukupno</th>
+                            <th>Akcije</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if invoice_items %}
+                            {% for item in invoice_items %}
+                            <tr>
+                                <td>{{ item.id }}</td>
+                                <td>{{ item.service.name_sr }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ item.price }}</td>
+                                <td>{{ item.currency }}</td>
+                                <td>{{ item.total }} {{ item.currency }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('invoices.remove_invoice_item', item_id=item.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Da li ste sigurni da u017eelite da uklonite ovu stavku?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center">Nema stavki za prikaz</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-primary">
+                            <th colspan="5" class="text-end">Ukupno:</th>
+                            <th>{{ invoice.total_amount }} {{ invoice.currency }}</th>
+                            <th></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Funkcija za izrau010dunavanje ukupne vrednosti stavke
+    function calculateTotal() {
+        const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+        const price = parseFloat(document.getElementById('price').value) || 0;
+        const total = quantity * price;
+        document.getElementById('total').value = total.toFixed(2);
+    }
+    
+    // Dodaj event listenere za promenu koliu010dine i cene
+    document.getElementById('quantity').addEventListener('input', calculateTotal);
+    document.getElementById('price').addEventListener('input', calculateTotal);
+    
+    // Dohvati cenu usluge kada se promeni izbor usluge
+    document.getElementById('service_id').addEventListener('change', function() {
+        const serviceId = this.value;
+        if (serviceId) {
+            fetch(`{{ url_for('invoices.get_service_price', service_id=0) }}`.replace('0', serviceId))
+                .then(response => response.json())
+                .then(data => {
+                    const currency = document.getElementById('item_currency').value;
+                    let price = 0;
+                    
+                    if (currency === 'RSD' && data.price_rsd) {
+                        price = data.price_rsd;
+                    } else if (currency === 'EUR' && data.price_eur) {
+                        price = data.price_eur;
+                    }
+                    
+                    document.getElementById('price').value = price;
+                    calculateTotal();
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    });
+    
+    // Au017euriraj cenu kada se promeni valuta
+    document.getElementById('item_currency').addEventListener('change', function() {
+        const serviceId = document.getElementById('service_id').value;
+        if (serviceId) {
+            fetch(`{{ url_for('invoices.get_service_price', service_id=0) }}`.replace('0', serviceId))
+                .then(response => response.json())
+                .then(data => {
+                    const currency = document.getElementById('item_currency').value;
+                    let price = 0;
+                    
+                    if (currency === 'RSD' && data.price_rsd) {
+                        price = data.price_rsd;
+                    } else if (currency === 'EUR' && data.price_eur) {
+                        price = data.price_eur;
+                    }
+                    
+                    document.getElementById('price').value = price;
+                    calculateTotal();
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    });
+    
+    // Izrau010dunaj ukupno pri uu010ditavanju stranice
+    calculateTotal();
+});
+</script>
+{% endblock %}
