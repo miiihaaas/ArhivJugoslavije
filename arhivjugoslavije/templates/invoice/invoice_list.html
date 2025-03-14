@@ -1,0 +1,226 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>{{ legend }}</h2>
+        <div>
+            <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left"></i> Nazad
+            </a>
+            <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#createSupplierInvoiceModal">
+                <i class="fas fa-file-import"></i> Nova ulazna faktura
+            </button>
+            <a href="{{ url_for('invoices.create_customer_invoice') }}" class="btn btn-primary">
+                <i class="fas fa-file-export"></i> Nova izlazna faktura
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-6 d-flex justify-content-start">
+            <button class="btn btn-outline-primary filter-btn me-2" data-filter="incoming">Ulazne fakture <i class="fas fa-file-import" data-bs-toggle="tooltip" data-bs-placement="top" title="Ulazne fakture"></i></button>
+            <button class="btn btn-outline-primary filter-btn" data-filter="outgoing">Izlazne fakture <i class="fas fa-file-export" data-bs-toggle="tooltip" data-bs-placement="top" title="Izlazne fakture"></i></button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table id="invoicesTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Broj fakture</th>
+                    <th>Datum izdavanja</th>
+                    <th>Datum usluge</th>
+                    <th>Rok plaćanja</th>
+                    <th>Partner</th>
+                    <th>Iznos</th>
+                    <th>Valuta</th>
+                    <th>Status plaćanja</th>
+                    <th>Tip fakture</th>
+                    <th>Akcije</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invoice in invoices %}
+                <tr class="invoice-row" 
+                    data-incoming="{{ invoice.incoming|lower }}">
+                    <td>{{ invoice.id }}</td>
+                    <td>{{ invoice.invoice_number }}</td>
+                    <td>{{ invoice.issue_date.strftime('%d.%m.%Y') }}</td>
+                    <td>{{ invoice.service_date.strftime('%d.%m.%Y') }}</td>
+                    <td>{% if invoice.payment_due_date %}{{ invoice.payment_due_date.strftime('%d.%m.%Y') }}{% endif %}</td>
+                    <td>{{ invoice.partner.name }}</td>
+                    <td>{{ invoice.total_amount }}</td>
+                    <td>{{ invoice.currency }}</td>
+                    <td>
+                        {% if invoice.paid %}
+                            <span class="badge bg-success">Plaćeno</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Neplaćeno</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if invoice.incoming %}
+                            <i class="fas fa-file-import" data-bs-toggle="tooltip" data-bs-placement="top" title="Ulazna faktura"></i>
+                        {% else %}
+                            <i class="fas fa-file-export" data-bs-toggle="tooltip" data-bs-placement="top" title="Izlazna faktura"></i>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="#" class="btn btn-outline-secondary btn-sm view-invoice" data-invoice-id="{{ invoice.id }}">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="#" class="btn btn-outline-primary btn-sm edit-invoice" data-invoice-id="{{ invoice.id }}">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal za kreiranje ulazne fakture (dobavljač) -->
+<div class="modal fade" id="createSupplierInvoiceModal" tabindex="-1" aria-labelledby="createSupplierInvoiceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createSupplierInvoiceModalLabel">Nova ulazna faktura</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('invoices.create_supplier_invoice') }}" method="POST">
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="invoice_number" class="form-label">Broj fakture *</label>
+                                <input type="text" class="form-control" id="invoice_number" name="invoice_number" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="partner_id" class="form-label">Dobavljač *</label>
+                                <select class="form-select" id="partner_id" name="partner_id" required>
+                                    <option value="">Izaberite dobavljača</option>
+                                    {% for partner in suppliers %}
+                                    <option value="{{ partner.id }}">{{ partner.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="issue_date" class="form-label">Datum izdavanja *</label>
+                                <input type="date" class="form-control" id="issue_date" name="issue_date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="service_date" class="form-label">Datum usluge *</label>
+                                <input type="date" class="form-control" id="service_date" name="service_date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="payment_due_date" class="form-label">Rok plaćanja</label>
+                                <input type="date" class="form-control" id="payment_due_date" name="payment_due_date">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="total_amount" class="form-label">Ukupan iznos *</label>
+                                <input type="number" step="0.01" class="form-control" id="total_amount" name="total_amount" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="currency" class="form-label">Valuta *</label>
+                                <select class="form-select" id="currency" name="currency" required>
+                                    <option value="RSD">RSD</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="USD">USD</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Skriveno polje za ulaznu fakturu -->
+                    <input type="hidden" name="incoming" value="1">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Odustani</button>
+                    <button type="submit" class="btn btn-primary">Sačuvaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicijalizacija tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+    
+    // Inicijalizacija DataTables
+    if ($.fn.DataTable.isDataTable('#invoicesTable')) {
+        $('#invoicesTable').DataTable().destroy();
+    }
+    $('#invoicesTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/sr-SP.json'
+        },
+        "order": [[ 0, "desc" ]]
+    });
+    
+    // Filtriranje faktura
+    document.querySelectorAll('.filter-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const filter = this.getAttribute('data-filter');
+            const isActive = this.classList.contains('active');
+            
+            // Resetuj sve filtere
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Prikaži sve redove
+            document.querySelectorAll('.invoice-row').forEach(row => {
+                row.style.display = '';
+            });
+            
+            // Ako je filter bio aktivan, ne primenjuj ga ponovo
+            if (!isActive) {
+                this.classList.add('active');
+                
+                // Filtriraj redove
+                document.querySelectorAll('.invoice-row').forEach(row => {
+                    if (filter === 'incoming' && row.getAttribute('data-incoming') !== 'true') {
+                        row.style.display = 'none';
+                    } else if (filter === 'outgoing' && row.getAttribute('data-incoming') !== 'false') {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+        });
+    });
+    
+    // Postavi današnji datum kao podrazumevanu vrednost za datume
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('issue_date').value = today;
+    document.getElementById('service_date').value = today;
+});
+</script>
+{% endblock %}

@@ -62,6 +62,7 @@ from arhivjugoslavije import models
 # Registracija blueprint-a
 from arhivjugoslavije.accounts.routes import account
 from arhivjugoslavije.errors.routes import errors
+from arhivjugoslavije.invoice.routes import invoices
 from arhivjugoslavije.main.routes import main
 from arhivjugoslavije.partner.routes import partner
 from arhivjugoslavije.project.routes import project
@@ -71,6 +72,7 @@ from arhivjugoslavije.users.routes import users
 
 app.register_blueprint(account)
 app.register_blueprint(errors)
+app.register_blueprint(invoices)
 app.register_blueprint(main)
 app.register_blueprint(partner)
 app.register_blueprint(project)
