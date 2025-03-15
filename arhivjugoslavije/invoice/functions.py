@@ -1,9 +1,10 @@
 from fpdf import FPDF
 import os
 from pathlib import Path
-from flask import make_response, flash, redirect, url_for
+from flask import make_response, flash, redirect, url_for, current_app
 from arhivjugoslavije.models import Invoice, Partner, InvoiceItem, Service, ArchiveSettings, UnitOfMeasure
 import io
+import logging
 
 
 def generate_invoice_pdf(invoice_id):
@@ -38,10 +39,22 @@ def generate_invoice_pdf(invoice_id):
             flash('Faktura nema stavke. Molimo vas da dodate bar jednu stavku.', 'warning')
             return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
         
-        # Proveri da li postoje DejaVu fontovi
-        fonts_dir = os.path.join('arhivjugoslavije', 'static', 'fonts')
+        # Proveri da li postoje DejaVu fontovi - koristi apsolutnu putanju
+        base_dir = current_app.root_path
+        fonts_dir = os.path.join(base_dir, 'static', 'fonts')
         dejavu_regular = os.path.join(fonts_dir, 'DejaVuSansCondensed.ttf')
         dejavu_bold = os.path.join(fonts_dir, 'DejaVuSansCondensed-Bold.ttf')
+        
+        # Provera da li fontovi postoje
+        if not os.path.exists(dejavu_regular):
+            logging.error(f"Font nije pronađen na putanji: {dejavu_regular}")
+            flash('Font DejaVuSansCondensed.ttf nije pronađen. Proverite da li je font dostupan u static/fonts direktorijumu.', 'danger')
+            return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
+        
+        if not os.path.exists(dejavu_bold):
+            logging.error(f"Font nije pronađen na putanji: {dejavu_bold}")
+            flash('Font DejaVuSansCondensed-Bold.ttf nije pronađen. Proverite da li je font dostupan u static/fonts direktorijumu.', 'danger')
+            return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
         
         # Kreiraj PDF sa podrškom za Unicode karaktere
         class InvoicePDF(FPDF):
@@ -56,8 +69,9 @@ def generate_invoice_pdf(invoice_id):
             
             def header(self):
                 # Logo i podaci o arhivu na levoj strani
-                if archive_settings.logo and os.path.exists(os.path.join('arhivjugoslavije', 'static', 'uploads', archive_settings.logo)):
-                    self.image(os.path.join('arhivjugoslavije', 'static', 'uploads', archive_settings.logo), 10, 8, 30)
+                logo_path = os.path.join(base_dir, 'static', 'uploads', archive_settings.logo) if archive_settings.logo else None
+                if logo_path and os.path.exists(logo_path):
+                    self.image(logo_path, 10, 8, 30)
                 
                 # Podaci o arhivu - leva strana
                 self.set_font('DejaVu', 'B', 12)
@@ -164,12 +178,14 @@ def generate_invoice_pdf(invoice_id):
         pdf.cell(95, 6, 'Potpis odgovornog lica', 0, 1, 'C')
         
         # Dodaj pečat ako postoji
-        if archive_settings.stamp and os.path.exists(os.path.join('arhivjugoslavije', 'static', 'uploads', archive_settings.stamp)):
-            pdf.image(os.path.join('arhivjugoslavije', 'static', 'uploads', archive_settings.stamp), x=40, y=pdf.get_y()-20, w=30)
+        stamp_path = os.path.join(base_dir, 'static', 'uploads', archive_settings.stamp) if archive_settings.stamp else None
+        if stamp_path and os.path.exists(stamp_path):
+            pdf.image(stamp_path, x=40, y=pdf.get_y()-20, w=30)
         
         # Dodaj faksimil ako postoji
-        if archive_settings.facsimile and os.path.exists(os.path.join('arhivjugoslavije', 'static', 'uploads', archive_settings.facsimile)):
-            pdf.image(os.path.join('arhivjugoslavije', 'static', 'uploads', archive_settings.facsimile), x=140, y=pdf.get_y()-20, w=30)
+        facsimile_path = os.path.join(base_dir, 'static', 'uploads', archive_settings.facsimile) if archive_settings.facsimile else None
+        if facsimile_path and os.path.exists(facsimile_path):
+            pdf.image(facsimile_path, x=140, y=pdf.get_y()-20, w=30)
         
         # Generisanje PDF-a
         pdf_bytes = io.BytesIO()
@@ -183,7 +199,7 @@ def generate_invoice_pdf(invoice_id):
         return response
         
     except Exception as e:
-        # Loguj grešku
-        print(f"Greška pri generisanju PDF-a: {str(e)}")
+        # Loguj grešku koristeći logging umesto print
+        logging.error(f"Greška pri generisanju PDF-a: {str(e)}")
         flash(f'Došlo je do greške prilikom generisanja PDF-a: {str(e)}.', 'danger')
         return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
