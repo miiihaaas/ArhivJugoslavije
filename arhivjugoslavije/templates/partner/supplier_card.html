@@ -1,0 +1,83 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="content-section">
+    <div class="h1">{{ legend }}</div>
+    
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Informacije o dobavljaču</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-md-4 fw-bold">Naziv:</div>
+                        <div class="col-md-8">{{ partner.name }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-4 fw-bold">Adresa:</div>
+                        <div class="col-md-8">{{ partner.address }}{% if partner.address and partner.city %}, {% endif %}{{ partner.city }}{% if partner.city and partner.country %}, {% endif %}{{ partner.country }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-4 fw-bold">Tekući račun:</div>
+                        <div class="col-md-8">{{ partner.account_number }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-4 fw-bold">PIB:</div>
+                        <div class="col-md-8">{{ partner.pib }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-4 fw-bold">Matični broj:</div>
+                        <div class="col-md-8">{{ partner.mb }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-4 fw-bold">Kontakt:</div>
+                        <div class="col-md-8">
+                            {% if partner.phones %}Tel: {{ partner.phones }}{% endif %}
+                            {% if partner.fax %}<br>Fax: {{ partner.fax }}{% endif %}
+                            {% if partner.email %}<br>Email: {{ partner.email }}{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Ulazne fakture</h5>
+                    <button type="button" class="btn btn-primary btn-sm">
+                        <i class="fas fa-file-import text-primary"></i> Nova ulazna faktura
+                    </button>
+                </div>
+                <div class="card-body">
+                    <p class="text-center">Ovde će biti prikazane ulazne fakture dobavljača.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Pregled kartice dobavljača</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-center">Ovde će biti prikazan pregled kartice dobavljača sa svim transakcijama.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-3">
+        <div class="col-12 d-flex justify-content-between">
+            <a href="{{ url_for('partner.partners') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Nazad na listu partnera
+            </a>
+            <a href="{{ url_for('partner.edit_partner', partner_id=partner.id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Izmeni podatke o dobavljaču
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock content %}

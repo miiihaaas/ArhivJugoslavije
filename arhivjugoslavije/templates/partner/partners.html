@@ -28,7 +28,7 @@
                     <th>Email</th>
                     <th>PIB/MB</th>
                     <th>Tip partnera</th>
-                    <th>Akcije</th>
+                    <th class="actions-column">Akcije</th>
                 </tr>
             </thead>
             <tbody>
@@ -62,11 +62,26 @@
                         <i class="fas fa-globe partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Strani partner"></i>
                         {% endif %}
                     </td>
-                    <td>
+                    <td class="actions-column">
                         <a href="{{ url_for('partner.edit_partner', partner_id=partner.id) }}" 
-                           class="btn btn-outline-secondary btn-sm">
-                            Izmeni
+                           class="btn btn-outline-secondary btn-sm action-btn"
+                           data-bs-toggle="tooltip" data-bs-placement="top" title="Izmeni partnera">
+                            <i class="fas fa-edit"></i>
                         </a>
+                        {% if partner.supplier %}
+                        <a href="{{ url_for('partner.supplier_card', partner_id=partner.id) }}" 
+                           class="btn btn-outline-primary btn-sm action-btn"
+                           data-bs-toggle="tooltip" data-bs-placement="top" title="Kartica dobavljača">
+                            <i class="fas fa-file-import text-primary"></i>
+                        </a>
+                        {% endif %}
+                        {% if partner.customer %}
+                        <a href="{{ url_for('partner.customer_card', partner_id=partner.id) }}" 
+                           class="btn btn-outline-success btn-sm action-btn"
+                           data-bs-toggle="tooltip" data-bs-placement="top" title="Kartica kupca">
+                            <i class="fas fa-file-export text-success"></i>
+                        </a>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -269,6 +284,14 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 .fa-globe {
     color: #6c757d; /* siva za stranog partnera */
+}
+.actions-column {
+    white-space: nowrap;
+    min-width: 150px;
+}
+.action-btn {
+    padding: 0.25rem 0.5rem;
+    margin-right: 2px;
 }
 </style>
 {% endblock %}

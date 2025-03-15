@@ -12,7 +12,7 @@ partner = Blueprint('partner', __name__)
 def partners():
     endpoint = request.endpoint
     partners = Partner.query.all()
-    return render_template('partners.html', 
+    return render_template('partner/partners.html', 
                             endpoint=endpoint, 
                             partners=partners,
                             legend='Poslovni partneri',
@@ -100,7 +100,7 @@ def edit_partner(partner_id):
         # Validacija
         if not partner.name:
             flash('Naziv partnera je obavezan!', 'danger')
-            return render_template('edit_partner.html', 
+            return render_template('partner/edit_partner.html', 
                                   partner=partner,
                                   legend='Izmena partnera',
                                   title='Izmena partnera')
@@ -121,7 +121,37 @@ def edit_partner(partner_id):
         flash('Partner uspešno izmenjen!', 'success')
         return redirect(url_for('partner.partners'))
     
-    return render_template('edit_partner.html', 
+    return render_template('partner/edit_partner.html', 
                           partner=partner,
                           legend='Izmena partnera',
                           title='Izmena partnera')
+
+@partner.route('/supplier_card/<int:partner_id>')
+@login_required
+def supplier_card(partner_id):
+    partner = Partner.query.get_or_404(partner_id)
+    
+    # Provera da li je partner dobavljač
+    if not partner.supplier:
+        flash('Izabrani partner nije označen kao dobavljač.', 'warning')
+        return redirect(url_for('partner.partners'))
+    
+    return render_template('partner/supplier_card.html',
+                          partner=partner,
+                          legend=f'Kartica dobavljača: {partner.name}',
+                          title=f'Kartica dobavljača: {partner.name}')
+
+@partner.route('/customer_card/<int:partner_id>')
+@login_required
+def customer_card(partner_id):
+    partner = Partner.query.get_or_404(partner_id)
+    
+    # Provera da li je partner kupac
+    if not partner.customer:
+        flash('Izabrani partner nije označen kao kupac.', 'warning')
+        return redirect(url_for('partner.partners'))
+    
+    return render_template('partner/customer_card.html',
+                          partner=partner,
+                          legend=f'Kartica kupca: {partner.name}',
+                          title=f'Kartica kupca: {partner.name}')
