@@ -35,7 +35,7 @@
                         {% if current_user.is_authenticated %}
                         <a class="nav-item nav-link {{ 'active' if request.endpoint in ['main.home'] }}" href="{{ url_for('main.home') }}">Početna</a>
                         <a class="nav-item nav-link {{ 'active' if request.endpoint in ['partner.partners'] }}" href="{{ url_for('partner.partners') }}">Poslovni partneri</a>
-                        <a class="nav-item nav-link {{ 'active' if request.endpoint in [''] }}" href="">Fakture</a>
+                        <a class="nav-item nav-link {{ 'active' if request.endpoint in ['invoices.invoice_list', 'invoices.edit_customer_invoice', 'invoices.create_customer_invoice'] }}" href="{{ url_for('invoices.invoice_list') }}">Fakture</a>
                         <li class="nav-item dropdown dropdown--align-right">
                             <a class="nav-link dropdown-toggle {{ 'active' if request.endpoint in ['payments.posting_payment', 'payments.payment_list'] }}" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#">Izvodi</a>
                             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">

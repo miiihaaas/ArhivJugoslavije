@@ -8,6 +8,9 @@
             <a href="{{ url_for('invoices.invoice_list') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i> Nazad na listu faktura
             </a>
+            <a href="{{ url_for('invoices.generate_invoice_pdf_route', invoice_id=invoice.id) }}" class="btn btn-outline-primary" target="_blank">
+                <i class="fas fa-file-pdf"></i> Generiši PDF
+            </a>
         </div>
     </div>
 
@@ -203,7 +206,7 @@
                         <tr>
                             <th>ID</th>
                             <th>Usluga</th>
-                            <th>Koliu010dina</th>
+                            <th>Količina</th>
                             <th>Cena</th>
                             <th>Valuta</th>
                             <th>Ukupno</th>
@@ -222,10 +225,13 @@
                                 <td>{{ item.total }} {{ item.currency }}</td>
                                 <td>
                                     <form method="POST" action="{{ url_for('invoices.remove_invoice_item', item_id=item.id) }}" class="d-inline">
-                                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Da li ste sigurni da u017eelite da uklonite ovu stavku?')">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Da li ste sigurni da želite da uklonite ovu stavku?')">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
+                                    <button type="button" class="btn btn-outline-primary btn-sm edit-item-btn" data-item-id="{{ item.id }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -247,12 +253,79 @@
         </div>
     </div>
 </div>
+
+<!-- Modal za uređivanje stavke fakture -->
+<div class="modal fade" id="editItemModal" tabindex="-1" aria-labelledby="editItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editItemModalLabel">Uređivanje stavke fakture</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" id="editItemForm">
+                    <input type="hidden" id="edit_item_id" name="item_id">
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="edit_service_id" class="form-label">Usluga</label>
+                                <select class="form-select" id="edit_service_id" name="service_id" required>
+                                    {% for service_id, service_name in item_form.service_id.choices %}
+                                    <option value="{{ service_id }}">{{ service_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="edit_quantity" class="form-label">Količina</label>
+                                <input type="number" class="form-control" id="edit_quantity" name="quantity" step="0.01" min="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="edit_price" class="form-label">Cena</label>
+                                <input type="number" class="form-control" id="edit_price" name="price" step="0.01" min="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="edit_currency" class="form-label">Valuta</label>
+                                <select class="form-select" id="edit_currency" name="currency" required>
+                                    <option value="RSD">RSD</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="USD">USD</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_total" class="form-label">Ukupno</label>
+                                <input type="number" class="form-control" id="edit_total" name="total" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Odustani</button>
+                <button type="button" class="btn btn-primary" id="saveItemChanges">Sačuvaj izmene</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Funkcija za izrau010dunavanje ukupne vrednosti stavke
+    // Funkcija za izračunavanje ukupne vrednosti stavke
     function calculateTotal() {
         const quantity = parseFloat(document.getElementById('quantity').value) || 0;
         const price = parseFloat(document.getElementById('price').value) || 0;
@@ -260,9 +333,21 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('total').value = total.toFixed(2);
     }
     
-    // Dodaj event listenere za promenu koliu010dine i cene
+    // Funkcija za izračunavanje ukupne vrednosti stavke u modalu za uređivanje
+    function calculateEditTotal() {
+        const quantity = parseFloat(document.getElementById('edit_quantity').value) || 0;
+        const price = parseFloat(document.getElementById('edit_price').value) || 0;
+        const total = quantity * price;
+        document.getElementById('edit_total').value = total.toFixed(2);
+    }
+    
+    // Dodaj event listenere za promenu količine i cene
     document.getElementById('quantity').addEventListener('input', calculateTotal);
     document.getElementById('price').addEventListener('input', calculateTotal);
+    
+    // Dodaj event listenere za promenu količine i cene u modalu za uređivanje
+    document.getElementById('edit_quantity').addEventListener('input', calculateEditTotal);
+    document.getElementById('edit_price').addEventListener('input', calculateEditTotal);
     
     // Dohvati cenu usluge kada se promeni izbor usluge
     document.getElementById('service_id').addEventListener('change', function() {
@@ -287,7 +372,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Au017euriraj cenu kada se promeni valuta
+    // Dohvati cenu usluge kada se promeni izbor usluge u modalu za uređivanje
+    document.getElementById('edit_service_id').addEventListener('change', function() {
+        const serviceId = this.value;
+        if (serviceId) {
+            fetch(`{{ url_for('invoices.get_service_price', service_id=0) }}`.replace('0', serviceId))
+                .then(response => response.json())
+                .then(data => {
+                    const currency = document.getElementById('edit_currency').value;
+                    let price = 0;
+                    
+                    if (currency === 'RSD' && data.price_rsd) {
+                        price = data.price_rsd;
+                    } else if (currency === 'EUR' && data.price_eur) {
+                        price = data.price_eur;
+                    }
+                    
+                    document.getElementById('edit_price').value = price;
+                    calculateEditTotal();
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    });
+    
+    // Ažuriraj cenu kada se promeni valuta
     document.getElementById('item_currency').addEventListener('change', function() {
         const serviceId = document.getElementById('service_id').value;
         if (serviceId) {
@@ -310,7 +418,79 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Izrau010dunaj ukupno pri uu010ditavanju stranice
+    // Ažuriraj cenu kada se promeni valuta u modalu za uređivanje
+    document.getElementById('edit_currency').addEventListener('change', function() {
+        const serviceId = document.getElementById('edit_service_id').value;
+        if (serviceId) {
+            fetch(`{{ url_for('invoices.get_service_price', service_id=0) }}`.replace('0', serviceId))
+                .then(response => response.json())
+                .then(data => {
+                    const currency = document.getElementById('edit_currency').value;
+                    let price = 0;
+                    
+                    if (currency === 'RSD' && data.price_rsd) {
+                        price = data.price_rsd;
+                    } else if (currency === 'EUR' && data.price_eur) {
+                        price = data.price_eur;
+                    }
+                    
+                    document.getElementById('edit_price').value = price;
+                    calculateEditTotal();
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    });
+    
+    // Prikaži modal za uređivanje stavke i popuni podatke
+    const editItemButtons = document.querySelectorAll('.edit-item-btn');
+    editItemButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const itemId = this.getAttribute('data-item-id');
+            
+            // Dohvati podatke o stavci
+            fetch(`{{ url_for('invoices.get_invoice_item', item_id=0) }}`.replace('0', itemId))
+                .then(response => response.json())
+                .then(data => {
+                    // Popuni formu sa podacima
+                    document.getElementById('edit_item_id').value = data.id;
+                    document.getElementById('edit_service_id').value = data.service_id;
+                    document.getElementById('edit_quantity').value = data.quantity;
+                    document.getElementById('edit_price').value = data.price;
+                    document.getElementById('edit_currency').value = data.currency;
+                    document.getElementById('edit_total').value = data.total;
+                    
+                    // Prikaži modal
+                    const editItemModal = new bootstrap.Modal(document.getElementById('editItemModal'));
+                    editItemModal.show();
+                })
+                .catch(error => console.error('Error:', error));
+        });
+    });
+    
+    // Sačuvaj izmene stavke
+    document.getElementById('saveItemChanges').addEventListener('click', function() {
+        const form = document.getElementById('editItemForm');
+        const formData = new FormData(form);
+        
+        fetch(`{{ url_for('invoices.edit_invoice_item', invoice_id=invoice.id) }}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                return response.json().then(data => {
+                    throw new Error(data.message || 'Došlo je do greške prilikom ažuriranja stavke.');
+                });
+            }
+        })
+        .catch(error => {
+            alert(error.message);
+        });
+    });
+    
+    // Izračunaj ukupno pri učitavanju stranice
     calculateTotal();
 });
 </script>

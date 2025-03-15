@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, BooleanField, FloatField
+from wtforms import StringField, SubmitField, BooleanField, FloatField, HiddenField
 from wtforms.validators import DataRequired, Optional
 
 
@@ -16,3 +16,11 @@ class SettingsForm(FlaskForm):
     use_eur = BooleanField('Koristi EUR', validators=[Optional()])
     eur_rate = FloatField('Kurs EUR', validators=[Optional()])
     submit = SubmitField('Sačuvajte')
+
+
+class BankAccountForm(FlaskForm):
+    id = HiddenField('ID')
+    account_number = StringField('Broj računa', validators=[DataRequired()])
+    bank = StringField('Banka', validators=[DataRequired()])
+    active = BooleanField('Aktivan', default=True)
+    submit = SubmitField('Sačuvaj')

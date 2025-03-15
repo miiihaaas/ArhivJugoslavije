@@ -1,9 +1,12 @@
 from datetime import datetime
-from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, make_response
 from flask_login import login_required, current_user
 from arhivjugoslavije import db
-from arhivjugoslavije.models import Partner, Invoice, InvoiceItem, Service
+from arhivjugoslavije.models import Partner, Invoice, InvoiceItem, Service, ArchiveSettings, UnitOfMeasure
 from arhivjugoslavije.invoice.forms import InvoiceForm, InvoiceItemForm
+from arhivjugoslavije.invoice.functions import generate_invoice_pdf
+import os
+from pathlib import Path
 
 invoices = Blueprint('invoices', __name__)
 
@@ -96,8 +99,8 @@ def edit_customer_invoice(invoice_id):
     
     # Proveri da li je izlazna faktura
     if invoice.incoming:
-        flash('Ne možete uređivati ulaznu fakturu na ovaj način.', 'warning')
-        return redirect(url_for('invoices.invoice_list'))
+        flash('Izmena podataka ulazne fakture.', 'warning')
+        return redirect(url_for('invoices.edit_supplier_invoice', invoice_id=invoice.id))
     
     # Forma za fakturu
     form = InvoiceForm(obj=invoice)
@@ -129,13 +132,52 @@ def edit_customer_invoice(invoice_id):
             flash(f'Došlo je do greške prilikom ažuriranja fakture: {str(e)}.', 'danger')
     
     return render_template('invoice/edit_customer_invoice.html',
-                           endpoint=endpoint,
-                           legend=f'Uređivanje fakture {invoice.invoice_number}',
-                           title='Uređivanje fakture',
-                           form=form,
-                           item_form=item_form,
-                           invoice=invoice,
-                           invoice_items=invoice_items)
+                            endpoint=endpoint,
+                            legend=f'Uređivanje fakture {invoice.invoice_number}',
+                            title='Uređivanje fakture',
+                            form=form,
+                            item_form=item_form,
+                            invoice=invoice,
+                            invoice_items=invoice_items)
+
+
+@invoices.route('/edit_supplier_invoice/<int:invoice_id>', methods=['GET', 'POST'])
+def edit_supplier_invoice(invoice_id):
+    endpoint = request.endpoint
+    invoice = Invoice.query.get_or_404(invoice_id)
+    form = InvoiceForm(obj=invoice)
+    suppliers = Partner.query.filter_by(supplier=True).all()
+    form.partner_id.choices = [(p.id, p.name) for p in suppliers]
+    
+    # Provera da li je faktura ulazna
+    if not invoice.incoming:
+        flash('Izmena podataka izlazne fakture.', 'danger')
+        return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice.id))
+    
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            form.populate_obj(invoice)
+            invoice.incoming = True  # Osiguravamo da je ulazna faktura
+            
+            # Ručno ažuriranje total_amount i paid polja koja nisu u formi
+            if 'total_amount' in request.form:
+                invoice.total_amount = request.form['total_amount']
+            
+            # Ažuriranje statusa plaćanja
+            invoice.paid = 'paid' in request.form
+            
+            db.session.commit()
+            flash('Faktura je uspešno ažurirana.', 'success')
+            return redirect(url_for('invoices.invoice_list'))
+        else:
+            flash('Došlo je do greške prilikom ažuriranja fakture. Proverite unete podatke.', 'danger')
+    
+    return render_template('invoice/edit_supplier_invoice.html',
+                            endpoint=endpoint,
+                            legend=f'Uređivanje fakture {invoice.invoice_number}',
+                            title='Uređivanje fakture',
+                            form=form,
+                            invoice=invoice)
 
 @invoices.route('/add_invoice_item/<int:invoice_id>', methods=['POST'])
 @login_required
@@ -202,3 +244,63 @@ def get_service_price(service_id):
         'price_rsd': float(service.price_rsd) if service.price_rsd else 0,
         'price_eur': float(service.price_eur) if service.price_eur else 0
     })
+
+@invoices.route('/generate_invoice_pdf/<int:invoice_id>')
+@login_required
+def generate_invoice_pdf_route(invoice_id):
+    """
+    Ruta za generisanje PDF fakture.
+    Poziva funkciju iz functions.py koja sadrži svu logiku.
+    """
+    return generate_invoice_pdf(invoice_id)
+
+@invoices.route('/get_invoice_item/<int:item_id>')
+@login_required
+def get_invoice_item(item_id):
+    """Dohvata podatke o stavci fakture za uređivanje."""
+    item = InvoiceItem.query.get_or_404(item_id)
+    
+    # Vraća podatke o stavci u JSON formatu
+    return jsonify({
+        'id': item.id,
+        'invoice_id': item.invoice_id,
+        'service_id': item.service_id,
+        'quantity': float(item.quantity),
+        'price': float(item.price),
+        'currency': item.currency,
+        'total': float(item.total)
+    })
+
+@invoices.route('/edit_invoice_item/<int:invoice_id>', methods=['POST'])
+@login_required
+def edit_invoice_item(invoice_id):
+    """Ažurira postojeću stavku fakture."""
+    invoice = Invoice.query.get_or_404(invoice_id)
+    item_id = request.form.get('item_id')
+    item = InvoiceItem.query.get_or_404(item_id)
+    
+    # Proveri da li stavka pripada ovoj fakturi
+    if item.invoice_id != invoice_id:
+        return jsonify({'success': False, 'message': 'Stavka ne pripada ovoj fakturi.'}), 400
+    
+    try:
+        # Sačuvaj staru vrednost za ažuriranje ukupnog iznosa fakture
+        old_total = item.total
+        
+        # Ažuriraj podatke stavke
+        item.service_id = request.form.get('service_id')
+        item.quantity = request.form.get('quantity')
+        item.price = request.form.get('price')
+        item.currency = request.form.get('currency')
+        item.total = request.form.get('total')
+        
+        # Ažuriraj ukupan iznos fakture
+        invoice.total_amount = float(invoice.total_amount) - float(old_total) + float(item.total)
+        
+        db.session.commit()
+        flash('Stavka fakture je uspešno ažurirana.', 'success')
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Došlo je do greške prilikom ažuriranja stavke: {str(e)}.', 'danger')
+        return jsonify({'success': False, 'message': str(e)}), 500

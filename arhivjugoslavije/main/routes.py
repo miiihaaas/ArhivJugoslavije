@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from flask_login import login_required, current_user
 from arhivjugoslavije import db, app
-from arhivjugoslavije.models import ArchiveSettings, BankStatement, StatementItem
-from arhivjugoslavije.main.forms import SettingsForm
+from arhivjugoslavije.models import ArchiveSettings, BankStatement, StatementItem, BankAccount
+from arhivjugoslavije.main.forms import SettingsForm, BankAccountForm
 import xml.etree.ElementTree as ET
 from datetime import datetime
 import requests
@@ -21,6 +21,7 @@ def home():
 def settings(id):
     archive = ArchiveSettings.query.get_or_404(id)
     form = SettingsForm()
+    bank_account_form = BankAccountForm()
     
     if request.method == 'GET':
         form.name.data = archive.name
@@ -39,7 +40,8 @@ def settings(id):
     
     return render_template('settings.html', title='Podešavanja', 
                            archive=archive, form=form, id=id,
-                           active_inventory_list=active_inventory_list)
+                           active_inventory_list=active_inventory_list,
+                           bank_account_form=bank_account_form)
 
 @main.route('/edit_settings/<int:id>', methods=['POST'])
 @login_required
@@ -146,3 +148,70 @@ def update_eur_rate(id):
         flash(f'Greška pri komunikaciji sa sajtom: {str(e)}.', 'danger')
     
     return redirect(url_for('main.settings', id=id))
+
+@main.route('/add_bank_account/<int:settings_id>', methods=['POST'])
+@login_required
+def add_bank_account(settings_id):
+    archive = ArchiveSettings.query.get_or_404(settings_id)
+    form = BankAccountForm()
+    
+    if form.validate_on_submit():
+        bank_account = BankAccount(
+            settings_id=settings_id,
+            account_number=form.account_number.data,
+            bank=form.bank.data,
+            active=form.active.data
+        )
+        
+        db.session.add(bank_account)
+        db.session.commit()
+        flash('Žiro račun je uspešno dodat.', 'success')
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f'Greška u polju {getattr(form, field).label.text}: {error}', 'danger')
+    
+    return redirect(url_for('main.settings', id=settings_id))
+
+@main.route('/edit_bank_account/<int:account_id>', methods=['POST'])
+@login_required
+def edit_bank_account(account_id):
+    bank_account = BankAccount.query.get_or_404(account_id)
+    form = BankAccountForm()
+    
+    if form.validate_on_submit():
+        bank_account.account_number = form.account_number.data
+        bank_account.bank = form.bank.data
+        bank_account.active = form.active.data
+        
+        db.session.commit()
+        flash('Žiro račun je uspešno ažuriran.', 'success')
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f'Greška u polju {getattr(form, field).label.text}: {error}', 'danger')
+    
+    return redirect(url_for('main.settings', id=bank_account.settings_id))
+
+@main.route('/delete_bank_account/<int:account_id>', methods=['POST'])
+@login_required
+def delete_bank_account(account_id):
+    bank_account = BankAccount.query.get_or_404(account_id)
+    settings_id = bank_account.settings_id
+    
+    db.session.delete(bank_account)
+    db.session.commit()
+    flash('Žiro račun je uspešno obrisan.', 'success')
+    
+    return redirect(url_for('main.settings', id=settings_id))
+
+@main.route('/get_bank_account/<int:account_id>', methods=['GET'])
+@login_required
+def get_bank_account(account_id):
+    bank_account = BankAccount.query.get_or_404(account_id)
+    return jsonify({
+        'id': bank_account.id,
+        'account_number': bank_account.account_number,
+        'bank': bank_account.bank,
+        'active': bank_account.active
+    })

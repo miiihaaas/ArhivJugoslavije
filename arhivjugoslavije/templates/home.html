@@ -6,12 +6,12 @@
     <div class="row g-4">
         <!-- Nova faktura -->
         <div class="col-md-4">
-            <a href="#" class="text-decoration-none">
+            <a href="{{ url_for('invoices.create_customer_invoice') }}" class="text-decoration-none">
                 <div class="card shortcut-card h-100">
                     <div class="card-body text-center">
                         <i class="fas fa-file-invoice fa-3x mb-3 text-primary"></i>
                         <h5 class="card-title">Nova faktura</h5>
-                        <p class="card-text text-muted">Kreirajte novu fakturu</p>
+                        <p class="card-text text-muted">Kreirajte novu izlaznu fakturu</p>
                     </div>
                 </div>
             </a>

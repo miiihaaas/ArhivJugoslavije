@@ -1,130 +1,166 @@
 {% extends "layout.html" %}
 {% block content %}
-<!-- Header Section -->
-<div class="page-header mb-4">
-    <div class="h1">Podaci Arhiva Jugoslavije</div>
-    <div class="action-buttons">
-        <a class="btn btn-secondary" href="javascript:history.back()">
-            <i class="fa fa-arrow-left me-2"></i>Nazad
-        </a>
-        <button type="button" class="btn btn-primary" 
-                data-bs-toggle="modal" 
-                data-bs-target="#editArchiveModal"
-                {% if active_inventory_list %}disabled{% endif %}>
-            <i class="fa fa-edit me-2"></i>Izmenite podatke
-        </button>
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+        <div class="h1">Podaci Arhiva Jugoslavije</div>
+        <div class="action-buttons">
+            <a class="btn btn-outline-secondary" href="javascript:history.back()">
+                <i class="fa fa-arrow-left me-2"></i>Nazad
+            </a>
+            <button type="button" class="btn btn-primary" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#editArchiveModal"
+                    {% if active_inventory_list %}disabled{% endif %}>
+                <i class="fa fa-edit me-2"></i>Izmenite podatke
+            </button>
+        </div>
     </div>
-</div>
-<!-- Main Content -->
-<div class="row g-4">
-    <!-- Basic Archive Info Card -->
-    <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">Osnovni podaci</h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover mb-0">
-                        <tbody>
-                            <tr>
-                                <th class="bg-light" style="width: 15%">{{ form.name.label }}</th>
-                                <td>{{ archive.name }}</td>
-                                <th class="bg-light" style="width: 15%">{{ form.address.label }}</th>
-                                <td>{{ archive.address }}</td>
-                            </tr>
-                            <tr>
-                                <th class="bg-light">{{ form.pib.label }}</th>
-                                <td>{{ archive.pib }}</td>
-                                <th class="bg-light">{{ form.mb.label }}</th>
-                                <td>{{ archive.mb }}</td>
-                            </tr>
-                            <tr>
-                                <th class="bg-light">{{ form.city.label }}</th>
-                                <td>{{ archive.city }}</td>
-                                <th class="bg-light">{{ form.country.label }}</th>
-                                <td>{{ archive.country }}</td>
-                            </tr>
-                            <tr>
-                                <th class="bg-light">{{ form.logo.label }}</th>
-                                <td>{{ archive.logo or '-' }}</td>
-                                <th class="bg-light">{{ form.stamp.label }}</th>
-                                <td>{{ archive.stamp or '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th class="bg-light">{{ form.facsimile.label }}</th>
-                                <td colspan="3">{{ archive.facsimile or '-' }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+    <!-- Main Content -->
+    <div class="row g-4">
+        <!-- Basic Archive Info Card -->
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Osnovni podaci</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <tbody>
+                                <tr>
+                                    <th class="bg-light" style="width: 15%">{{ form.name.label }}</th>
+                                    <td>{{ archive.name }}</td>
+                                    <th class="bg-light" style="width: 15%">{{ form.address.label }}</th>
+                                    <td>{{ archive.address }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">{{ form.pib.label }}</th>
+                                    <td>{{ archive.pib }}</td>
+                                    <th class="bg-light">{{ form.mb.label }}</th>
+                                    <td>{{ archive.mb }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">{{ form.city.label }}</th>
+                                    <td>{{ archive.city }}</td>
+                                    <th class="bg-light">{{ form.country.label }}</th>
+                                    <td>{{ archive.country }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">{{ form.logo.label }}</th>
+                                    <td>{{ archive.logo or '-' }}</td>
+                                    <th class="bg-light">{{ form.stamp.label }}</th>
+                                    <td>{{ archive.stamp or '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">{{ form.facsimile.label }}</th>
+                                    <td colspan="3">{{ archive.facsimile or '-' }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Settings Card -->
-    <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">Podešavanja aplikacije</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card mb-3">
-                            <div class="card-header bg-secondary text-white">
-                                <h6 class="card-title mb-0">Kurs evra</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div>
-                                        <p class="mb-0"><strong>Trenutni kurs:</strong> 
-                                            {% if archive.eur_rate %}
-                                                {{ archive.eur_rate }} RSD
-                                            {% else %}
-                                                Nije postavljen
-                                            {% endif %}
-                                        </p>
-                                        <p class="mb-0"><strong>Datum ažuriranja:</strong> 
-                                            {% if archive.eur_rate_date %}
-                                                {{ archive.eur_rate_date.strftime('%d.%m.%Y. %H:%M') }}
-                                            {% else %}
-                                                -
-                                            {% endif %}
-                                        </p>
-                                        <div class="form-check mt-2">
-                                            <input class="form-check-input" type="checkbox" disabled 
-                                                {% if archive.use_eur %}checked{% endif %}>
-                                            <label class="form-check-label">{{ form.use_eur.label }}</label>
+        <!-- Settings Card -->
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Podešavanja aplikacije</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="card-title mb-0">Kurs evra</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div>
+                                            <p class="mb-2"><strong>Trenutni kurs:</strong> 
+                                                {% if archive.eur_rate %}
+                                                    {{ archive.eur_rate }} RSD
+                                                {% else %}
+                                                    Nije postavljen
+                                                {% endif %}
+                                            </p>
+                                            <p class="mb-2"><strong>Datum ažuriranja:</strong> 
+                                                {% if archive.eur_rate_date %}
+                                                    {{ archive.eur_rate_date.strftime('%d.%m.%Y. %H:%M') }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </p>
+                                            <div class="form-check mt-3">
+                                                <input class="form-check-input" type="checkbox" disabled 
+                                                    {% if archive.use_eur %}checked{% endif %}>
+                                                <label class="form-check-label">{{ form.use_eur.label }}</label>
+                                            </div>
                                         </div>
+                                        <form action="{{ url_for('main.update_eur_rate', id=id) }}" method="POST">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fa fa-sync-alt me-2"></i>Ažuriraj kurs
+                                            </button>
+                                        </form>
                                     </div>
-                                    <form action="{{ url_for('main.update_eur_rate', id=id) }}" method="POST">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fa fa-sync-alt me-2"></i>Ažuriraj kurs
-                                        </button>
-                                    </form>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header bg-secondary text-white">
-                                <h6 class="card-title mb-0">Žiro računi</h6>
-                            </div>
-                            <div class="card-body">
-                                {% if archive.bank_accounts %}
-                                    <ul class="list-group">
-                                        {% for account in archive.bank_accounts %}
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                {{ account.bank_name }} - {{ account.account_number }}
-                                                <span class="badge bg-primary rounded-pill">{{ account.currency }}</span>
-                                            </li>
-                                        {% endfor %}
-                                    </ul>
-                                {% else %}
-                                    <p class="text-muted">Nema dodanih žiro računa.</p>
-                                {% endif %}
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                                    <h6 class="card-title mb-0">Žiro računi</h6>
+                                    <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#addBankAccountModal">
+                                        <i class="fa fa-plus me-1"></i>Dodaj
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    {% if archive.bank_accounts %}
+                                        <div class="table-responsive">
+                                            <table class="table table-striped table-hover mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Banka</th>
+                                                        <th>Broj računa</th>
+                                                        <th>Status</th>
+                                                        <th class="text-end">Akcije</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for account in archive.bank_accounts %}
+                                                    <tr>
+                                                        <td>{{ account.bank }}</td>
+                                                        <td>{{ account.account_number }}</td>
+                                                        <td>
+                                                            {% if account.active %}
+                                                                <span class="badge bg-success">Aktivan</span>
+                                                            {% else %}
+                                                                <span class="badge bg-secondary">Neaktivan</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <button type="button" class="btn btn-sm btn-outline-primary edit-account-btn" 
+                                                                    data-id="{{ account.id }}">
+                                                                <i class="fa fa-edit"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger delete-account-btn"
+                                                                    data-id="{{ account.id }}" 
+                                                                    data-bank="{{ account.bank }}" 
+                                                                    data-account="{{ account.account_number }}">
+                                                                <i class="fa fa-trash"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% else %}
+                                        <p class="text-muted mb-0">Nema dodanih žiro računa.</p>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -138,9 +174,9 @@
 <div class="modal fade" id="editArchiveModal" tabindex="-1" role="dialog" aria-labelledby="editArchiveModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header">
                 <h5 class="modal-title" id="editArchiveModalLabel">Izmena podataka arhiva</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="{{ url_for('main.edit_settings', id=id) }}">
                 {{ form.csrf_token }}
@@ -149,7 +185,7 @@
                     <div class="section-title mb-3">Osnovni podaci</div>
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            {{ form.name.label(class="form-control-label") }}
+                            {{ form.name.label(class="form-label") }}
                             {% if form.name.errors %}
                                 {{ form.name(class="form-control is-invalid") }}
                                 <div class="invalid-feedback">
@@ -162,7 +198,7 @@
                             {% endif %}
                         </div>
                         <div class="col-md-6">
-                            {{ form.address.label(class="form-control-label") }}
+                            {{ form.address.label(class="form-label") }}
                             {% if form.address.errors %}
                                 {{ form.address(class="form-control is-invalid") }}
                                 <div class="invalid-feedback">
@@ -180,7 +216,7 @@
                     <div class="section-title mb-3">Lokacija</div>
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            {{ form.city.label(class="form-control-label") }}
+                            {{ form.city.label(class="form-label") }}
                             {% if form.city.errors %}
                                 {{ form.city(class="form-control is-invalid") }}
                                 <div class="invalid-feedback">
@@ -193,7 +229,7 @@
                             {% endif %}
                         </div>
                         <div class="col-md-6">
-                            {{ form.country.label(class="form-control-label") }}
+                            {{ form.country.label(class="form-label") }}
                             {% if form.country.errors %}
                                 {{ form.country(class="form-control is-invalid") }}
                                 <div class="invalid-feedback">
@@ -207,24 +243,11 @@
                         </div>
                     </div>
 
-                    <!-- Registration Section -->
-                    <div class="section-title mb-3">Registracioni podaci</div>
+                    <!-- Identification Section -->
+                    <div class="section-title mb-3">Identifikacioni podaci</div>
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            {{ form.mb.label(class="form-control-label") }}
-                            {% if form.mb.errors %}
-                                {{ form.mb(class="form-control is-invalid") }}
-                                <div class="invalid-feedback">
-                                    {% for error in form.mb.errors %}
-                                        <span>{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                {{ form.mb(class="form-control") }}
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6">
-                            {{ form.pib.label(class="form-control-label") }}
+                            {{ form.pib.label(class="form-label") }}
                             {% if form.pib.errors %}
                                 {{ form.pib(class="form-control is-invalid") }}
                                 <div class="invalid-feedback">
@@ -236,13 +259,26 @@
                                 {{ form.pib(class="form-control") }}
                             {% endif %}
                         </div>
+                        <div class="col-md-6">
+                            {{ form.mb.label(class="form-label") }}
+                            {% if form.mb.errors %}
+                                {{ form.mb(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.mb.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.mb(class="form-control") }}
+                            {% endif %}
+                        </div>
                     </div>
 
-                    <!-- Logos and Stamps Section -->
-                    <div class="section-title mb-3">Logotipi i pečati</div>
+                    <!-- Files Section -->
+                    <div class="section-title mb-3">Dokumenti</div>
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
-                            {{ form.logo.label(class="form-control-label") }}
+                            {{ form.logo.label(class="form-label") }}
                             {% if form.logo.errors %}
                                 {{ form.logo(class="form-control is-invalid") }}
                                 <div class="invalid-feedback">
@@ -255,7 +291,7 @@
                             {% endif %}
                         </div>
                         <div class="col-md-4">
-                            {{ form.stamp.label(class="form-control-label") }}
+                            {{ form.stamp.label(class="form-label") }}
                             {% if form.stamp.errors %}
                                 {{ form.stamp(class="form-control is-invalid") }}
                                 <div class="invalid-feedback">
@@ -268,7 +304,7 @@
                             {% endif %}
                         </div>
                         <div class="col-md-4">
-                            {{ form.facsimile.label(class="form-control-label") }}
+                            {{ form.facsimile.label(class="form-label") }}
                             {% if form.facsimile.errors %}
                                 {{ form.facsimile(class="form-control is-invalid") }}
                                 <div class="invalid-feedback">
@@ -282,24 +318,129 @@
                         </div>
                     </div>
 
-                    <!-- Currency Settings Section -->
-                    <div class="section-title mb-3">Podešavanja valute</div>
+                    <!-- Settings Section -->
+                    <div class="section-title mb-3">Dodatna podešavanja</div>
                     <div class="row g-3">
                         <div class="col-md-12">
                             <div class="form-check">
-                                {{ form.use_eur(class="form-check-input") }}
+                                {% if form.use_eur.errors %}
+                                    {{ form.use_eur(class="form-check-input is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.use_eur.errors %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.use_eur(class="form-check-input") }}
+                                {% endif %}
                                 {{ form.use_eur.label(class="form-check-label") }}
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
                         <i class="fa fa-times me-2"></i>Odustani
                     </button>
-                    {{ form.submit(class="btn btn-primary") }}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-save me-2"></i>Sačuvaj izmene
+                    </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Bank Account Modal -->
+<div class="modal fade" id="addBankAccountModal" tabindex="-1" role="dialog" aria-labelledby="addBankAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addBankAccountModalLabel">Dodaj žiro račun</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('main.add_bank_account', settings_id=id) }}" id="bankAccountForm">
+                {{ bank_account_form.csrf_token }}
+                {{ bank_account_form.id(id="bank_account_id") }}
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            {{ bank_account_form.bank.label(class="form-label") }}
+                            {% if bank_account_form.bank.errors %}
+                                {{ bank_account_form.bank(class="form-control is-invalid", id="bank_account_bank") }}
+                                <div class="invalid-feedback">
+                                    {% for error in bank_account_form.bank.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ bank_account_form.bank(class="form-control", id="bank_account_bank") }}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-12">
+                            {{ bank_account_form.account_number.label(class="form-label") }}
+                            {% if bank_account_form.account_number.errors %}
+                                {{ bank_account_form.account_number(class="form-control is-invalid", id="bank_account_number") }}
+                                <div class="invalid-feedback">
+                                    {% for error in bank_account_form.account_number.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ bank_account_form.account_number(class="form-control", id="bank_account_number") }}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                {% if bank_account_form.active.errors %}
+                                    {{ bank_account_form.active(class="form-check-input is-invalid", id="bank_account_active") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in bank_account_form.active.errors %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ bank_account_form.active(class="form-check-input", id="bank_account_active") }}
+                                {% endif %}
+                                {{ bank_account_form.active.label(class="form-check-label") }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fa fa-times me-2"></i>Odustani
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-save me-2"></i>Sačuvaj
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Bank Account Modal -->
+<div class="modal fade" id="deleteBankAccountModal" tabindex="-1" role="dialog" aria-labelledby="deleteBankAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteBankAccountModalLabel">Potvrda brisanja</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Da li ste sigurni da želite da obrišete žiro račun <span id="deleteAccountInfo"></span>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fa fa-times me-2"></i>Odustani
+                </button>
+                <form method="POST" id="deleteAccountForm">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa fa-trash me-2"></i>Obriši
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -307,6 +448,71 @@
 {% endblock %}
 {% block scripts %}
 <script>
-    // Ovde možete dodati JavaScript kod ako je potreban
+    $(document).ready(function() {
+        // Inicijalizacija modala za dodavanje/uređivanje žiro računa
+        var addBankAccountModal = new bootstrap.Modal(document.getElementById('addBankAccountModal'));
+        var deleteBankAccountModal = new bootstrap.Modal(document.getElementById('deleteBankAccountModal'));
+        
+        // Dodaj funkciju za prikazivanje grešaka u konzoli
+        function logError(message, error) {
+            console.error(message, error);
+        }
+        
+        // Resetuj formu kada se modal zatvori
+        $('#addBankAccountModal').on('hidden.bs.modal', function () {
+            $('#bankAccountForm').attr('action', '{{ url_for("main.add_bank_account", settings_id=id) }}');
+            $('#addBankAccountModalLabel').text('Dodaj žiro račun');
+            $('#bankAccountForm')[0].reset();
+        });
+        
+        // Klik na dugme za uređivanje žiro računa
+        $('.edit-account-btn').on('click', function() {
+            var accountId = $(this).data('id');
+            console.log('Uređivanje računa ID:', accountId);
+            
+            // Dohvati podatke o žiro računu
+            $.ajax({
+                url: '{{ url_for("main.get_bank_account", account_id=0) }}'.replace('0', accountId),
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    console.log('Podaci računa:', data);
+                    
+                    // Koristi ispravne selektore za polja forme
+                    $('#bank_account_id').val(data.id);
+                    $('#bank_account_bank').val(data.bank);
+                    $('#bank_account_number').val(data.account_number);
+                    $('#bank_account_active').prop('checked', data.active);
+                    
+                    // Promeni naslov i akciju forme
+                    $('#addBankAccountModalLabel').text('Izmeni žiro račun');
+                    $('#bankAccountForm').attr('action', '{{ url_for("main.edit_bank_account", account_id=0) }}'.replace('0', accountId));
+                    
+                    // Prikaži modal
+                    addBankAccountModal.show();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error('Greška pri dohvatanju podataka:', textStatus, errorThrown);
+                    alert('Došlo je do greške pri dohvatanju podataka o žiro računu.');
+                }
+            });
+        });
+        
+        // Klik na dugme za brisanje žiro računa
+        $('.delete-account-btn').on('click', function() {
+            var accountId = $(this).data('id');
+            var bank = $(this).data('bank');
+            var accountNumber = $(this).data('account');
+            
+            // Postavi informacije o žiro računu koji se briše
+            $('#deleteAccountInfo').text(bank + ' - ' + accountNumber);
+            
+            // Postavi akciju forme
+            $('#deleteAccountForm').attr('action', '{{ url_for("main.delete_bank_account", account_id=0) }}'.replace('0', accountId));
+            
+            // Prikaži modal
+            deleteBankAccountModal.show();
+        });
+    });
 </script>
 {% endblock %}
