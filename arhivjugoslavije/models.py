@@ -38,17 +38,26 @@ class ArchiveSettings(db.Model):
     __tablename__ = 'archive_settings'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
+    
     address = db.Column(db.String(200), nullable=True)
+    zip_code = db.Column(db.String(5), nullable=True)
+    city = db.Column(db.String(100), nullable=True)
+    country = db.Column(db.String(100), nullable=True)
+    
     pib = db.Column(db.String(20), nullable=True)
     mb = db.Column(db.String(20), nullable=True)
-    logo = db.Column(db.String(100), nullable=True)
-    stamp = db.Column(db.String(100), nullable=True)
-    facsimile = db.Column(db.String(100), nullable=True)
+    
+    phones = db.Column(db.String(20), nullable=True)
+    fax = db.Column(db.String(20), nullable=True)
+    email = db.Column(db.String(120), nullable=True)
+    web_site = db.Column(db.String(120), nullable=True)
+    
+    logo = db.Column(db.String(255), nullable=True)
+    stamp = db.Column(db.String(255), nullable=True)
+    facsimile = db.Column(db.String(255), nullable=True)
     use_eur = db.Column(db.Boolean, default=False, nullable=False)
     eur_rate = db.Column(db.Float, nullable=True)
     eur_rate_date = db.Column(db.DateTime, nullable=True)
-    city = db.Column(db.String(100), nullable=True)
-    country = db.Column(db.String(100), nullable=True)
     
     # Definišemo vezu sa bank_accounts
     bank_accounts = db.relationship('BankAccount', backref='archive_settings', lazy=True)

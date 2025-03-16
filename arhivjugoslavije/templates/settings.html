@@ -24,40 +24,93 @@
                 <div class="card-header">
                     <h5 class="card-title mb-0">Osnovni podaci</h5>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover mb-0">
-                            <tbody>
-                                <tr>
-                                    <th class="bg-light" style="width: 15%">{{ form.name.label }}</th>
-                                    <td>{{ archive.name }}</td>
-                                    <th class="bg-light" style="width: 15%">{{ form.address.label }}</th>
-                                    <td>{{ archive.address }}</td>
-                                </tr>
-                                <tr>
-                                    <th class="bg-light">{{ form.pib.label }}</th>
-                                    <td>{{ archive.pib }}</td>
-                                    <th class="bg-light">{{ form.mb.label }}</th>
-                                    <td>{{ archive.mb }}</td>
-                                </tr>
-                                <tr>
-                                    <th class="bg-light">{{ form.city.label }}</th>
-                                    <td>{{ archive.city }}</td>
-                                    <th class="bg-light">{{ form.country.label }}</th>
-                                    <td>{{ archive.country }}</td>
-                                </tr>
-                                <tr>
-                                    <th class="bg-light">{{ form.logo.label }}</th>
-                                    <td>{{ archive.logo or '-' }}</td>
-                                    <th class="bg-light">{{ form.stamp.label }}</th>
-                                    <td>{{ archive.stamp or '-' }}</td>
-                                </tr>
-                                <tr>
-                                    <th class="bg-light">{{ form.facsimile.label }}</th>
-                                    <td colspan="3">{{ archive.facsimile or '-' }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <!-- Leva kolona - Osnovni podaci -->
+                        <div class="col-md-8">
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h3 class="text-primary mb-3">{{ archive.name }}</h3>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fa fa-map-marker-alt text-secondary me-2"></i>
+                                        <span>{{ archive.address }}, {{ archive.zip_code }} {{ archive.city }}, {{ archive.country }}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fa fa-id-card text-secondary me-2"></i>
+                                        <span>PIB: {{ archive.pib }} | MB: {{ archive.mb }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5 class="border-bottom pb-2 mb-3">Kontakt podaci</h5>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fa fa-phone text-secondary me-2"></i>
+                                        <span>{{ archive.phones }}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fa fa-fax text-secondary me-2"></i>
+                                        <span>{{ archive.fax }}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fa fa-envelope text-secondary me-2"></i>
+                                        <span>{{ archive.email }}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fa fa-globe text-secondary me-2"></i>
+                                        <span>{{ archive.web_site }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Desna kolona - Slike -->
+                        <div class="col-md-4">
+                            <div class="row">
+                                <div class="col-12 mb-4">
+                                    <h5 class="border-bottom pb-2 mb-3">Logo</h5>
+                                    {% if logo_url %}
+                                        <div class="text-center">
+                                            <img src="{{ logo_url }}" alt="Logo arhiva" class="img-fluid mb-2" style="max-height: 100px;">
+                                        </div>
+                                    {% else %}
+                                        <div class="text-center text-muted">
+                                            <i class="fa fa-image fa-3x mb-2"></i>
+                                            <p>Logo nije postavljen</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-6 mb-4">
+                                    <h5 class="border-bottom pb-2 mb-3">Pečat</h5>
+                                    {% if stamp_url %}
+                                        <div class="text-center">
+                                            <img src="{{ stamp_url }}" alt="Pečat arhiva" class="img-fluid mb-2" style="max-height: 80px;">
+                                        </div>
+                                    {% else %}
+                                        <div class="text-center text-muted">
+                                            <i class="fa fa-stamp fa-2x mb-2"></i>
+                                            <p>Nije postavljen</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-6 mb-4">
+                                    <h5 class="border-bottom pb-2 mb-3">Faksimil</h5>
+                                    {% if facsimile_url %}
+                                        <div class="text-center">
+                                            <img src="{{ facsimile_url }}" alt="Faksimil" class="img-fluid mb-2" style="max-height: 80px;">
+                                        </div>
+                                    {% else %}
+                                        <div class="text-center text-muted">
+                                            <i class="fa fa-signature fa-2x mb-2"></i>
+                                            <p>Nije postavljen</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -178,7 +231,7 @@
                 <h5 class="modal-title" id="editArchiveModalLabel">Izmena podataka arhiva</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="POST" action="{{ url_for('main.edit_settings', id=id) }}">
+            <form method="POST" action="{{ url_for('main.edit_settings', id=id) }}" enctype="multipart/form-data">
                 {{ form.csrf_token }}
                 <div class="modal-body">
                     <!-- Archive Name and Address Section -->
@@ -215,7 +268,20 @@
                     <!-- Location Section -->
                     <div class="section-title mb-3">Lokacija</div>
                     <div class="row g-3 mb-4">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            {{ form.zip_code.label(class="form-label") }}
+                            {% if form.zip_code.errors %}
+                                {{ form.zip_code(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.zip_code.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.zip_code(class="form-control") }}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
                             {{ form.city.label(class="form-label") }}
                             {% if form.city.errors %}
                                 {{ form.city(class="form-control is-invalid") }}
@@ -228,7 +294,7 @@
                                 {{ form.city(class="form-control") }}
                             {% endif %}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             {{ form.country.label(class="form-label") }}
                             {% if form.country.errors %}
                                 {{ form.country(class="form-control is-invalid") }}
@@ -239,6 +305,66 @@
                                 </div>
                             {% else %}
                                 {{ form.country(class="form-control") }}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Contact Section -->
+                    <div class="section-title mb-3">Kontakt podaci</div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            {{ form.phones.label(class="form-label") }}
+                            {% if form.phones.errors %}
+                                {{ form.phones(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.phones.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.phones(class="form-control") }}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.fax.label(class="form-label") }}
+                            {% if form.fax.errors %}
+                                {{ form.fax(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.fax.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.fax(class="form-control") }}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            {{ form.email.label(class="form-label") }}
+                            {% if form.email.errors %}
+                                {{ form.email(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.email.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.email(class="form-control") }}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.web_site.label(class="form-label") }}
+                            {% if form.web_site.errors %}
+                                {{ form.web_site(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.web_site.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.web_site(class="form-control") }}
                             {% endif %}
                         </div>
                     </div>

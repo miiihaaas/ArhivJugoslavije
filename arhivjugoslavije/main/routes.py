@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, current_app
 from flask_login import login_required, current_user
 from arhivjugoslavije import db, app
 from arhivjugoslavije.models import ArchiveSettings, BankStatement, StatementItem, BankAccount
@@ -7,6 +7,8 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
+from werkzeug.utils import secure_filename
+import os
 
 main = Blueprint('main', __name__)
 
@@ -26,22 +28,37 @@ def settings(id):
     if request.method == 'GET':
         form.name.data = archive.name
         form.address.data = archive.address
+        form.zip_code.data = archive.zip_code
         form.city.data = archive.city
         form.country.data = archive.country
         form.pib.data = archive.pib
         form.mb.data = archive.mb
-        form.logo.data = archive.logo
-        form.stamp.data = archive.stamp
-        form.facsimile.data = archive.facsimile
+        form.phones.data = archive.phones
+        form.fax.data = archive.fax
+        form.email.data = archive.email
+        form.web_site.data = archive.web_site
         form.use_eur.data = archive.use_eur
     
     # Proveravamo da li postoji aktivna inventarna lista
     active_inventory_list = False  # Ovde možete dodati logiku za proveru aktivne inventarne liste
     
+    # Pripremamo putanje do slika za prikaz
+    logo_url = None
+    stamp_url = None
+    facsimile_url = None
+    
+    if archive.logo:
+        logo_url = url_for('static', filename=archive.logo)
+    if archive.stamp:
+        stamp_url = url_for('static', filename=archive.stamp)
+    if archive.facsimile:
+        facsimile_url = url_for('static', filename=archive.facsimile)
+    
     return render_template('settings.html', title='Podešavanja', 
                            archive=archive, form=form, id=id,
                            active_inventory_list=active_inventory_list,
-                           bank_account_form=bank_account_form)
+                           bank_account_form=bank_account_form,
+                           logo_url=logo_url, stamp_url=stamp_url, facsimile_url=facsimile_url)
 
 @main.route('/edit_settings/<int:id>', methods=['POST'])
 @login_required
@@ -52,14 +69,35 @@ def edit_settings(id):
     if form.validate_on_submit():
         archive.name = form.name.data
         archive.address = form.address.data
+        archive.zip_code = form.zip_code.data
         archive.city = form.city.data
         archive.country = form.country.data
         archive.pib = form.pib.data
         archive.mb = form.mb.data
-        archive.logo = form.logo.data
-        archive.stamp = form.stamp.data
-        archive.facsimile = form.facsimile.data
+        archive.phones = form.phones.data
+        archive.fax = form.fax.data
+        archive.email = form.email.data
+        archive.web_site = form.web_site.data
         archive.use_eur = form.use_eur.data
+        
+        # Obrada slika
+        if form.logo.data:
+            logo_filename = secure_filename(form.logo.data.filename)
+            logo_path = os.path.join(current_app.root_path, 'static/uploads', logo_filename)
+            form.logo.data.save(logo_path)
+            archive.logo = 'uploads/' + logo_filename
+        
+        if form.stamp.data:
+            stamp_filename = secure_filename(form.stamp.data.filename)
+            stamp_path = os.path.join(current_app.root_path, 'static/uploads', stamp_filename)
+            form.stamp.data.save(stamp_path)
+            archive.stamp = 'uploads/' + stamp_filename
+        
+        if form.facsimile.data:
+            facsimile_filename = secure_filename(form.facsimile.data.filename)
+            facsimile_path = os.path.join(current_app.root_path, 'static/uploads', facsimile_filename)
+            form.facsimile.data.save(facsimile_path)
+            archive.facsimile = 'uploads/' + facsimile_filename
         
         db.session.commit()
         flash('Podaci arhiva su uspešno ažurirani.', 'success')
