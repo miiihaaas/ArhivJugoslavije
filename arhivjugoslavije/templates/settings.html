@@ -142,7 +142,7 @@
                                         <div>
                                             <p class="mb-2"><strong>Trenutni kurs:</strong> 
                                                 {% if archive.eur_rate %}
-                                                    {{ archive.eur_rate }} RSD
+                                                    {{ "%.2f"|format(archive.eur_rate|float) }} RSD
                                                 {% else %}
                                                     Nije postavljen
                                                 {% endif %}

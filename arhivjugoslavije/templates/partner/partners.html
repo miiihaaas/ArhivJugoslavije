@@ -23,8 +23,8 @@
                     <th>Naziv</th>
                     <th>Adresa</th>
                     <th>Tekući račun</th>
-                    <th>Telefoni</th>
-                    <th>Fax</th>
+                    <th>Telefon 1</th>
+                    <th>Telefon 2</th>
                     <th>Email</th>
                     <th>PIB/MB</th>
                     <th>Tip partnera</th>
@@ -43,8 +43,8 @@
                         {{ partner.address }}{% if partner.address and partner.city %}, {% endif %}{{ partner.city }}
                     </td>
                     <td>{{ partner.account_number }}</td>
-                    <td>{{ partner.phones }}</td>
-                    <td>{{ partner.fax }}</td>
+                    <td>{{ partner.phone_1 }}</td>
+                    <td>{{ partner.phone_2 }}</td>
                     <td>{{ partner.email }}</td>
                     <td>
                         {% if partner.pib %}PIB: {{ partner.pib }}{% endif %}
@@ -100,17 +100,18 @@
             </div>
             <form action="{{ url_for('partner.add_partner') }}" method="POST">
                 <div class="modal-body">
+                    {{ form.hidden_tag() }}
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name" class="form-label">Naziv partnera *</label>
-                                <input type="text" class="form-control" id="name" name="name" required>
+                                {{ form.name.label(class="form-label") }}
+                                {{ form.name(class="form-control", required=true) }}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" name="email">
+                                {{ form.email.label(class="form-label") }}
+                                {{ form.email(class="form-control") }}
                             </div>
                         </div>
                     </div>
@@ -118,20 +119,20 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="address" class="form-label">Adresa</label>
-                                <input type="text" class="form-control" id="address" name="address">
+                                {{ form.address.label(class="form-label") }}
+                                {{ form.address(class="form-control") }}
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="city" class="form-label">Grad</label>
-                                <input type="text" class="form-control" id="city" name="city">
+                                {{ form.city.label(class="form-label") }}
+                                {{ form.city(class="form-control") }}
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="country" class="form-label">Država</label>
-                                <input type="text" class="form-control" id="country" name="country" value="Srbija">
+                                {{ form.country.label(class="form-label") }}
+                                {{ form.country(class="form-control") }}
                             </div>
                         </div>
                     </div>
@@ -139,20 +140,20 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="account_number" class="form-label">Tekući račun</label>
-                                <input type="text" class="form-control" id="account_number" name="account_number">
+                                {{ form.account_number.label(class="form-label") }}
+                                {{ form.account_number(class="form-control") }}
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="phones" class="form-label">Telefoni</label>
-                                <input type="text" class="form-control" id="phones" name="phones">
+                                {{ form.phone_1.label(class="form-label") }}
+                                {{ form.phone_1(class="form-control") }}
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="fax" class="form-label">Fax</label>
-                                <input type="text" class="form-control" id="fax" name="fax">
+                                {{ form.phone_2.label(class="form-label") }}
+                                {{ form.phone_2(class="form-control") }}
                             </div>
                         </div>
                     </div>
@@ -160,14 +161,16 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="pib" class="form-label">PIB</label>
-                                <input type="text" class="form-control" id="pib" name="pib">
+                                {{ form.pib.label(class="form-label") }}
+                                {{ form.pib(class="form-control", required=true, maxlength="9", pattern="[0-9]{9}") }}
+                                <div class="form-text">PIB mora sadržati tačno 9 cifara</div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="mb" class="form-label">Matični broj</label>
-                                <input type="text" class="form-control" id="mb" name="mb">
+                                {{ form.mb.label(class="form-label") }}
+                                {{ form.mb(class="form-control", required=true, maxlength="8", pattern="[0-9]{8}") }}
+                                <div class="form-text">Matični broj mora sadržati tačno 8 cifara</div>
                             </div>
                         </div>
                     </div>
@@ -175,23 +178,23 @@
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="checkbox" id="customer" name="customer">
-                                <label class="form-check-label" for="customer">Kupac</label>
+                                {{ form.customer(class="form-check-input") }}
+                                {{ form.customer.label(class="form-check-label") }}
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="checkbox" id="supplier" name="supplier">
-                                <label class="form-check-label" for="supplier">Dobavljač</label>
+                                {{ form.supplier(class="form-check-input") }}
+                                {{ form.supplier.label(class="form-check-label") }}
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="checkbox" id="international" name="international">
-                                <label class="form-check-label" for="international">Strani partner</label>
+                                {{ form.international(class="form-check-input") }}
+                                {{ form.international.label(class="form-check-label") }}
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Odustani</button>
-                    <button type="submit" class="btn btn-primary">Sačuvaj</button>
+                    {{ form.submit(class="btn btn-primary") }}
                 </div>
             </form>
         </div>

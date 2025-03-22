@@ -9,17 +9,18 @@
         </div>
         <div class="card-body">
             <form action="{{ url_for('partner.edit_partner', partner_id=partner.id) }}" method="POST">
+                {{ form.hidden_tag() }}
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="name" class="form-label">Naziv partnera *</label>
-                            <input type="text" class="form-control" id="name" name="name" value="{{ partner.name }}" required>
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control", required=true, value=partner.name) }}
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" name="email" value="{{ partner.email }}">
+                            {{ form.email.label(class="form-label") }}
+                            {{ form.email(class="form-control", value=partner.email) }}
                         </div>
                     </div>
                 </div>
@@ -27,20 +28,20 @@
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="address" class="form-label">Adresa</label>
-                            <input type="text" class="form-control" id="address" name="address" value="{{ partner.address }}">
+                            {{ form.address.label(class="form-label") }}
+                            {{ form.address(class="form-control", value=partner.address) }}
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="city" class="form-label">Grad</label>
-                            <input type="text" class="form-control" id="city" name="city" value="{{ partner.city }}">
+                            {{ form.city.label(class="form-label") }}
+                            {{ form.city(class="form-control", value=partner.city) }}
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="country" class="form-label">Država</label>
-                            <input type="text" class="form-control" id="country" name="country" value="{{ partner.country if partner.country else 'Srbija' }}">
+                            {{ form.country.label(class="form-label") }}
+                            {{ form.country(class="form-control", value=partner.country if partner.country else 'Srbija') }}
                         </div>
                     </div>
                 </div>
@@ -48,20 +49,20 @@
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="account_number" class="form-label">Tekući račun</label>
-                            <input type="text" class="form-control" id="account_number" name="account_number" value="{{ partner.account_number }}">
+                            {{ form.account_number.label(class="form-label") }}
+                            {{ form.account_number(class="form-control", value=partner.account_number) }}
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="phones" class="form-label">Telefoni</label>
-                            <input type="text" class="form-control" id="phones" name="phones" value="{{ partner.phones }}">
+                            {{ form.phone_1.label(class="form-label") }}
+                            {{ form.phone_1(class="form-control", value=partner.phone_1) }}
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="fax" class="form-label">Fax</label>
-                            <input type="text" class="form-control" id="fax" name="fax" value="{{ partner.fax }}">
+                            {{ form.phone_2.label(class="form-label") }}
+                            {{ form.phone_2(class="form-control", value=partner.phone_2) }}
                         </div>
                     </div>
                 </div>
@@ -69,14 +70,16 @@
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="pib" class="form-label">PIB</label>
-                            <input type="text" class="form-control" id="pib" name="pib" value="{{ partner.pib }}">
+                            {{ form.pib.label(class="form-label") }}
+                            {{ form.pib(class="form-control", required=true, value=partner.pib, maxlength="9", pattern="[0-9]{9}") }}
+                            <div class="form-text">PIB mora sadržati 9 cifara</div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="mb" class="form-label">Matični broj</label>
-                            <input type="text" class="form-control" id="mb" name="mb" value="{{ partner.mb }}">
+                            {{ form.mb.label(class="form-label") }}
+                            {{ form.mb(class="form-control", required=true, value=partner.mb, maxlength="8", pattern="[0-9]{8}") }}
+                            <div class="form-text">Matični broj mora sadržati 8 cifara</div>
                         </div>
                     </div>
                 </div>
@@ -84,16 +87,16 @@
                 <div class="row mb-3">
                     <div class="col-md-12">
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="customer" name="customer" {% if partner.customer %}checked{% endif %}>
-                            <label class="form-check-label" for="customer">Kupac</label>
+                            {{ form.customer(class="form-check-input", checked=partner.customer) }}
+                            {{ form.customer.label(class="form-check-label") }}
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="supplier" name="supplier" {% if partner.supplier %}checked{% endif %}>
-                            <label class="form-check-label" for="supplier">Dobavljač</label>
+                            {{ form.supplier(class="form-check-input", checked=partner.supplier) }}
+                            {{ form.supplier.label(class="form-check-label") }}
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="international" name="international" {% if partner.international %}checked{% endif %}>
-                            <label class="form-check-label" for="international">Strani partner</label>
+                            {{ form.international(class="form-check-input", checked=partner.international) }}
+                            {{ form.international.label(class="form-check-label") }}
                         </div>
                     </div>
                 </div>
@@ -101,7 +104,7 @@
                 <div class="row mt-4">
                     <div class="col-md-12">
                         <a href="{{ url_for('partner.partners') }}" class="btn btn-secondary">Odustani</a>
-                        <button type="submit" class="btn btn-primary">Sačuvaj izmene</button>
+                        {{ form.submit(class="btn btn-primary") }}
                     </div>
                 </div>
             </form>

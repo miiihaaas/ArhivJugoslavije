@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 from arhivjugoslavije import db, app
 from arhivjugoslavije.models import Partner
+from arhivjugoslavije.partner.forms import PartnerForm, EditPartnerForm
 
 
 partner = Blueprint('partner', __name__)
@@ -12,59 +13,35 @@ partner = Blueprint('partner', __name__)
 def partners():
     endpoint = request.endpoint
     partners = Partner.query.all()
+    form = PartnerForm()
     return render_template('partner/partners.html', 
                             endpoint=endpoint, 
                             partners=partners,
+                            form=form,
                             legend='Poslovni partneri',
                             title='Poslovni partneri')
 
-@partner.route('/add_partner', methods=['POST'])
+@partner.route('/add_partner', methods=['GET', 'POST'])
 @login_required
 def add_partner():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        address = request.form.get('address')
-        city = request.form.get('city')
-        country = request.form.get('country')
-        account_number = request.form.get('account_number')
-        pib = request.form.get('pib')
-        mb = request.form.get('mb')
-        phones = request.form.get('phones')
-        fax = request.form.get('fax')
-        email = request.form.get('email')
-        
-        # Checkbox vrednosti
-        customer = True if request.form.get('customer') else False
-        supplier = True if request.form.get('supplier') else False
-        international = True if request.form.get('international') else False
-        
-        # Validacija
-        if not name:
-            flash('Naziv partnera je obavezan!', 'danger')
-            return redirect(url_for('partner.partners'))
-        
-        # Provera da li PIB već postoji u bazi
-        if pib and pib.strip():
-            existing_partner = Partner.query.filter_by(pib=pib).first()
-            if existing_partner:
-                flash(f'U bazi već postoji partner sa PIB brojem {pib}!', 'warning')
-                return redirect(url_for('partner.edit_partner', partner_id=existing_partner.id))
-        
-        # Kreiranje novog partnera
+    form = PartnerForm()
+    
+    if form.validate_on_submit():
+        # Kreiranje novog partnera iz podataka forme
         new_partner = Partner(
-            name=name,
-            address=address,
-            city=city,
-            country=country,
-            account_number=account_number,
-            pib=pib,
-            mb=mb,
-            phones=phones,
-            fax=fax,
-            email=email,
-            customer=customer,
-            supplier=supplier,
-            international=international
+            name=form.name.data,
+            address=form.address.data,
+            city=form.city.data,
+            country=form.country.data,
+            account_number=form.account_number.data,
+            pib=form.pib.data,
+            mb=form.mb.data,
+            phone_1=form.phone_1.data,
+            phone_2=form.phone_2.data,
+            email=form.email.data,
+            customer=form.customer.data,
+            supplier=form.supplier.data,
+            international=form.international.data
         )
         
         # Dodavanje u bazu
@@ -73,47 +50,54 @@ def add_partner():
         
         flash('Partner uspešno dodat!', 'success')
         return redirect(url_for('partner.partners'))
+    
+    # Ako forma nije validna, prikaži greške
+    if form.errors:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f'{error}', 'danger')
+    
+    # Vrati se na stranicu sa partnerima
+    return redirect(url_for('partner.partners'))
 
 @partner.route('/edit_partner/<int:partner_id>', methods=['GET', 'POST'])
 @login_required
 def edit_partner(partner_id):
     partner = Partner.query.get_or_404(partner_id)
+    form = EditPartnerForm(original_partner_id=partner_id)
     
-    if request.method == 'POST':
-        # Prikupljanje podataka iz forme
-        partner.name = request.form.get('name')
-        partner.address = request.form.get('address')
-        partner.city = request.form.get('city')
-        partner.country = request.form.get('country')
-        partner.account_number = request.form.get('account_number')
-        pib = request.form.get('pib')
-        partner.mb = request.form.get('mb')
-        partner.phones = request.form.get('phones')
-        partner.fax = request.form.get('fax')
-        partner.email = request.form.get('email')
-        
-        # Checkbox vrednosti
-        partner.customer = True if request.form.get('customer') else False
-        partner.supplier = True if request.form.get('supplier') else False
-        partner.international = True if request.form.get('international') else False
-        
-        # Validacija
-        if not partner.name:
-            flash('Naziv partnera je obavezan!', 'danger')
-            return render_template('partner/edit_partner.html', 
-                                  partner=partner,
-                                  legend='Izmena partnera',
-                                  title='Izmena partnera')
-        
-        # Provera da li PIB već postoji u bazi kod drugog partnera
-        if pib and pib.strip():
-            existing_partner = Partner.query.filter_by(pib=pib).first()
-            if existing_partner and existing_partner.id != partner_id:
-                flash(f'U bazi već postoji partner sa PIB brojem {pib}!', 'warning')
-                return redirect(url_for('partner.edit_partner', partner_id=existing_partner.id))
-        
-        # Ažuriranje PIB-a nakon validacije
-        partner.pib = pib
+    # Popunjavanje forme postojećim podacima ako je GET zahtev
+    if request.method == 'GET':
+        form.name.data = partner.name
+        form.address.data = partner.address
+        form.city.data = partner.city
+        form.country.data = partner.country
+        form.account_number.data = partner.account_number
+        form.pib.data = partner.pib
+        form.mb.data = partner.mb
+        form.phone_1.data = partner.phone_1
+        form.phone_2.data = partner.phone_2
+        form.email.data = partner.email
+        form.customer.data = partner.customer
+        form.supplier.data = partner.supplier
+        form.international.data = partner.international
+    
+    # Obrada forme ako je POST zahtev
+    if form.validate_on_submit():
+        # Ažuriranje podataka partnera iz forme
+        partner.name = form.name.data
+        partner.address = form.address.data
+        partner.city = form.city.data
+        partner.country = form.country.data
+        partner.account_number = form.account_number.data
+        partner.pib = form.pib.data
+        partner.mb = form.mb.data
+        partner.phone_1 = form.phone_1.data
+        partner.phone_2 = form.phone_2.data
+        partner.email = form.email.data
+        partner.customer = form.customer.data
+        partner.supplier = form.supplier.data
+        partner.international = form.international.data
         
         # Čuvanje izmena
         db.session.commit()
@@ -121,8 +105,15 @@ def edit_partner(partner_id):
         flash('Partner uspešno izmenjen!', 'success')
         return redirect(url_for('partner.partners'))
     
+    # Ako forma nije validna, prikaži greške
+    if form.errors and request.method == 'POST':
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f'{error}', 'danger')
+    
     return render_template('partner/edit_partner.html', 
                           partner=partner,
+                          form=form,
                           legend='Izmena partnera',
                           title='Izmena partnera')
 
