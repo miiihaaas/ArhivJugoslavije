@@ -108,9 +108,9 @@ def generate_invoice_pdf(invoice_id):
                 # Kontakt podaci - desna strana
                 self.set_font('DejaVu', '', 10)
                 self.set_xy(105, 8)
-                self.cell(95, 5, f'Tel: {archive_settings.phones}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+                self.cell(95, 5, f'Tel: {archive_settings.phone_1}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
                 self.set_xy(105, 13)
-                self.cell(95, 5, f'Fax: {archive_settings.phone_2}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+                self.cell(95, 5, f'Tel: {archive_settings.phone_2}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
                 self.set_xy(105, 18)
                 self.cell(95, 5, f'e-mail: {archive_settings.email}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
                 self.set_xy(105, 23)
@@ -173,10 +173,10 @@ def generate_invoice_pdf(invoice_id):
                 self.set_xy(10, date_y_position + 5)
                 self.cell(95, 5, f'Datum prometa: {invoice.service_date.strftime("%d.%m.%Y.")}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
                 
-                # Rok plaćanja
+                # Datum dospeća
                 if invoice.payment_due_date:
                     self.set_xy(10, date_y_position + 10)
-                    self.cell(95, 5, f'Rok plaćanja: {invoice.payment_due_date.strftime("%d.%m.%Y.")}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+                    self.cell(95, 5, f'Datum dospeća: {invoice.payment_due_date.strftime("%d.%m.%Y.")}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
                 
                 # ===== TREĆI DEO: NASLOV FAKTURE =====
                 # Naslov fakture
@@ -261,6 +261,12 @@ def generate_invoice_pdf(invoice_id):
         pdf.ln(10)
         pdf.set_font('DejaVu', 'B', 12)
         pdf.cell(0, 10, f'Ukupno za uplatu: {invoice.total_amount} {invoice.currency}', 0, new_x="LMARGIN", new_y="NEXT", align="R")
+        
+        # Svrha uplate i poziv na broj
+        pdf.ln(10)
+        pdf.set_font('DejaVu', '', 10)
+        pdf.cell(0, 6, f'Svrha uplate: 318', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+        pdf.cell(0, 6, f'Poziv na broj: {archive_settings.model} {archive_settings.poziv_na_broj}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
         
         # Napomena
         pdf.ln(10)

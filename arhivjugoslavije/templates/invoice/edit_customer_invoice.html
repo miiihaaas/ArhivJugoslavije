@@ -2,32 +2,47 @@
 
 {% block content %}
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>{{ legend }}</h2>
-        <div>
-            <a href="{{ url_for('invoices.invoice_list') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> Nazad na listu faktura
-            </a>
-            <a href="{{ url_for('invoices.generate_invoice_pdf_route', invoice_id=invoice.id) }}" class="btn btn-outline-primary" target="_blank">
-                <i class="fas fa-file-pdf"></i> Generiši PDF
-            </a>
+    <!-- Zaglavlje stranice sa naslovom i akcijama -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0"><i class="fas fa-file-invoice me-2 text-primary"></i>{{ legend }}</h2>
+                        <div class="btn-group">
+                            <a href="{{ url_for('invoices.invoice_list') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Nazad
+                            </a>
+                            <a href="{{ url_for('invoices.generate_invoice_pdf_route', invoice_id=invoice.id) }}" class="btn btn-outline-primary" target="_blank">
+                                <i class="fas fa-file-pdf me-1"></i> PDF
+                            </a>
+                            <a href="" class="btn btn-outline-success">
+                                <i class="fas fa-envelope me-1"></i> Posalji
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="row">
         <!-- Leva kolona - Osnovni podaci fakture -->
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5><i class="fas fa-file-invoice me-2"></i>Osnovni podaci fakture</h5>
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-info-circle me-2 text-primary fs-5"></i>
+                        <h5 class="mb-0">Osnovni podaci fakture</h5>
+                    </div>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('invoices.edit_customer_invoice', invoice_id=invoice.id) }}">
                         {{ form.hidden_tag() }}
-                        <div class="row mb-3">
+                        <div class="row g-3">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    {{ form.invoice_number.label(class="form-label") }}
+                                    {{ form.invoice_number.label(class="form-label fw-semibold") }}
                                     {{ form.invoice_number(class="form-control") }}
                                     {% if form.invoice_number.errors %}
                                         {% for error in form.invoice_number.errors %}
@@ -38,7 +53,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    {{ form.partner_id.label(class="form-label") }}
+                                    {{ form.partner_id.label(class="form-label fw-semibold") }}
                                     {{ form.partner_id(class="form-select") }}
                                     {% if form.partner_id.errors %}
                                         {% for error in form.partner_id.errors %}
@@ -49,11 +64,11 @@
                             </div>
                         </div>
                         
-                        <div class="row mb-3">
+                        <div class="row g-3 mt-2">
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    {{ form.issue_date.label(class="form-label") }}
-                                    {{ form.issue_date(class="form-control", type="date") }}
+                                    {{ form.issue_date.label(class="form-label fw-semibold") }}
+                                    {{ form.issue_date(class="form-control", type="date", id="issue_date") }}
                                     {% if form.issue_date.errors %}
                                         {% for error in form.issue_date.errors %}
                                             <div class="invalid-feedback d-block">{{ error }}</div>
@@ -63,8 +78,8 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    {{ form.service_date.label(class="form-label") }}
-                                    {{ form.service_date(class="form-control", type="date") }}
+                                    {{ form.service_date.label(class="form-label fw-semibold") }}
+                                    {{ form.service_date(class="form-control", type="date", id="service_date") }}
                                     {% if form.service_date.errors %}
                                         {% for error in form.service_date.errors %}
                                             <div class="invalid-feedback d-block">{{ error }}</div>
@@ -74,8 +89,8 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    {{ form.payment_due_date.label(class="form-label") }}
-                                    {{ form.payment_due_date(class="form-control", type="date") }}
+                                    {{ form.payment_due_date.label(class="form-label fw-semibold") }}
+                                    {{ form.payment_due_date(class="form-control", type="date", id="payment_due_date") }}
                                     {% if form.payment_due_date.errors %}
                                         {% for error in form.payment_due_date.errors %}
                                             <div class="invalid-feedback d-block">{{ error }}</div>
@@ -85,10 +100,10 @@
                             </div>
                         </div>
                         
-                        <div class="row mb-3">
+                        <div class="row g-3 mt-2">
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    {{ form.currency.label(class="form-label") }}
+                                    {{ form.currency.label(class="form-label fw-semibold") }}
                                     {{ form.currency(class="form-select") }}
                                     {% if form.currency.errors %}
                                         {% for error in form.currency.errors %}
@@ -99,14 +114,14 @@
                             </div>
                             <div class="col-md-8">
                                 <div class="form-group">
-                                    <label class="form-label">Ukupan iznos</label>
-                                    <div class="form-control bg-light">{{ invoice.total_amount }} {{ invoice.currency }}</div>
+                                    <label class="form-label fw-semibold">Ukupan iznos</label>
+                                    <div class="form-control bg-light fs-5 text-end">{{ invoice.total_amount }} {{ invoice.currency }}</div>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="text-end">
-                            {{ form.submit(class="btn btn-primary") }}
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            {{ form.submit(class="btn btn-primary px-4") }}
                         </div>
                     </form>
                 </div>
@@ -114,19 +129,27 @@
         </div>
         
         <!-- Desna kolona - Dodavanje stavki -->
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5><i class="fas fa-list-ul me-2"></i>Dodavanje stavki</h5>
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-plus-circle me-2 text-success fs-5"></i>
+                        <h5 class="mb-0">Dodavanje stavki</h5>
+                    </div>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('invoices.add_invoice_item', invoice_id=invoice.id) }}" id="addItemForm">
                         {{ item_form.hidden_tag() }}
-                        <div class="row mb-3">
+                        <div class="row g-3">
                             <div class="col-md-12">
                                 <div class="form-group">
-                                    {{ item_form.service_id.label(class="form-label") }}
-                                    {{ item_form.service_id(class="form-select", id="service_id") }}
+                                    {{ item_form.service_id.label(class="form-label fw-semibold") }}
+                                    <select class="form-select" id="service_id" name="service_id" required>
+                                        <option value="" selected disabled>Izaberi uslugu</option>
+                                        {% for service_id, service_name in item_form.service_id.choices %}
+                                            <option value="{{ service_id }}">{{ service_name }}</option>
+                                        {% endfor %}
+                                    </select>
                                     {% if item_form.service_id.errors %}
                                         {% for error in item_form.service_id.errors %}
                                             <div class="invalid-feedback d-block">{{ error }}</div>
@@ -136,10 +159,10 @@
                             </div>
                         </div>
                         
-                        <div class="row mb-3">
+                        <div class="row g-3 mt-2">
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    {{ item_form.quantity.label(class="form-label") }}
+                                    {{ item_form.quantity.label(class="form-label fw-semibold") }}
                                     {{ item_form.quantity(class="form-control", id="quantity") }}
                                     {% if item_form.quantity.errors %}
                                         {% for error in item_form.quantity.errors %}
@@ -150,8 +173,11 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    {{ item_form.price.label(class="form-label") }}
-                                    {{ item_form.price(class="form-control", id="price") }}
+                                    {{ item_form.price.label(class="form-label fw-semibold") }}
+                                    <div class="input-group">
+                                        {{ item_form.price(class="form-control", id="price", readonly=true) }}
+                                        <span class="input-group-text">{{ invoice.currency }}</span>
+                                    </div>
                                     {% if item_form.price.errors %}
                                         {% for error in item_form.price.errors %}
                                             <div class="invalid-feedback d-block">{{ error }}</div>
@@ -161,22 +187,21 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    {{ item_form.currency.label(class="form-label") }}
-                                    {{ item_form.currency(class="form-select", id="item_currency") }}
-                                    {% if item_form.currency.errors %}
-                                        {% for error in item_form.currency.errors %}
-                                            <div class="invalid-feedback d-block">{{ error }}</div>
-                                        {% endfor %}
-                                    {% endif %}
+                                    <label class="form-label fw-semibold">Jedinica mere</label>
+                                    <input type="text" class="form-control" id="unit_of_measure" readonly>
+                                    <input type="hidden" id="invoice_currency" value="{{ invoice.currency }}">
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="row mb-3">
-                            <div class="col-md-6">
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-7">
                                 <div class="form-group">
-                                    {{ item_form.total.label(class="form-label") }}
-                                    {{ item_form.total(class="form-control", id="total", readonly=true) }}
+                                    {{ item_form.total.label(class="form-label fw-semibold") }}
+                                    <div class="input-group">
+                                        {{ item_form.total(class="form-control fs-5", id="total", readonly=true) }}
+                                        <span class="input-group-text">{{ invoice.currency }}</span>
+                                    </div>
                                     {% if item_form.total.errors %}
                                         {% for error in item_form.total.errors %}
                                             <div class="invalid-feedback d-block">{{ error }}</div>
@@ -184,7 +209,7 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            <div class="col-md-6 d-flex align-items-end">
+                            <div class="col-md-5 d-flex align-items-end">
                                 {{ item_form.submit(class="btn btn-success w-100") }}
                             </div>
                         </div>
@@ -195,49 +220,58 @@
     </div>
     
     <!-- Tabela sa stavkama fakture -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5><i class="fas fa-table me-2"></i>Stavke fakture</h5>
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-table me-2 text-info fs-5"></i>
+                <h5 class="mb-0">Stavke fakture</h5>
+            </div>
         </div>
-        <div class="card-body">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <th>ID</th>
+                            <th>#</th>
                             <th>Usluga</th>
                             <th>Količina</th>
+                            <th>Jedinica</th>
                             <th>Cena</th>
-                            <th>Valuta</th>
                             <th>Ukupno</th>
-                            <th>Akcije</th>
+                            <th class="text-center">Akcije</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% if invoice_items %}
                             {% for item in invoice_items %}
-                            <tr>
-                                <td>{{ item.id }}</td>
-                                <td>{{ item.service.name_sr }}</td>
-                                <td>{{ item.quantity }}</td>
-                                <td>{{ item.price }}</td>
-                                <td>{{ item.currency }}</td>
-                                <td>{{ item.total }} {{ item.currency }}</td>
-                                <td>
-                                    <form method="POST" action="{{ url_for('invoices.remove_invoice_item', item_id=item.id) }}" class="d-inline">
-                                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Da li ste sigurni da želite da uklonite ovu stavku?')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                    <button type="button" class="btn btn-outline-primary btn-sm edit-item-btn" data-item-id="{{ item.id }}">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </td>
-                            </tr>
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ item.service.name_sr }}</td>
+                                    <td>{{ item.quantity }}</td>
+                                    {% if invoice.currency == 'RSD' %}
+                                    <td>{{ item.service.unit_of_measure.name_sr }}</td>
+                                    {% else %}
+                                    <td>{{ item.service.unit_of_measure.name_en }}</td>
+                                    {% endif %}
+                                    <td>{{ item.price }} {{ item.currency }}</td>
+                                    <td class="fw-bold">{{ item.total }} {{ item.currency }}</td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-outline-primary edit-item-btn" data-item-id="{{ item.id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <form method="POST" action="{{ url_for('invoices.remove_invoice_item', item_id=item.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Da li ste sigurni da želite da uklonite ovu stavku?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="7" class="text-center">Nema stavki za prikaz</td>
+                                <td colspan="7" class="text-center py-3">Nema stavki za ovu fakturu. Dodajte stavke koristeći formu iznad.</td>
                             </tr>
                         {% endif %}
                     </tbody>
@@ -258,17 +292,20 @@
 <div class="modal fade" id="editItemModal" tabindex="-1" aria-labelledby="editItemModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editItemModalLabel">Uređivanje stavke fakture</h5>
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="editItemModalLabel">
+                    <i class="fas fa-edit me-2 text-primary"></i>Uređivanje stavke fakture
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form method="POST" id="editItemForm">
                     <input type="hidden" id="edit_item_id" name="item_id">
-                    <div class="row mb-3">
+                    <input type="hidden" id="edit_currency" name="currency" value="{{ invoice.currency }}">
+                    <div class="row g-3">
                         <div class="col-md-12">
                             <div class="form-group">
-                                <label for="edit_service_id" class="form-label">Usluga</label>
+                                <label for="edit_service_id" class="form-label fw-semibold">Usluga</label>
                                 <select class="form-select" id="edit_service_id" name="service_id" required>
                                     {% for service_id, service_name in item_form.service_id.choices %}
                                     <option value="{{ service_id }}">{{ service_name }}</option>
@@ -278,36 +315,39 @@
                         </div>
                     </div>
                     
-                    <div class="row mb-3">
+                    <div class="row g-3 mt-2">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="edit_quantity" class="form-label">Količina</label>
-                                <input type="number" class="form-control" id="edit_quantity" name="quantity" step="0.01" min="0.01" required>
+                                <label for="edit_quantity" class="form-label fw-semibold">Količina</label>
+                                <input type="number" class="form-control" id="edit_quantity" name="quantity" step="1.0" min="1" required>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="edit_price" class="form-label">Cena</label>
-                                <input type="number" class="form-control" id="edit_price" name="price" step="0.01" min="0.01" required>
+                                <label for="edit_price" class="form-label fw-semibold">Cena</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="edit_price" name="price" required readonly>
+                                    <span class="input-group-text">{{ invoice.currency }}</span>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="edit_currency" class="form-label">Valuta</label>
-                                <select class="form-select" id="edit_currency" name="currency" required>
-                                    <option value="RSD">RSD</option>
-                                    <option value="EUR">EUR</option>
-                                    <option value="USD">USD</option>
-                                </select>
+                                <label class="form-label fw-semibold">Jedinica mere</label>
+                                <input type="text" class="form-control" id="edit_unit_of_measure" readonly>
+                                <input type="hidden" id="edit_invoice_currency" value="{{ invoice.currency }}">
                             </div>
                         </div>
                     </div>
                     
-                    <div class="row mb-3">
-                        <div class="col-md-6">
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-12">
                             <div class="form-group">
-                                <label for="edit_total" class="form-label">Ukupno</label>
-                                <input type="number" class="form-control" id="edit_total" name="total" readonly>
+                                <label for="edit_total" class="form-label fw-semibold">Ukupno</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="edit_total" name="total" readonly>
+                                    <span class="input-group-text">{{ invoice.currency }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -325,6 +365,38 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Elementi datuma
+    const issueDateInput = document.getElementById('issue_date');
+    const serviceDateInput = document.getElementById('service_date');
+    const paymentDueDateInput = document.getElementById('payment_due_date');
+    
+    // Funkcija za ažuriranje ograničenja datuma
+    function updateDateConstraints() {
+        // Datum izdavanja može biti najkasnije na datum prometa
+        issueDateInput.max = serviceDateInput.value;
+        
+        // Datum prometa mora biti najmanje na datum izdavanja
+        serviceDateInput.min = issueDateInput.value;
+        
+        // Datum prometa može biti najkasnije na datum dospeća (ako je postavljen)
+        if (paymentDueDateInput.value) {
+            serviceDateInput.max = paymentDueDateInput.value;
+        } else {
+            serviceDateInput.max = ""; // Bez ograničenja ako datum dospeća nije postavljen
+        }
+        
+        // Datum dospeća mora biti najmanje na datum prometa
+        paymentDueDateInput.min = serviceDateInput.value;
+    }
+    
+    // Inicijalno postavi ograničenja
+    updateDateConstraints();
+    
+    // Dodaj event listener za promene datuma
+    issueDateInput.addEventListener('change', updateDateConstraints);
+    serviceDateInput.addEventListener('change', updateDateConstraints);
+    paymentDueDateInput.addEventListener('change', updateDateConstraints);
+    
     // Funkcija za izračunavanje ukupne vrednosti stavke
     function calculateTotal() {
         const quantity = parseFloat(document.getElementById('quantity').value) || 0;
@@ -341,22 +413,22 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('edit_total').value = total.toFixed(2);
     }
     
-    // Dodaj event listenere za promenu količine i cene
+    // Dodaj event listener za promenu količine i cene
     document.getElementById('quantity').addEventListener('input', calculateTotal);
     document.getElementById('price').addEventListener('input', calculateTotal);
     
-    // Dodaj event listenere za promenu količine i cene u modalu za uređivanje
+    // Dodaj event listener za promenu količine i cene u modalu za uređivanje
     document.getElementById('edit_quantity').addEventListener('input', calculateEditTotal);
     document.getElementById('edit_price').addEventListener('input', calculateEditTotal);
     
-    // Dohvati cenu usluge kada se promeni izbor usluge
+    // Ažuriraj cenu kada se promeni usluga
     document.getElementById('service_id').addEventListener('change', function() {
         const serviceId = this.value;
         if (serviceId) {
             fetch(`{{ url_for('invoices.get_service_price', service_id=0) }}`.replace('0', serviceId))
                 .then(response => response.json())
                 .then(data => {
-                    const currency = document.getElementById('item_currency').value;
+                    const currency = document.getElementById('invoice_currency').value;
                     let price = 0;
                     
                     if (currency === 'RSD' && data.price_rsd) {
@@ -366,20 +438,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     document.getElementById('price').value = price;
+                    document.getElementById('unit_of_measure').value = data.unit_of_measure;
                     calculateTotal();
                 })
                 .catch(error => console.error('Error:', error));
         }
     });
     
-    // Dohvati cenu usluge kada se promeni izbor usluge u modalu za uređivanje
+    // Ažuriraj cenu kada se promeni usluga u modalu za uređivanje
     document.getElementById('edit_service_id').addEventListener('change', function() {
         const serviceId = this.value;
         if (serviceId) {
             fetch(`{{ url_for('invoices.get_service_price', service_id=0) }}`.replace('0', serviceId))
                 .then(response => response.json())
                 .then(data => {
-                    const currency = document.getElementById('edit_currency').value;
+                    const currency = document.getElementById('edit_invoice_currency').value;
                     let price = 0;
                     
                     if (currency === 'RSD' && data.price_rsd) {
@@ -389,52 +462,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     document.getElementById('edit_price').value = price;
-                    calculateEditTotal();
-                })
-                .catch(error => console.error('Error:', error));
-        }
-    });
-    
-    // Ažuriraj cenu kada se promeni valuta
-    document.getElementById('item_currency').addEventListener('change', function() {
-        const serviceId = document.getElementById('service_id').value;
-        if (serviceId) {
-            fetch(`{{ url_for('invoices.get_service_price', service_id=0) }}`.replace('0', serviceId))
-                .then(response => response.json())
-                .then(data => {
-                    const currency = document.getElementById('item_currency').value;
-                    let price = 0;
-                    
-                    if (currency === 'RSD' && data.price_rsd) {
-                        price = data.price_rsd;
-                    } else if (currency === 'EUR' && data.price_eur) {
-                        price = data.price_eur;
-                    }
-                    
-                    document.getElementById('price').value = price;
-                    calculateTotal();
-                })
-                .catch(error => console.error('Error:', error));
-        }
-    });
-    
-    // Ažuriraj cenu kada se promeni valuta u modalu za uređivanje
-    document.getElementById('edit_currency').addEventListener('change', function() {
-        const serviceId = document.getElementById('edit_service_id').value;
-        if (serviceId) {
-            fetch(`{{ url_for('invoices.get_service_price', service_id=0) }}`.replace('0', serviceId))
-                .then(response => response.json())
-                .then(data => {
-                    const currency = document.getElementById('edit_currency').value;
-                    let price = 0;
-                    
-                    if (currency === 'RSD' && data.price_rsd) {
-                        price = data.price_rsd;
-                    } else if (currency === 'EUR' && data.price_eur) {
-                        price = data.price_eur;
-                    }
-                    
-                    document.getElementById('edit_price').value = price;
+                    document.getElementById('edit_unit_of_measure').value = data.unit_of_measure;
                     calculateEditTotal();
                 })
                 .catch(error => console.error('Error:', error));
@@ -456,8 +484,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('edit_service_id').value = data.service_id;
                     document.getElementById('edit_quantity').value = data.quantity;
                     document.getElementById('edit_price').value = data.price;
-                    document.getElementById('edit_currency').value = data.currency;
                     document.getElementById('edit_total').value = data.total;
+                    
+                    // Dohvati i popuni podatke o jedinici mere
+                    fetch(`{{ url_for('invoices.get_service_price', service_id=0) }}`.replace('0', data.service_id))
+                        .then(response => response.json())
+                        .then(serviceData => {
+                            document.getElementById('edit_unit_of_measure').value = serviceData.unit_of_measure;
+                        })
+                        .catch(error => console.error('Error:', error));
                     
                     // Prikaži modal
                     const editItemModal = new bootstrap.Modal(document.getElementById('editItemModal'));

@@ -2,103 +2,173 @@
 
 {% block content %}
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>{{ legend }}</h2>
-        <div>
-            <a href="{{ url_for('invoices.invoice_list') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> Nazad na listu faktura
-            </a>
+    <!-- Zaglavlje stranice sa naslovom i dugmetom za povratak -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0"><i class="fas fa-file-invoice me-2 text-primary"></i>{{ legend }}</h2>
+                        <a href="{{ url_for('invoices.invoice_list') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Nazad na listu faktura
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5><i class="fas fa-file-invoice me-2"></i>Osnovni podaci fakture</h5>
+    <div class="row">
+        <!-- Forma za kreiranje fakture -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 text-primary"><i class="fas fa-plus-circle me-2"></i>Osnovni podaci fakture</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('invoices.create_customer_invoice') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Broj fakture i partner -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.invoice_number.label(class="form-label fw-bold") }}
+                                    {{ form.invoice_number(class="form-control", placeholder="Unesite broj fakture") }}
+                                    {% if form.invoice_number.errors %}
+                                        {% for error in form.invoice_number.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.partner_id.label(class="form-label fw-bold") }}
+                                    {{ form.partner_id(class="form-select") }}
+                                    {% if form.partner_id.errors %}
+                                        {% for error in form.partner_id.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Datumi -->
+                        <div class="row mb-3">
+                            <div class="col-12 mb-2">
+                                <h6 class="border-bottom pb-2">Datumi</h6>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ form.issue_date.label(class="form-label") }}
+                                    {{ form.issue_date(class="form-control", type="date", id="issue_date") }}
+                                    {% if form.issue_date.errors %}
+                                        {% for error in form.issue_date.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ form.service_date.label(class="form-label") }}
+                                    {{ form.service_date(class="form-control", type="date", id="service_date") }}
+                                    {% if form.service_date.errors %}
+                                        {% for error in form.service_date.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ form.payment_due_date.label(class="form-label") }}
+                                    {{ form.payment_due_date(class="form-control", type="date", id="payment_due_date") }}
+                                    {% if form.payment_due_date.errors %}
+                                        {% for error in form.payment_due_date.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Valuta -->
+                        <div class="row mb-4">
+                            <div class="col-12 mb-2">
+                                <h6 class="border-bottom pb-2">Finansijski podaci</h6>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ form.currency.label(class="form-label") }}
+                                    {{ form.currency(class="form-select") }}
+                                    {% if form.currency.errors %}
+                                        {% for error in form.currency.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" name="incoming" value="0">
+                        
+                        <!-- Dugme za čuvanje -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            {{ form.submit(class="btn btn-primary px-4") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-            <form method="POST" action="{{ url_for('invoices.create_customer_invoice') }}">
-                {{ form.hidden_tag() }}
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            {{ form.invoice_number.label(class="form-label") }}
-                            {{ form.invoice_number(class="form-control") }}
-                            {% if form.invoice_number.errors %}
-                                {% for error in form.invoice_number.errors %}
-                                    <div class="invalid-feedback d-block">{{ error }}</div>
+        
+        <!-- Poslednje izlazne fakture -->
+        <div class="col-lg-4">
+            {% if recent_invoices %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 text-primary"><i class="fas fa-history me-2"></i>Poslednje fakture</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Broj fakture</th>
+                                    <th>Datum</th>
+                                    <th class="text-end pe-3">Iznos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invoice in recent_invoices %}
+                                <tr class="clickable-row" onclick="navigateToInvoice('{{ url_for('invoices.edit_customer_invoice', invoice_id=invoice.id) }}')">
+                                    <td class="ps-3">{{ invoice.invoice_number }}</td>
+                                    <td>{{ invoice.issue_date.strftime('%d.%m.%Y') }}</td>
+                                    <td class="text-end pe-3">{{ '{:,.2f}'.format(invoice.total_amount) }} {{ invoice.currency }}</td>
+                                </tr>
                                 {% endfor %}
-                            {% endif %}
-                        </div>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            {{ form.partner_id.label(class="form-label") }}
-                            {{ form.partner_id(class="form-select") }}
-                            {% if form.partner_id.errors %}
-                                {% for error in form.partner_id.errors %}
-                                    <div class="invalid-feedback d-block">{{ error }}</div>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
+                    <div class="card-footer bg-white py-2 text-center">
+                        <a href="{{ url_for('invoices.invoice_list') }}" class="text-decoration-none">Prikaži sve fakture</a>
                     </div>
                 </div>
-                
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            {{ form.issue_date.label(class="form-label") }}
-                            {{ form.issue_date(class="form-control", type="date") }}
-                            {% if form.issue_date.errors %}
-                                {% for error in form.issue_date.errors %}
-                                    <div class="invalid-feedback d-block">{{ error }}</div>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            {{ form.service_date.label(class="form-label") }}
-                            {{ form.service_date(class="form-control", type="date") }}
-                            {% if form.service_date.errors %}
-                                {% for error in form.service_date.errors %}
-                                    <div class="invalid-feedback d-block">{{ error }}</div>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            {{ form.payment_due_date.label(class="form-label") }}
-                            {{ form.payment_due_date(class="form-control", type="date") }}
-                            {% if form.payment_due_date.errors %}
-                                {% for error in form.payment_due_date.errors %}
-                                    <div class="invalid-feedback d-block">{{ error }}</div>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                    </div>
+            </div>
+            {% endif %}
+            
+            <!-- Pomoćni panel sa informacijama -->
+            <div class="card shadow-sm mb-4 bg-light">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 text-primary"><i class="fas fa-info-circle me-2"></i>Informacije</h5>
                 </div>
-                
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            {{ form.currency.label(class="form-label") }}
-                            {{ form.currency(class="form-select") }}
-                            {% if form.currency.errors %}
-                                {% for error in form.currency.errors %}
-                                    <div class="invalid-feedback d-block">{{ error }}</div>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                    </div>
+                <div class="card-body">
+                    <p class="card-text">Nakon kreiranja osnovnih podataka fakture, bićete preusmereni na stranicu za dodavanje stavki.</p>
+                    <p class="card-text">Obavezna polja su označena podebljanim tekstom.</p>
                 </div>
-                
-                <input type="hidden" name="incoming" value="0">
-                
-                <div class="text-end">
-                    {{ form.submit(class="btn btn-primary") }}
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
@@ -107,16 +177,62 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Postavi danau0161nji datum kao podrazumevanu vrednost za datume ako nisu veu0107 postavljeni
+    // Elementi datuma
+    const issueDateInput = document.getElementById('issue_date');
+    const serviceDateInput = document.getElementById('service_date');
+    const paymentDueDateInput = document.getElementById('payment_due_date');
+    
+    // Postavi današnji datum kao podrazumevanu vrednost za datume ako nisu već postavljeni
     const today = new Date().toISOString().split('T')[0];
     
-    if (!document.getElementById('issue_date').value) {
-        document.getElementById('issue_date').value = today;
+    if (!issueDateInput.value) {
+        issueDateInput.value = today;
     }
     
-    if (!document.getElementById('service_date').value) {
-        document.getElementById('service_date').value = today;
+    if (!serviceDateInput.value) {
+        serviceDateInput.value = today;
     }
+    
+    // Funkcija za ažuriranje ograničenja datuma
+    function updateDateConstraints() {
+        // Datum izdavanja može biti najkasnije na datum prometa
+        issueDateInput.max = serviceDateInput.value;
+        
+        // Datum prometa mora biti najmanje na datum izdavanja
+        serviceDateInput.min = issueDateInput.value;
+        
+        // Datum prometa može biti najkasnije na datum dospeća (ako je postavljen)
+        if (paymentDueDateInput.value) {
+            serviceDateInput.max = paymentDueDateInput.value;
+        } else {
+            serviceDateInput.max = ""; // Bez ograničenja ako datum dospeća nije postavljen
+        }
+        
+        // Datum dospeća mora biti najmanje na datum prometa
+        paymentDueDateInput.min = serviceDateInput.value;
+    }
+    
+    // Inicijalno postavi ograničenja
+    updateDateConstraints();
+    
+    // Dodaj event listenere za promene datuma
+    issueDateInput.addEventListener('change', updateDateConstraints);
+    serviceDateInput.addEventListener('change', updateDateConstraints);
+    paymentDueDateInput.addEventListener('change', updateDateConstraints);
+    
+    // Stil za redove koji su klikabilni
+    document.querySelectorAll('.clickable-row').forEach(row => {
+        row.style.cursor = 'pointer';
+    });
 });
+
+function navigateToInvoice(url) {
+    window.location.href = url;
+}
 </script>
+<style>
+.clickable-row:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+</style>
 {% endblock %}

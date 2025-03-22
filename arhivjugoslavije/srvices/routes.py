@@ -45,6 +45,7 @@ def create_service():
             name_sr=register_form.service_name_rs.data,
             name_en=register_form.service_name_en.data,
             price_rsd=register_form.service_value.data,
+            price_eur=round(float(register_form.service_value.data) / ArchiveSettings.query.first().eur_rate, 2),
             note=register_form.service_description.data,
             unit_of_measure_id=register_form.service_unit_of_measure.data,
             archived=False
@@ -79,6 +80,7 @@ def edit_service(service_id):
         service.note = edit_form.service_description.data
         service.unit_of_measure_id = edit_form.service_unit_of_measure.data
         service.price_rsd = edit_form.service_value.data
+        service.price_eur = round(float(edit_form.service_value.data) / ArchiveSettings.query.first().eur_rate, 2)
         service.archived = bool(int(edit_form.archived.data))
         
         db.session.commit()
@@ -101,5 +103,6 @@ def get_service(service_id):
         'service_description': service.note,
         'service_unit_of_measure': unit_of_measure_id,
         'service_value': service.price_rsd,
+        'service_value_eur': service.price_eur,
         'archived': service.archived
     })

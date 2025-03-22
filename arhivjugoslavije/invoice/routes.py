@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 from flask_login import login_required, current_user
 from arhivjugoslavije import db
 from arhivjugoslavije.models import Partner, Invoice, InvoiceItem, Service, ArchiveSettings, UnitOfMeasure
-from arhivjugoslavije.invoice.forms import InvoiceForm, InvoiceItemForm
+from arhivjugoslavije.invoice.forms import InvoiceForm, InvoiceItemForm, EditInvoiceForm
 from arhivjugoslavije.invoice.functions import generate_invoice_pdf
 import os
 from pathlib import Path
@@ -64,6 +64,9 @@ def create_customer_invoice():
     customers = Partner.query.filter_by(customer=True).all()
     form.partner_id.choices = [(p.id, p.name) for p in customers]
     
+    # Dohvati poslednje tri izlazne fakture
+    recent_invoices = Invoice.query.filter_by(incoming=False).order_by(Invoice.id.desc()).limit(3).all()
+    
     if form.validate_on_submit():
         try:
             new_invoice = Invoice(
@@ -86,10 +89,11 @@ def create_customer_invoice():
             flash(f'Došlo je do greške prilikom kreiranja fakture: {str(e)}.', 'danger')
     
     return render_template('invoice/create_customer_invoice.html', 
-                           endpoint=endpoint, 
-                           legend='Nova izlazna faktura', 
-                           title='Nova izlazna faktura',
-                           form=form)
+                            endpoint=endpoint, 
+                            legend='Nova izlazna faktura', 
+                            title='Nova izlazna faktura',
+                            form=form,
+                            recent_invoices=recent_invoices)
 
 @invoices.route('/edit_customer_invoice/<int:invoice_id>', methods=['GET', 'POST'])
 @login_required
@@ -103,7 +107,8 @@ def edit_customer_invoice(invoice_id):
         return redirect(url_for('invoices.edit_supplier_invoice', invoice_id=invoice.id))
     
     # Forma za fakturu
-    form = InvoiceForm(obj=invoice)
+    form = EditInvoiceForm(obj=invoice)
+    form.invoice_id.data = str(invoice.id)  # Postavljanje ID-ja fakture koja se edituje
     customers = Partner.query.filter_by(customer=True).all()
     form.partner_id.choices = [(p.id, p.name) for p in customers]
     
@@ -123,8 +128,20 @@ def edit_customer_invoice(invoice_id):
             invoice.payment_due_date = form.payment_due_date.data
             invoice.partner_id = form.partner_id.data
             invoice.currency = form.currency.data
+            invoice.total_amount = 0
             
             db.session.commit()
+            try:
+                for item in invoice_items:
+                    service = Service.query.get_or_404(item.service_id)
+                    item.price = service.price_rsd if invoice.currency == 'RSD' else service.price_eur
+                    item.currency = invoice.currency
+                    item.total = item.price * item.quantity
+                    invoice.total_amount += item.total
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Došlo je do greške prilikom ažuriranja stavki fakture: {str(e)}.', 'danger')
             flash('Faktura uspešno ažurirana.', 'success')
             return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice.id))
         except Exception as e:
@@ -194,14 +211,14 @@ def add_invoice_item(invoice_id):
                 service_id=form.service_id.data,
                 quantity=form.quantity.data,
                 price=form.price.data,
-                currency=form.currency.data,
+                currency=invoice.currency,
                 total=form.total.data
             )
             db.session.add(new_item)
             
             # Ažuriraj ukupan iznos fakture
             items = InvoiceItem.query.filter_by(invoice_id=invoice_id).all()
-            total_amount = sum(item.total for item in items) + form.total.data
+            total_amount = sum(item.total for item in items)
             invoice.total_amount = total_amount
             
             db.session.commit()
@@ -242,7 +259,8 @@ def get_service_price(service_id):
     service = Service.query.get_or_404(service_id)
     return jsonify({
         'price_rsd': float(service.price_rsd) if service.price_rsd else 0,
-        'price_eur': float(service.price_eur) if service.price_eur else 0
+        'price_eur': float(service.price_eur) if service.price_eur else 0,
+        'unit_of_measure': service.unit_of_measure.symbol if service.unit_of_measure else ''
     })
 
 @invoices.route('/generate_invoice_pdf/<int:invoice_id>')

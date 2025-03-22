@@ -59,7 +59,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label for="service_date" class="form-label">Datum usluge *</label>
+                            <label for="service_date" class="form-label">Datum prometa *</label>
                             {{ form.service_date(class="form-control" + (" is-invalid" if form.service_date.errors else ""), id="service_date", type="date") }}
                             {% if form.service_date.errors %}
                                 <div class="invalid-feedback">
@@ -72,7 +72,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label for="payment_due_date" class="form-label">Rok plaćanja</label>
+                            <label for="payment_due_date" class="form-label">Datum dospeća</label>
                             {{ form.payment_due_date(class="form-control" + (" is-invalid" if form.payment_due_date.errors else ""), id="payment_due_date", type="date") }}
                             {% if form.payment_due_date.errors %}
                                 <div class="invalid-feedback">
