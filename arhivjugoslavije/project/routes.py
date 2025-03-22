@@ -112,6 +112,7 @@ def project_accounts(project_id):
     project = Project.query.get_or_404(project_id)
     project_accounts = ProjectAccount.query.filter_by(project_id=project_id).order_by(ProjectAccount.id.asc())
     sum_data = sum_account_data(project_accounts)
+    sum_data_total = sum(account['amount'] for account in sum_data.values())
     accounts = AccountLevel6.query.order_by(AccountLevel6.number).all()
     accounts_list = [{
         'number': account.number,
@@ -121,6 +122,7 @@ def project_accounts(project_id):
                             project=project,
                             project_accounts=project_accounts,
                             sum_data=sum_data,
+                            sum_data_total=sum_data_total,
                             accounts_list=accounts_list,
                             legend='Detalji projekta',
                             title='Detalji projekta')
@@ -155,6 +157,14 @@ def add_project_account():
     # Validacija podataka
     if not project_id or not account_level_6_number or not amount:
         return jsonify({'success': False, 'message': 'Projekat, konto i iznos su obavezni'}), 400
+    
+    # Validacija iznosa - mora biti veći od 0
+    try:
+        amount_float = float(amount)
+        if amount_float <= 0:
+            return jsonify({'success': False, 'message': 'Iznos mora biti veći od 0.'}), 400
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Iznos mora biti validan broj.'}), 400
     
     # Provera da li projekat postoji
     project = Project.query.get(project_id)
@@ -230,6 +240,14 @@ def edit_project_account(account_id):
     # Validacija podataka
     if not account_level_6_number or not amount:
         return jsonify({'success': False, 'message': 'Konto i iznos su obavezni'}), 400
+    
+    # Validacija iznosa - mora biti veći od 0
+    try:
+        amount_float = float(amount)
+        if amount_float <= 0:
+            return jsonify({'success': False, 'message': 'Iznos mora biti veći od 0.'}), 400
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Iznos mora biti validan broj.'}), 400
     
     # Pronalazimo konto projekta koji želimo da izmenimo
     project_account = ProjectAccount.query.get_or_404(account_id)

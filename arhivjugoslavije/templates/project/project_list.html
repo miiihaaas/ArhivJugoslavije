@@ -8,16 +8,16 @@
         </button>
     </div>
 
-    <table id="projectsTable" class="table table-striped">
-        <thead>
+    <table id="projectsTable" class="table table-striped table-hover">
+        <thead class="table-light">
             <tr>
                 <th>ID</th>
                 <th>Naziv projekta</th>
-                <th>Vrednost</th>
+                <th class="text-end">Vrednost</th>
                 <th>Napomena</th>
                 <th>Godina</th>
                 <th>Status</th>
-                <th>Akcije</th>
+                <th class="text-center">Akcije</th>
             </tr>
         </thead>
         <tbody>
@@ -25,7 +25,7 @@
             <tr>
                 <td>{{ project.id }}</td>
                 <td>{{ project.name }}</td>
-                <td>{{ project.amount }}</td>
+                <td class="text-end">{{ "%.2f"|format(project.amount|float) }}</td>
                 <td>{{ project.note }}</td>
                 <td>{{ project.year }}</td>
                 <td>
@@ -35,13 +35,13 @@
                     <span class="badge bg-success">Aktivno</span>
                     {% endif %}
                 </td>
-                <td>
-                    <button type="button" class="btn btn-link p-0 me-2" data-bs-toggle="modal" data-bs-target="#editProjectModal"
-                            data-project-id="{{ project.id }}" data-archived="{{ '1' if project.archived else '0' }}">
-                        <i class="fas fa-edit text-primary"></i>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editProjectModal"
+                            data-project-id="{{ project.id }}" data-archived="{{ '1' if project.archived else '0' }}" title="Izmeni projekat">
+                        <i class="fas fa-edit"></i>
                     </button>
-                    <a class="btn btn-link p-0 me-2" href="{{ url_for('project.project_accounts', project_id=project.id) }}" title="Projektna konta">
-                        <i class="fas fa-hashtag text-primary"></i>
+                    <a class="btn btn-sm btn-outline-success" href="{{ url_for('project.project_accounts', project_id=project.id) }}" title="Projektna konta">
+                        <i class="fas fa-hashtag"></i>
                     </a>
                     
                 </td>
@@ -102,69 +102,97 @@
 
 <!-- Edit Project Modal -->
 <div class="modal fade" id="editProjectModal" tabindex="-1" aria-labelledby="editProjectModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editProjectModalLabel">Izmena projekta</h5>
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="editProjectModalLabel"><i class="fas fa-edit me-2"></i>Izmena projekta</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="{{ url_for('project.edit_project', project_id=0) }}" class="needs-validation" novalidate id="editProjectForm">
                 {{ edit_form.hidden_tag() }}
                 <input type="hidden" id="edit_project_id" name="project_id" value="">
                 <div class="modal-body">
-                    <div class="mb-3">
-                        {{ edit_form.name.label(class="form-label") }}
-                        {{ edit_form.name(class="form-control", id="edit_project_name") }}
-                        {% if edit_form.name.errors %}
-                            {% for error in edit_form.name.errors %}
-                                <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
-                        {% endif %}
-                    </div>
-                    <div class="mb-3">
-                        {{ edit_form.note.label(class="form-label") }}
-                        {{ edit_form.note(class="form-control", id="edit_project_note") }}
-                        {% if edit_form.note.errors %}
-                            {% for error in edit_form.note.errors %}
-                                <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
-                        {% endif %}
-                    </div>
-                    <!-- Polje amount je uklonjeno jer se vrednost računa automatski -->
-                    <div class="mb-3">
-                        {{ edit_form.year.label(class="form-label") }}
-                        {{ edit_form.year(class="form-control", id="edit_project_year", type="number") }}
-                        {% if edit_form.year.errors %}
-                            {% for error in edit_form.year.errors %}
-                                <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
-                        {% endif %}
-                    </div>
-                    <div class="mb-3">
-                        {{ edit_form.archived.label(class="form-check-label") }}
-                        {{ edit_form.archived(class="form-check-input", id="edit_archived") }}
+                    <div class="row">
+                        <!-- Leva strana - podaci o projektu -->
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header bg-primary text-white">
+                                    <i class="fas fa-info-circle me-2"></i>Osnovni podaci
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        {{ edit_form.name.label(class="form-label") }}
+                                        {{ edit_form.name(class="form-control", id="edit_project_name") }}
+                                        {% if edit_form.name.errors %}
+                                            {% for error in edit_form.name.errors %}
+                                                <div class="invalid-feedback">{{ error }}</div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                    <div class="mb-3">
+                                        {{ edit_form.note.label(class="form-label") }}
+                                        {{ edit_form.note(class="form-control", id="edit_project_note") }}
+                                        {% if edit_form.note.errors %}
+                                            {% for error in edit_form.note.errors %}
+                                                <div class="invalid-feedback">{{ error }}</div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                    <!-- Polje amount je uklonjeno jer se vrednost računa automatski -->
+                                    <div class="mb-3">
+                                        {{ edit_form.year.label(class="form-label") }}
+                                        {{ edit_form.year(class="form-control", id="edit_project_year", type="number") }}
+                                        {% if edit_form.year.errors %}
+                                            {% for error in edit_form.year.errors %}
+                                                <div class="invalid-feedback">{{ error }}</div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                    <div class="form-check mb-3">
+                                        {{ edit_form.archived(class="form-check-input", id="edit_archived") }}
+                                        {{ edit_form.archived.label(class="form-check-label") }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Desna strana - suma po kontima -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <i class="fas fa-chart-pie me-2"></i>Suma po kontima 4 stepena
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-striped table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Konto</th>
+                                                    <th class="text-end">Iznos</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="sum-data-table">
+                                                <tr>
+                                                    <td colspan="2" class="text-center">Nema podataka za prikaz</td>
+                                                </tr>
+                                            </tbody>
+                                            <tfoot>
+                                                <tr class="table-primary fw-bold">
+                                                    <th>Ukupno:</th>
+                                                    <th class="text-end" id="sum-data-total">0</th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-12">
-                    <h5><i class="fas fa-chart-pie me-2"></i>Suma po kontima 4 stepena</h5>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Konto</th>
-                                    <th>Iznos</th>
-                                </tr>
-                            </thead>
-                            <tbody id="sum-data-table">
-                                <tr>
-                                    <td colspan="2" class="text-center">Nema podataka za prikaz</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zatvori</button>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Zatvori
+                    </button>
                     {{ edit_form.submit(class="btn btn-primary") }}
                 </div>
             </form>
@@ -218,17 +246,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (sumDataTable) {
                         if (data.sum_data && data.sum_data.length > 0) {
                             let tableHtml = '';
+                            let totalAmount = 0;
                             data.sum_data.forEach(item => {
                                 tableHtml += `<tr>
                                     <td>${item.account}</td>
-                                    <td>${item.amount.toLocaleString('sr-RS')}</td>
+                                    <td class="text-end">${item.amount.toLocaleString('sr-RS', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                                 </tr>`;
+                                totalAmount += item.amount;
                             });
                             sumDataTable.innerHTML = tableHtml;
+                            // Postavi ukupnu sumu
+                            document.getElementById('sum-data-total').textContent = totalAmount.toLocaleString('sr-RS', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                         } else {
                             sumDataTable.innerHTML = `<tr>
                                 <td colspan="2" class="text-center">Nema podataka za prikaz</td>
                             </tr>`;
+                            document.getElementById('sum-data-total').textContent = '0.00';
                         }
                     }
                 })

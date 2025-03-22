@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SubmitField, BooleanField, SelectField
-from wtforms.validators import DataRequired, Length, Optional
+from wtforms import StringField, TextAreaField, SubmitField, BooleanField, SelectField, DecimalField
+from wtforms.validators import DataRequired, Length, Optional, NumberRange, ValidationError
 
 class ServiceRegisterForm(FlaskForm):
     service_name_rs = StringField(
@@ -30,11 +30,12 @@ class ServiceRegisterForm(FlaskForm):
         coerce=int,
         validators=[DataRequired()]
         )
-    service_value = StringField(
+    service_value = DecimalField(
         'Cena',
+        places=2,  
         validators=[
-            DataRequired(), 
-            Length(max=20, message='Cena ne može biti duža od 20 karaktera')
+            DataRequired(),
+            NumberRange(min=0.01, message='Cena mora biti veća od 0.')
             ]
         )
     submit = SubmitField('Kreiraj uslugu')

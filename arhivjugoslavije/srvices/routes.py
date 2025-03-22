@@ -53,7 +53,7 @@ def create_service():
         db.session.commit()
         flash('Usluga uspešno kreirana.', 'success')
         return redirect(url_for('services.services_list'))
-    return render_template('services_create.html', 
+    return render_template('services_list.html', 
                             endpoint=endpoint,
                             register_form=register_form,
                             legend='Kreiranje usluge',
