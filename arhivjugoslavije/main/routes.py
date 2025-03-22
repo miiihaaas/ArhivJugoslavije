@@ -33,11 +33,12 @@ def settings(id):
         form.country.data = archive.country
         form.pib.data = archive.pib
         form.mb.data = archive.mb
-        form.phones.data = archive.phones
-        form.fax.data = archive.fax
+        form.model.data = archive.model
+        form.poziv_na_broj.data = archive.poziv_na_broj
+        form.phone_1.data = archive.phone_1
+        form.phone_2.data = archive.phone_2
         form.email.data = archive.email
         form.web_site.data = archive.web_site
-        form.use_eur.data = archive.use_eur
     
     # Proveravamo da li postoji aktivna inventarna lista
     active_inventory_list = False  # Ovde možete dodati logiku za proveru aktivne inventarne liste
@@ -74,11 +75,12 @@ def edit_settings(id):
         archive.country = form.country.data
         archive.pib = form.pib.data
         archive.mb = form.mb.data
-        archive.phones = form.phones.data
-        archive.fax = form.fax.data
+        archive.model = form.model.data
+        archive.poziv_na_broj = form.poziv_na_broj.data
+        archive.phone_1 = form.phone_1.data
+        archive.phone_2 = form.phone_2.data
         archive.email = form.email.data
         archive.web_site = form.web_site.data
-        archive.use_eur = form.use_eur.data
         
         # Obrada slika
         if form.logo.data:
@@ -197,7 +199,7 @@ def add_bank_account(settings_id):
         bank_account = BankAccount(
             settings_id=settings_id,
             account_number=form.account_number.data,
-            bank=form.bank.data,
+            purpose=form.purpose.data,
             active=form.active.data
         )
         
@@ -219,7 +221,7 @@ def edit_bank_account(account_id):
     
     if form.validate_on_submit():
         bank_account.account_number = form.account_number.data
-        bank_account.bank = form.bank.data
+        bank_account.purpose = form.purpose.data
         bank_account.active = form.active.data
         
         db.session.commit()
@@ -250,6 +252,6 @@ def get_bank_account(account_id):
     return jsonify({
         'id': bank_account.id,
         'account_number': bank_account.account_number,
-        'bank': bank_account.bank,
+        'purpose': bank_account.purpose,
         'active': bank_account.active
     })

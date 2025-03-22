@@ -44,18 +44,19 @@ class ArchiveSettings(db.Model):
     city = db.Column(db.String(100), nullable=True)
     country = db.Column(db.String(100), nullable=True)
     
-    pib = db.Column(db.String(20), nullable=True)
-    mb = db.Column(db.String(20), nullable=True)
+    pib = db.Column(db.String(9), nullable=True)
+    mb = db.Column(db.String(8), nullable=True)
+    model = db.Column(db.String(2), nullable=True)
+    poziv_na_broj = db.Column(db.String(20), nullable=True)
     
-    phones = db.Column(db.String(20), nullable=True)
-    fax = db.Column(db.String(20), nullable=True)
+    phone_1 = db.Column(db.String(20), nullable=True)
+    phone_2 = db.Column(db.String(20), nullable=True)
     email = db.Column(db.String(120), nullable=True)
     web_site = db.Column(db.String(120), nullable=True)
     
     logo = db.Column(db.String(255), nullable=True)
     stamp = db.Column(db.String(255), nullable=True)
     facsimile = db.Column(db.String(255), nullable=True)
-    use_eur = db.Column(db.Boolean, default=False, nullable=False)
     eur_rate = db.Column(db.Float, nullable=True)
     eur_rate_date = db.Column(db.DateTime, nullable=True)
     
@@ -71,11 +72,11 @@ class BankAccount(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     settings_id = db.Column(db.Integer, db.ForeignKey('archive_settings.id'), nullable=False)
     account_number = db.Column(db.String(50), nullable=False)
-    bank = db.Column(db.String(100), nullable=False)
+    purpose = db.Column(db.String(100), nullable=False)
     active = db.Column(db.Boolean, default=True, nullable=False)
     
     def __repr__(self):
-        return f"BankAccount('{self.account_number}', '{self.bank}', active: '{self.active}')"
+        return f"BankAccount('{self.account_number}', '{self.purpose}', active: '{self.active}')"
 
 
 class Partner(db.Model):

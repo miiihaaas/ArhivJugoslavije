@@ -110,7 +110,7 @@ def generate_invoice_pdf(invoice_id):
                 self.set_xy(105, 8)
                 self.cell(95, 5, f'Tel: {archive_settings.phones}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
                 self.set_xy(105, 13)
-                self.cell(95, 5, f'Fax: {archive_settings.fax}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+                self.cell(95, 5, f'Fax: {archive_settings.phone_2}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
                 self.set_xy(105, 18)
                 self.cell(95, 5, f'e-mail: {archive_settings.email}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
                 self.set_xy(105, 23)
