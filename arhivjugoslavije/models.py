@@ -240,7 +240,7 @@ class InvoiceItem(db.Model):
 class BankStatement(db.Model):
     __tablename__ = 'bank_statement'
     id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+    date = db.Column(db.Date, nullable=False, default=datetime.now())
     statement_number = db.Column(db.String(20), nullable=False)
     initial_balance = db.Column(db.Numeric(10, 2), nullable=False)
     total_credit = db.Column(db.Numeric(10, 2), nullable=False)
@@ -258,15 +258,27 @@ class StatementItem(db.Model):
     __tablename__ = 'statement_item'
     id = db.Column(db.Integer, primary_key=True)
     bank_statement_id = db.Column(db.Integer, db.ForeignKey('bank_statement.id'), nullable=False)
+    
+    # Polja koja se mogu editovati
     partner_id = db.Column(db.Integer, db.ForeignKey('partner.id'), nullable=True)
     account_level_6_number = db.Column(db.String(6), db.ForeignKey('account_level_6.number'), nullable=True)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True)
-    invoice_id = db.Column(db.Integer, db.ForeignKey('invoice.id'), nullable=True)
-    amount = db.Column(db.Numeric(10, 2), nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    is_debit = db.Column(db.Boolean, default=True, nullable=False)
-    document_number = db.Column(db.String(50), nullable=True)
-    account_in_project = db.Column(db.Boolean, default=False, nullable=False)
+    public_procurement = db.Column(db.String(100), nullable=True)  # Javna nabavka - zamenjuje invoice_id
+    account_in_project = db.Column(db.Boolean, default=False, nullable=False) #? Označava da li se ova stavka knjiži u projekat. Ako je True, znači da se ova stavka uračunava u finansije projekta. Podrazumevana vrednost je False.
+    #? Polje account_in_project nije redundantno iako imamo project_id i account_level_6_number.
+    #? Razlog je što samo postojanje veze sa projektom (project_id) ne znači automatski da ta stavka treba da se knjiži u finansije projekta. account_in_project služi kao eksplicitna oznaka koja govori sistemu da li ovu stavku treba uključiti u finansijske izveštaje projekta.
+    #? Moguće je da neka transakcija bude povezana sa projektom (ima project_id), ali da iz nekog razloga ne treba da utiče na finansijsko stanje projekta. U tom slučaju, account_in_project bi bilo postavljeno na False.
+    #? Ovo omogućava fleksibilnost u knjigovodstvenom praćenju projekata i daje mogućnost da se neke transakcije isključe iz finansijskih izveštaja projekta iako su povezane sa njim.
+    
+    # Polja koja se ne mogu editovati (iz XML fajla)
+    payer = db.Column(db.String(200), nullable=True)  # Uplatilac
+    recipient = db.Column(db.String(200), nullable=True)  # Primalac
+    amount = db.Column(db.Numeric(10, 2), nullable=False)  # Iznos uplate/isplate
+    description = db.Column(db.Text, nullable=True) #? Tekstualni opis transakcije/svrha uplate, može biti prazan. Najčešće sadrži opis sa bankovnog izvoda.
+    reference_number = db.Column(db.String(50), nullable=True)  # Poziv na broj
+    is_debit = db.Column(db.Boolean, default=True, nullable=False) #! True = isplata, False = uplata
+    document_number = db.Column(db.String(50), nullable=True) #! Broj dokumenta povezanog sa transakcijom (može biti broj fakture, ugovora i slično). Polje može biti prazno.
+    
     
     def __repr__(self):
         return f"StatementItem(bank_statement_id: '{self.bank_statement_id}', amount: '{self.amount}', is_debit: '{self.is_debit}')"
