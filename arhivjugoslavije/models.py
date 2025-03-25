@@ -217,7 +217,7 @@ class Invoice(db.Model):
     
     # Definišemo veze sa invoice_item i statement_item
     invoice_items = db.relationship('InvoiceItem', backref='invoice', lazy=True)
-    statement_items = db.relationship('StatementItem', backref='invoice', lazy=True)
+    # statement_items = db.relationship('StatementItem', backref='invoice', lazy=True)
     
     def __repr__(self):
         return f"Invoice('{self.invoice_number}', issue_date: '{self.issue_date}', total: '{self.total_amount} {self.currency}')"

@@ -13,7 +13,7 @@ from flask_migrate import Migrate
 # Učitavanje .env konfiguracije
 root_path = Path(__file__).resolve().parent.parent
 env_path = root_path / '.env'
-load_dotenv(dotenv_path=env_path)
+load_dotenv(dotenv_path=env_path, override=True)
 
 # Podešavanje logovanja
 if not os.path.exists('app_logs'):
@@ -33,6 +33,7 @@ app.logger.info('ArhivJugoslavije started')
 # Osnovne konfiguracije
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI')
+# print(f"Nakon dodeljivanja app.config: {app.config['SQLALCHEMY_DATABASE_URI']=}")
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_recycle': 299,
     'pool_timeout': 20,
