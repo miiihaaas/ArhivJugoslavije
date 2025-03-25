@@ -6,6 +6,18 @@
     <div class="row">
         <!-- Sekcija za učitavanje XML fajla - leva strana -->
         <div class="col-md-4">
+            {% if stavke %}
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">TEXT</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('statement.statement_list') }}" class="btn btn-secondary btn-block mt-3">
+                        <i class="fas fa-arrow-left mr-2"></i> Nazad na listu izvoda
+                    </a>
+                </div>
+            </div>
+            {% else %}
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">Učitaj XML fajl izvoda</h5>
@@ -27,6 +39,7 @@
                     </form>
                 </div>
             </div>
+            {% endif %}
         </div>
         
         <!-- Podaci o izvodu - desna strana -->
@@ -209,9 +222,15 @@
                     </div>
                 </div>
                 <div class="card-footer">
+                    {% if izvod_vec_postoji %}
+                    <div class="alert alert-warning mt-2 mb-0">
+                        <i class="fas fa-exclamation-triangle mr-2"></i> Ovaj izvod već postoji u bazi podataka. Možete pregledati podatke, ali ne možete ponovo sačuvati stavke.
+                    </div>
+                    {% else %}
                     <button type="submit" name="submitBtnSaveData" class="btn btn-success">
                         <i class="fas fa-save mr-2"></i> Sačuvajte izvod u bazu podataka
                     </button>
+                    {% endif %}
                 </div>
             </div>
         </form>

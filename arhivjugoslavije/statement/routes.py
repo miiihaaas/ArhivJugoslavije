@@ -23,6 +23,7 @@ def statement_list():
     ukupno_potrazuje_element = None
     krajnje_stanje_element = None
     broj_pojavljivanja = None
+    izvod_vec_postoji = False
     
     # Učitavanje podataka za padajuće menije
     partners = Partner.query.all()
@@ -72,6 +73,29 @@ def statement_list():
                             return redirect(url_for('statement.statement_list'))
 
                         
+                        # Provera da li izvod sa istim brojem i datumom već postoji
+                        try:
+                            # Konverzija datuma iz stringa u Python date objekat
+                            datum_izvoda = datetime.strptime(datum_izvoda_element, '%d.%m.%Y').date()
+                            
+                            # Provera da li izvod sa istim brojem i datumom već postoji
+                            existing_statement = BankStatement.query.filter_by(
+                                date=datum_izvoda,
+                                statement_number=broj_izvoda_element
+                            ).first()
+                            
+                            if existing_statement:
+                                # Ako izvod već postoji, omogući pregled podataka ali onemogući učitavanje
+                                flash(f'Izvod broj {broj_izvoda_element} od {datum_izvoda_element} već postoji u bazi podataka. Možete pregledati podatke, ali ne možete ponovo sačuvati stavke.', 'warning')
+                                # Postavljamo flag da je izvod već sačuvan
+                                izvod_vec_postoji = True
+                            else:
+                                izvod_vec_postoji = False
+                        except Exception as e:
+                            error_mesage = f'Greška prilikom provere postojećeg izvoda: {str(e)}.'
+                            flash(error_mesage, 'danger')
+                            return redirect(url_for('statement.statement_list'))
+                        
                         # Pretvaranje stavki u listu rečnika za lakše korišćenje u šablonu
                         stavke = []
                         for stavka_xml in stavke_xml:
@@ -105,21 +129,22 @@ def statement_list():
         try:
             # Konverzija datuma iz stringa u Python date objekat
             datum_izvoda = datetime.strptime(request.form.get('payment_date'), '%d.%m.%Y').date()
+            broj_izvoda = request.form.get('statement_number')
             
             # Provera da li izvod sa istim brojem i datumom već postoji
             existing_statement = BankStatement.query.filter_by(
                 date=datum_izvoda,
-                statement_number=request.form.get('statement_number')
+                statement_number=broj_izvoda
             ).first()
             
             if existing_statement:
-                flash(f'Izvod broj {request.form.get("statement_number")} od {request.form.get("payment_date")} već postoji u bazi podataka.', 'warning')
+                flash(f'Izvod broj {broj_izvoda} od {request.form.get("payment_date")} već postoji u bazi podataka. Ne možete ponovo sačuvati stavke.', 'warning')
                 return redirect(url_for('statement.statement_list'))
             
             # Kreiranje novog BankStatement objekta
             bank_statement = BankStatement(
                 date=datum_izvoda,
-                statement_number=request.form.get('statement_number'),
+                statement_number=broj_izvoda,
                 initial_balance=float(request.form.get('initial_balance').replace(',', '.')),
                 total_credit=float(request.form.get('total_credit').replace(',', '.')),
                 total_debit=float(request.form.get('total_debit').replace(',', '.')),
@@ -225,16 +250,60 @@ def statement_list():
                             accounts_level_6=accounts_level_6,
                             projects=projects,
                             error_message=error_mesage,
-                            bank_statements=bank_statements)
+                            bank_statements=bank_statements,
+                            izvod_vec_postoji=izvod_vec_postoji)
 
 
-@statement.route('/statement_details/<int:statement_id>', methods=['GET'])
+@statement.route('/statement_details/<int:statement_id>', methods=['GET', 'POST'])
 @login_required
 def statement_details(statement_id):
     endpoint = 'statement.statement_details'
     statement = BankStatement.query.get_or_404(statement_id)
+    
+    # Učitavanje potrebnih podataka za select elemente
+    partners = Partner.query.order_by(Partner.name).all()
+    accounts_level_6 = AccountLevel6.query.order_by(AccountLevel6.number).all()
+    projects = Project.query.filter_by(archived=False).order_by(Project.name).all()
+    
+    # Obrada POST zahteva za ažuriranje stavki
+    if request.method == 'POST':
+        try:
+            # Iteracija kroz sve stavke izvoda i ažuriranje podataka
+            for item in statement.statement_items:
+                item_id = str(item.id)
+                
+                # Ažuriranje editabilnih polja
+                if f'partner_id_{item_id}' in request.form:
+                    partner_id = request.form.get(f'partner_id_{item_id}')
+                    item.partner_id = int(partner_id) if partner_id else None
+                
+                if f'account_level_6_number_{item_id}' in request.form:
+                    account_number = request.form.get(f'account_level_6_number_{item_id}')
+                    item.account_level_6_number = account_number if account_number else None
+                
+                if f'project_id_{item_id}' in request.form:
+                    project_id = request.form.get(f'project_id_{item_id}')
+                    item.project_id = int(project_id) if project_id else None
+                
+                if f'public_procurement_{item_id}' in request.form:
+                    item.public_procurement = request.form.get(f'public_procurement_{item_id}')
+                
+                # Checkbox za knjiženje u projekat
+                item.account_in_project = f'account_in_project_{item_id}' in request.form
+            
+            db.session.commit()
+            flash('Stavke izvoda su uspešno ažurirane.', 'success')
+            return redirect(url_for('statement.statement_details', statement_id=statement_id))
+        
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Došlo je do greške prilikom ažuriranja stavki: {str(e)}.', 'danger')
+    
     return render_template('statement/statement_details.html',
-                            endpoint=endpoint,
-                            legend='Detalji izvoda',
-                            title='Detalji izvoda',
-                            statement=statement)
+                          endpoint=endpoint,
+                          legend='Detalji izvoda',
+                          title='Detalji izvoda',
+                          statement=statement,
+                          partners=partners,
+                          accounts_level_6=accounts_level_6,
+                          projects=projects)
