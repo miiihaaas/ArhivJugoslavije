@@ -261,7 +261,8 @@ def statement_details(statement_id):
     statement = BankStatement.query.get_or_404(statement_id)
     
     # Učitavanje potrebnih podataka za select elemente
-    partners = Partner.query.order_by(Partner.name).all()
+    customers = Partner.query.filter_by(customer=True).order_by(Partner.name).all()
+    suppliers = Partner.query.filter_by(supplier=True).order_by(Partner.name).all()
     accounts_level_6 = AccountLevel6.query.order_by(AccountLevel6.number).all()
     projects = Project.query.filter_by(archived=False).order_by(Project.name).all()
     
@@ -300,10 +301,11 @@ def statement_details(statement_id):
             flash(f'Došlo je do greške prilikom ažuriranja stavki: {str(e)}.', 'danger')
     
     return render_template('statement/statement_details.html',
-                          endpoint=endpoint,
-                          legend='Detalji izvoda',
-                          title='Detalji izvoda',
-                          statement=statement,
-                          partners=partners,
-                          accounts_level_6=accounts_level_6,
-                          projects=projects)
+                            endpoint=endpoint,
+                            legend='Detalji izvoda',
+                            title='Detalji izvoda',
+                            statement=statement,
+                            customers=customers,
+                            suppliers=suppliers,
+                            accounts_level_6=accounts_level_6,
+                            projects=projects)
