@@ -1,0 +1,274 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="h1">{{ legend }}</div>
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- Sekcija za učitavanje XML fajla - leva strana -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Učitaj XML fajl izvoda</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="fileInput">Izaberite XML fajl:</label>
+                            <input type="file" 
+                                class="form-control-file" 
+                                id="fileInput" 
+                                name="fileInput" 
+                                accept=".xml"
+                                required>
+                        </div>
+                        <button type="submit" name="submitBtnImportData" class="btn btn-primary btn-block mt-3">
+                            <i class="fas fa-upload mr-2"></i> Učitaj XML fajl
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Podaci o izvodu - desna strana -->
+        {% if stavke %}
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Pregled učitanih podataka</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-5">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td width="50%"><strong>Datum izvoda:</strong></td>
+                                    <td>{{ datum_izvoda_element }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Broj izvoda:</strong></td>
+                                    <td>{{ broj_izvoda_element }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Račun izvoda:</strong></td>
+                                    <td>{{ racun_izvoda_element }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Početno stanje:</strong></td>
+                                    <td>{{ pocetno_stanje_element }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-7">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td width="50%"><strong>Ukupna dugovna strana:</strong></td>
+                                    <td>{{ ukupno_duguje_element }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Ukupna potražena strana:</strong></td>
+                                    <td>{{ ukupno_potrazuje_element }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Krajnje stanje:</strong></td>
+                                    <td>{{ krajnje_stanje_element }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Broj stavki:</strong></td>
+                                    <td>{{ broj_pojavljivanja }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if stavke %}
+    <div class="mt-4">
+        <form method="POST">
+            <input type="hidden" name="payment_date" value="{{ datum_izvoda_element }}">
+            <input type="hidden" name="statement_number" value="{{ broj_izvoda_element }}">
+            <input type="hidden" name="initial_balance" value="{{ pocetno_stanje_element }}">
+            <input type="hidden" name="total_debit" value="{{ ukupno_duguje_element }}">
+            <input type="hidden" name="total_credit" value="{{ ukupno_potrazuje_element }}">
+            <input type="hidden" name="final_balance" value="{{ krajnje_stanje_element }}">
+            <input type="hidden" name="number_of_items" value="{{ broj_pojavljivanja }}">
+            <input type="hidden" name="bank_account" value="{{ racun_izvoda_element }}">
+
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Stavke izvoda</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <!-- Needitabilna polja (iz XML fajla) -->
+                                    <th>Uplatilac</th>
+                                    <th>Primalac</th>
+                                    <th>Iznos</th>
+                                    <th>Tip</th>
+                                    <th>Broj dokumenta</th>
+                                    <th>Poziv na broj</th>
+                                    <th>Svrha uplate</th>
+                                    <!-- Editabilna polja -->
+                                    <th>Partner</th>
+                                    <th>Konto (nivo 6)</th>
+                                    <th>Projekat</th>
+                                    <th>Javna nabavka</th>
+                                    <th>Knjiži u projekat</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stavka in stavke %}
+                                <tr {% if not stavka.Validnost %}class="table-danger"{% endif %}>
+                                    <!-- Needitabilna polja (iz XML fajla) -->
+                                    <td>
+                                        <input type="hidden" name="payer[]" value="{{ stavka.NazivZaduzenja }}">
+                                        {{ stavka.NazivZaduzenja }}
+                                    </td>
+                                    <td>
+                                        <input type="hidden" name="recipient[]" value="{{ stavka.NazivOdobrenja }}">
+                                        {{ stavka.NazivOdobrenja }}
+                                    </td>
+                                    <td>
+                                        <input type="hidden" name="amount[]" value="{{ stavka.Iznos }}">
+                                        {{ stavka.Iznos }}
+                                    </td>
+                                    <td>
+                                        <input type="hidden" name="is_debit[]" value="{% if stavka.Dug %}true{% else %}false{% endif %}">
+                                        {% if stavka.Izlazna %}
+                                            <span class="badge badge-danger">Izlazna</span>
+                                        {% elif not stavka.Izlazna %}
+                                            <span class="badge badge-success">Ulazna</span>
+                                        {% elif stavka.Izlazna is none %}
+                                            <span class="badge badge-info">Nepoznato!</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <input type="hidden" name="document_number[]" value="{{ stavka.BrojDokumenta }}">
+                                        {{ stavka.BrojDokumenta }}
+                                    </td>
+                                    <td>
+                                        <input type="hidden" name="reference_number[]" value="{{ stavka.PozivNaBrojApp }}">
+                                        {{ stavka.PozivNaBrojApp }}
+                                    </td>
+                                    <td>
+                                        <input type="hidden" name="description[]" value="{{ stavka.SvrhaDoznake }}">
+                                        {{ stavka.SvrhaDoznake }}
+                                    </td>
+                                    <!-- Editabilna polja -->
+                                    <td>
+                                        {% if stavka.Izlazna %}
+                                            <select name="partner_id[]" class="form-control form-control-sm">
+                                                <option value="">-- Izaberite --</option>
+                                                {% for supplier in suppliers %}
+                                                <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        {% else %}
+                                            <select name="partner_id[]" class="form-control form-control-sm">
+                                                <option value="">-- Izaberite --</option>
+                                                {% for customer in customers %}
+                                                <option value="{{ customer.id }}">{{ customer.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <select name="account_level_6_number[]" class="form-control form-control-sm">
+                                            <option value="">-- Izaberite --</option>
+                                            {% for account in accounts_level_6 %}
+                                            <option value="{{ account.number }}">{{ account.number }} - {{ account.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select name="project_id[]" class="form-control form-control-sm">
+                                            <option value="">-- Izaberite --</option>
+                                            {% for project in projects %}
+                                            <option value="{{ project.id }}">{{ project.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="public_procurement[]" class="form-control form-control-sm" placeholder="Javna nabavka">
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="form-check">
+                                            <input type="checkbox" name="account_in_project[]" class="form-check-input" id="accountInProject{{ loop.index }}" value="{{ loop.index }}">
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" name="submitBtnSaveData" class="btn btn-success">
+                        <i class="fas fa-save mr-2"></i> Sačuvajte izvod u bazu podataka
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    {% elif bank_statements %}
+    <div class="mt-4">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Prethodno učitani izvodi</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Datum</th>
+                                <th>Broj izvoda</th>
+                                <th>Račun</th>
+                                <th>Početno stanje</th>
+                                <th>Ukupno duguje</th>
+                                <th>Ukupno potražuje</th>
+                                <th>Krajnje stanje</th>
+                                <th>Broj stavki</th>
+                                <th>Akcije</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for statement in bank_statements %}
+                            <tr>
+                                <td>{{ statement.id }}</td>
+                                <td>{{ statement.payment_date }}</td>
+                                <td>{{ statement.statement_number }}</td>
+                                <td>{{ statement.bank_account }}</td>
+                                <td class="text-end">{{ "%.2f"|format(statement.initial_balance|float) }}</td>
+                                <td class="text-end">{{ "%.2f"|format(statement.total_debit|float) }}</td>
+                                <td class="text-end">{{ "%.2f"|format(statement.total_credit|float) }}</td>
+                                <td class="text-end">{{ "%.2f"|format(statement.final_balance|float) }}</td>
+                                <td class="text-center">{{ statement.number_of_items }}</td>
+                                <td class="text-center">
+                                    <a href="{{ url_for('statement.statement_details', statement_id=statement.id) }}" class="btn btn-sm btn-outline-primary" title="Detalji">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="10" class="text-center">Nema učitanih izvoda</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% endif %}
+</div>
+{% endblock %}
