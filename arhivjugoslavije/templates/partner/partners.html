@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="content-section">
+<div class="container mt-4">
     <!-- Zaglavlje stranice sa naslovom i dugmadima za akcije -->
     <div class="row mb-4">
         <div class="col-12">
@@ -37,12 +37,10 @@
                     <th>Naziv</th>
                     <th>Adresa</th>
                     <th>Tekući račun</th>
-                    <th>Telefon 1</th>
-                    <th>Telefon 2</th>
-                    <th>Email</th>
+                    <th>Kontakt</th>
                     <th>PIB/MB</th>
                     <th>Tip partnera</th>
-                    <th class="actions-column">Akcije</th>
+                    <th class="actions-column" style="width: 1%;"></th>
                 </tr>
             </thead>
             <tbody>
@@ -54,12 +52,16 @@
                     <td>{{ partner.id }}</td>
                     <td>{{ partner.name }}</td>
                     <td>
-                        {{ partner.address }}{% if partner.address and partner.city %}, {% endif %}{{ partner.city }}
+                        {% if partner.address %}{{ partner.address }}{% endif %}
+                        {% if partner.city %},<br>{{ partner.city }}{% endif %}
+                        {% if partner.country %},<br>{{ partner.country }}{% endif %}
                     </td>
                     <td>{{ partner.account_number }}</td>
-                    <td>{{ partner.phone_1 }}</td>
-                    <td>{{ partner.phone_2 }}</td>
-                    <td>{{ partner.email }}</td>
+                    <td>
+                        {% if partner.phone_1 %}{{ partner.phone_1 }}{% endif %}
+                        {% if partner.phone_2 %}<br>{{ partner.phone_2 }}{% endif %}
+                        {% if partner.email %}<br>{{ partner.email }}{% endif %}
+                    </td>
                     <td>
                         {% if partner.pib %}PIB: {{ partner.pib }}{% endif %}
                         {% if partner.pib and partner.mb %}<br>{% endif %}
@@ -75,24 +77,29 @@
                         {% if partner.international %}
                         <i class="fas fa-globe partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Strani partner"></i>
                         {% endif %}
+                        {% if partner.active %}
+                        <i class="fas fa-check-circle partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Aktivan"></i>
+                        {% else %}
+                        <i class="fas fa-circle-minus partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Neaktivan"></i>
+                        {% endif %}
                     </td>
-                    <td class="actions-column">
+                    <td class="actions-column" style="white-space: nowrap;">
                         <a href="{{ url_for('partner.edit_partner', partner_id=partner.id) }}" 
-                           class="btn btn-outline-secondary btn-sm action-btn"
-                           data-bs-toggle="tooltip" data-bs-placement="top" title="Izmeni partnera">
+                            class="btn btn-outline-secondary btn-sm action-btn"
+                            data-bs-toggle="tooltip" data-bs-placement="top" title="Izmeni partnera">
                             <i class="fas fa-edit"></i>
                         </a>
                         {% if partner.supplier %}
                         <a href="{{ url_for('partner.supplier_card', partner_id=partner.id) }}" 
-                           class="btn btn-outline-primary btn-sm action-btn"
-                           data-bs-toggle="tooltip" data-bs-placement="top" title="Kartica dobavljača">
+                            class="btn btn-outline-primary btn-sm action-btn"
+                            data-bs-toggle="tooltip" data-bs-placement="top" title="Kartica dobavljača">
                             <i class="fas fa-file-import text-primary"></i>
                         </a>
                         {% endif %}
                         {% if partner.customer %}
                         <a href="{{ url_for('partner.customer_card', partner_id=partner.id) }}" 
-                           class="btn btn-outline-success btn-sm action-btn"
-                           data-bs-toggle="tooltip" data-bs-placement="top" title="Kartica kupca">
+                            class="btn btn-outline-success btn-sm action-btn"
+                            data-bs-toggle="tooltip" data-bs-placement="top" title="Kartica kupca">
                             <i class="fas fa-file-export text-success"></i>
                         </a>
                         {% endif %}
@@ -235,6 +242,7 @@ document.addEventListener('DOMContentLoaded', function() {
             url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/sr-SP.json'
         },
         pageLength: 25,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Prikaži sve']],
         order: [[1, 'asc']], // Sortiranje po nazivu (druga kolona)
         columnDefs: [
             { orderable: false, targets: -1 } // Isključi sortiranje za kolonu sa akcijama

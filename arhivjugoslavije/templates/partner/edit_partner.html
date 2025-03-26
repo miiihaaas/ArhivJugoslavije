@@ -1,82 +1,108 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="content-section">
-    <div class="h1">{{ legend }}</div>
+<div class="container mt-4">
+    <!-- Zaglavlje stranice sa naslovom i dugmadima za akcije -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0"><i class="fas fa-edit me-2 text-primary"></i>{{ legend }}</h2>
+                        <div>
+                            <a href="{{ url_for('partner.partners') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Nazad na listu partnera
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">Izmena podataka partnera</h5>
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="fas fa-user-edit me-2"></i>Podaci o partneru</h5>
         </div>
         <div class="card-body">
             <form action="{{ url_for('partner.edit_partner', partner_id=partner.id) }}" method="POST">
                 {{ form.hidden_tag() }}
-                <div class="row mb-3">
+                
+                <!-- Osnovni podaci -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2 mb-3 text-muted"><i class="fas fa-info-circle me-2"></i>Osnovni podaci</h6>
+                    </div>
                     <div class="col-md-6">
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             {{ form.name.label(class="form-label") }}
                             {{ form.name(class="form-control", required=true, value=partner.name) }}
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             {{ form.email.label(class="form-label") }}
                             {{ form.email(class="form-control", value=partner.email) }}
                         </div>
                     </div>
                 </div>
                 
-                <div class="row mb-3">
+                <!-- Adresa i kontakt -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2 mb-3 text-muted"><i class="fas fa-map-marker-alt me-2"></i>Adresa i kontakt</h6>
+                    </div>
                     <div class="col-md-6">
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             {{ form.address.label(class="form-label") }}
                             {{ form.address(class="form-control", value=partner.address) }}
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             {{ form.city.label(class="form-label") }}
                             {{ form.city(class="form-control", value=partner.city) }}
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             {{ form.country.label(class="form-label") }}
                             {{ form.country(class="form-control", value=partner.country if partner.country else 'Srbija') }}
                         </div>
                     </div>
-                </div>
-                
-                <div class="row mb-3">
                     <div class="col-md-6">
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             {{ form.account_number.label(class="form-label") }}
                             {{ form.account_number(class="form-control", value=partner.account_number) }}
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             {{ form.phone_1.label(class="form-label") }}
                             {{ form.phone_1(class="form-control", value=partner.phone_1) }}
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             {{ form.phone_2.label(class="form-label") }}
                             {{ form.phone_2(class="form-control", value=partner.phone_2) }}
                         </div>
                     </div>
                 </div>
                 
-                <div class="row mb-3">
+                <!-- Identifikacija -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2 mb-3 text-muted"><i class="fas fa-id-card me-2"></i>Identifikacija</h6>
+                    </div>
                     <div class="col-md-6">
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             {{ form.pib.label(class="form-label") }}
                             {{ form.pib(class="form-control", required=true, value=partner.pib, maxlength="9", pattern="[0-9]{9}") }}
                             <div class="form-text">PIB mora sadržati 9 cifara</div>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             {{ form.mb.label(class="form-label") }}
                             {{ form.mb(class="form-control", required=true, value=partner.mb, maxlength="8", pattern="[0-9]{8}") }}
                             <div class="form-text">Matični broj mora sadržati 8 cifara</div>
@@ -84,7 +110,17 @@
                     </div>
                 </div>
                 
-                <div class="row mb-3">
+                <!-- Status i tip partnera -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2 mb-3 text-muted"><i class="fas fa-tag me-2"></i>Status i tip partnera</h6>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <div class="form-check form-switch">
+                            {{ form.active(class="form-check-input", checked=partner.active) }}
+                            {{ form.active.label(class="form-check-label") }}
+                        </div>
+                    </div>
                     <div class="col-md-12">
                         <div class="form-check form-check-inline">
                             {{ form.customer(class="form-check-input", checked=partner.customer) }}
@@ -102,8 +138,10 @@
                 </div>
                 
                 <div class="row mt-4">
-                    <div class="col-md-12">
-                        <a href="{{ url_for('partner.partners') }}" class="btn btn-secondary">Odustani</a>
+                    <div class="col-md-12 d-flex justify-content-between">
+                        <a href="{{ url_for('partner.partners') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i> Odustani
+                        </a>
                         {{ form.submit(class="btn btn-primary") }}
                     </div>
                 </div>

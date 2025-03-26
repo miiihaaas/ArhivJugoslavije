@@ -45,6 +45,7 @@ class PartnerForm(FlaskForm):
 
 class EditPartnerForm(PartnerForm):
     """Forma za editovanje partnera, nasleđuje osnovnu PartnerForm"""
+    active = BooleanField('Aktivan')
     submit = SubmitField('Sačuvaj izmene')
     
     def __init__(self, original_partner_id, *args, **kwargs):

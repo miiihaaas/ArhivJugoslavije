@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 from arhivjugoslavije import db, app
-from arhivjugoslavije.models import Partner
+from arhivjugoslavije.models import Partner, Invoice
 from arhivjugoslavije.partner.forms import PartnerForm, EditPartnerForm
+from datetime import datetime
 
 
 partner = Blueprint('partner', __name__)
@@ -78,6 +79,7 @@ def edit_partner(partner_id):
         form.phone_1.data = partner.phone_1
         form.phone_2.data = partner.phone_2
         form.email.data = partner.email
+        form.active.data = partner.active
         form.customer.data = partner.customer
         form.supplier.data = partner.supplier
         form.international.data = partner.international
@@ -95,6 +97,7 @@ def edit_partner(partner_id):
         partner.phone_1 = form.phone_1.data
         partner.phone_2 = form.phone_2.data
         partner.email = form.email.data
+        partner.active = form.active.data
         partner.customer = form.customer.data
         partner.supplier = form.supplier.data
         partner.international = form.international.data
@@ -112,25 +115,27 @@ def edit_partner(partner_id):
                 flash(f'{error}', 'danger')
     
     return render_template('partner/edit_partner.html', 
-                          partner=partner,
-                          form=form,
-                          legend='Izmena partnera',
-                          title='Izmena partnera')
+                            partner=partner,
+                            form=form,
+                            legend='Izmena partnera',
+                            title='Izmena partnera')
 
 @partner.route('/supplier_card/<int:partner_id>')
 @login_required
 def supplier_card(partner_id):
     partner = Partner.query.get_or_404(partner_id)
     
-    # Provera da li je partner dobavljač
     if not partner.supplier:
         flash('Izabrani partner nije označen kao dobavljač.', 'warning')
         return redirect(url_for('partner.partners'))
     
+    invoices = Invoice.query.filter_by(partner_id=partner_id, incoming=True).order_by(Invoice.issue_date.desc()).all()
     return render_template('partner/supplier_card.html',
-                          partner=partner,
-                          legend=f'Kartica dobavljača: {partner.name}',
-                          title=f'Kartica dobavljača: {partner.name}')
+                            partner=partner,
+                            legend=f'Kartica dobavljača: {partner.name}',
+                            title=f'Kartica dobavljača: {partner.name}',
+                            invoices=invoices,
+                            current_date=datetime.now().date())
 
 @partner.route('/customer_card/<int:partner_id>')
 @login_required
@@ -142,7 +147,10 @@ def customer_card(partner_id):
         flash('Izabrani partner nije označen kao kupac.', 'warning')
         return redirect(url_for('partner.partners'))
     
+    invoices = Invoice.query.filter_by(partner_id=partner_id).order_by(Invoice.issue_date.desc()).all()
     return render_template('partner/customer_card.html',
-                          partner=partner,
-                          legend=f'Kartica kupca: {partner.name}',
-                          title=f'Kartica kupca: {partner.name}')
+                            partner=partner,
+                            legend=f'Kartica kupca: {partner.name}',
+                            title=f'Kartica kupca: {partner.name}',
+                            invoices=invoices,
+                            current_date=datetime.now().date())
