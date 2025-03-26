@@ -99,14 +99,14 @@
                                     <!-- Editabilna polja -->
                                     <td>
                                         {% if item.is_debit %}
-                                            <select name="partner_id_{{ item.id }}" class="form-control form-control-sm" {% if not current_user.is_authenticated %}disabled{% endif %}>
+                                            <select name="partner_id_{{ item.id }}" class="form-select form-select-sm" {% if not current_user.is_authenticated %}disabled{% endif %}>
                                                 <option value="">-- Izaberite --</option>
                                                 {% for supplier in suppliers %}
                                                     <option value="{{ supplier.id }}" {% if item.partner_id == supplier.id %}selected{% endif %}>{{ supplier.name }}</option>
                                                 {% endfor %}
                                             </select>
                                         {% else %}
-                                            <select name="partner_id_{{ item.id }}" class="form-control form-control-sm" {% if not current_user.is_authenticated %}disabled{% endif %}>
+                                            <select name="partner_id_{{ item.id }}" class="form-select form-select-sm" {% if not current_user.is_authenticated %}disabled{% endif %}>
                                                 <option value="">-- Izaberite --</option>
                                                 {% for customer in customers %}
                                                     <option value="{{ customer.id }}" {% if item.partner_id == customer.id %}selected{% endif %}>{{ customer.name }}</option>
@@ -115,7 +115,7 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <select name="account_level_6_number_{{ item.id }}" class="form-control form-control-sm" {% if not current_user.is_authenticated %}disabled{% endif %}>
+                                        <select name="account_level_6_number_{{ item.id }}" class="form-select form-select-sm" {% if not current_user.is_authenticated %}disabled{% endif %}>
                                             <option value="">-- Izaberite --</option>
                                             {% for account in accounts_level_6 %}
                                                 <option value="{{ account.number }}" {% if item.account_level_6_number == account.number %}selected{% endif %}>{{ account.number }} - {{ account.name }}</option>
@@ -123,7 +123,7 @@
                                         </select>
                                     </td>
                                     <td>
-                                        <select name="project_id_{{ item.id }}" class="form-control form-control-sm" {% if not current_user.is_authenticated %}disabled{% endif %}>
+                                        <select name="project_id_{{ item.id }}" class="form-select form-select-sm" {% if not current_user.is_authenticated %}disabled{% endif %}>
                                             <option value="">-- Izaberite --</option>
                                             {% for project in projects %}
                                                 <option value="{{ project.id }}" {% if item.project_id == project.id %}selected{% endif %}>{{ project.name }}</option>

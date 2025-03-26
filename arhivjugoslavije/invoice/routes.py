@@ -1,10 +1,10 @@
 from datetime import datetime
-from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, make_response
-from flask_login import login_required, current_user
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
+from flask_login import login_required
 from arhivjugoslavije import db
-from arhivjugoslavije.models import Partner, Invoice, InvoiceItem, Service, ArchiveSettings, UnitOfMeasure
+from arhivjugoslavije.models import Partner, Invoice, InvoiceItem, Service
 from arhivjugoslavije.invoice.forms import InvoiceForm, InvoiceItemForm, EditInvoiceForm
-from arhivjugoslavije.invoice.functions import generate_invoice_pdf
+from arhivjugoslavije.invoice.functions import generate_invoice_pdf, save_invoice_to_db, send_invoice_to_partner
 import os
 from pathlib import Path
 
@@ -77,7 +77,8 @@ def create_customer_invoice():
                 partner_id=form.partner_id.data,
                 currency=form.currency.data,
                 total_amount=0,  # Početna vrednost, biće ažurirana nakon dodavanja stavki
-                incoming=False
+                incoming=False,
+                status='nacrt'
             )
             db.session.add(new_invoice)
             db.session.commit()
@@ -94,6 +95,60 @@ def create_customer_invoice():
                             title='Nova izlazna faktura',
                             form=form,
                             recent_invoices=recent_invoices)
+
+
+@invoices.route('/delete_invoice/<int:invoice_id>', methods=['POST'])
+@login_required
+def delete_invoice(invoice_id):
+    invoice = Invoice.query.get_or_404(invoice_id)
+    if invoice.status != 'nacrt':
+        flash('Faktura nije u nacrтu, ne može se obrisati.', 'warning')
+        return redirect(url_for('invoices.invoice_list'))
+    if invoice.incoming and invoice.paid:
+        flash('Ulazna faktura je plaćena, ne može se obrisati.', 'warning')
+        return redirect(url_for('invoices.invoice_list'))
+    invoice_items = InvoiceItem.query.filter_by(invoice_id=invoice.id).all()
+    for item in invoice_items:
+        db.session.delete(item)
+    db.session.delete(invoice)
+    db.session.commit()
+    flash('Faktura uspešno obrisana.', 'success')
+    return redirect(url_for('invoices.invoice_list'))
+
+
+@invoices.route('/save_invoice/<int:invoice_id>', methods=['GET', 'POST'])
+@login_required
+def save_invoice(invoice_id):
+    message = save_invoice_to_db(invoice_id)
+    if 'error' in message:
+        flash(message['error'], 'danger')
+        return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
+    if 'success' in message:
+        flash(message['success'], 'success')
+        return redirect(url_for('invoices.invoice_list'))
+    return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
+
+
+@invoices.route('/send_invoice/<int:invoice_id>', methods=['GET', 'POST'])
+@login_required
+def send_invoice(invoice_id):
+    invoice = Invoice.query.get_or_404(invoice_id)
+    if invoice.status == 'nacrt':
+        message_1 = save_invoice_to_db(invoice_id)
+        if 'error' in message_1:
+            flash(message_1['error'], 'danger')
+            return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
+        if 'success' in message_1:
+            flash(message_1['success'], 'success')
+    message_2 = send_invoice_to_partner(invoice_id)
+    if 'error' in message_2:
+        flash(message_2['error'], 'danger')
+        return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
+    if 'success' in message_2:
+        flash(message_2['success'], 'success')
+        return redirect(url_for('invoices.invoice_list'))
+    return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
+
 
 @invoices.route('/edit_customer_invoice/<int:invoice_id>', methods=['GET', 'POST'])
 @login_required
@@ -271,6 +326,7 @@ def generate_invoice_pdf_route(invoice_id):
     Poziva funkciju iz functions.py koja sadrži svu logiku.
     """
     return generate_invoice_pdf(invoice_id)
+
 
 @invoices.route('/get_invoice_item/<int:item_id>')
 @login_required

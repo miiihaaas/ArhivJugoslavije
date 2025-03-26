@@ -5,12 +5,126 @@ import logging
 from pathlib import Path
 from flask import make_response, flash, redirect, url_for, current_app
 from arhivjugoslavije.models import Invoice, Partner, InvoiceItem, Service, ArchiveSettings, UnitOfMeasure, BankAccount
+from arhivjugoslavije import db, mail
+from flask_mail import Message
 
 
-def generate_invoice_pdf(invoice_id):
+def save_invoice_to_db(invoice_id):
+    """
+    Funkcija za sačuvanje fakture u data bazi.
+    Vraća poruku sa statusom sačuvanja.
+    """
+    invoice = Invoice.query.get_or_404(invoice_id)
+    message = {}
+    if invoice.status != 'nacrt':
+        message['error'] = f'Faktura {invoice.invoice_number} nije u nacrtu, ne može se sačuvati.'
+        return message
+    invoice.status = 'sacuvano'
+    db.session.commit()
+    message['success'] = f'Faktura {invoice.invoice_number} je uspešno sačuvana u data bazi.'
+    return message
+
+
+def send_invoice_to_partner(invoice_id):
+    """
+    Funkcija za slanje fakture partneru.
+    Vraća poruku sa statusom slanja.
+    """
+    invoice = Invoice.query.get_or_404(invoice_id)
+    message = {}
+    if invoice.incoming:
+        message['error'] = f'Nije moguće poslati izlaznu fakturu dobavljaču.'
+        return message
+    
+    if invoice.status != 'poslato':
+        # Pokušaj slanja emaila
+        email_sent = send_email(invoice)
+        
+        if email_sent:
+            invoice.status = 'poslato'
+            db.session.commit()
+            message['success'] = f'Faktura {invoice.invoice_number} je uspešno poslata partneru.'
+        else:
+            message['error'] = f'Došlo je do greške prilikom slanja fakture {invoice.invoice_number}. Proverite log fajl za više detalja.'
+        
+        return message
+    else:
+        message['error'] = f'Faktura {invoice.invoice_number} je već poslata.'
+        return message
+
+
+def send_email(invoice):
+    """
+    Funkcija za slanje e-maila partneru sa priloženom fakturom.
+    Generiše PDF fakturu, dodaje je kao prilog i šalje email partneru.
+    """
+    try:
+        # Dohvati partnera
+        partner = Partner.query.get(invoice.partner_id)
+        if not partner or not partner.email:
+            current_app.logger.error(f"Nije moguće poslati email: Partner nema email adresu za fakturu {invoice.invoice_number}")
+            return False
+        
+        # Dohvati podatke o arhivu
+        archive_settings = ArchiveSettings.query.first()
+        if not archive_settings:
+            current_app.logger.error(f"Nije moguće poslati email: Podaci o arhivu nisu podešeni za fakturu {invoice.invoice_number}")
+            return False
+        
+        # Generiši PDF fakturu
+        pdf_buffer = generate_invoice_pdf(invoice.id, is_attachment=True)
+        if not pdf_buffer:
+            current_app.logger.error(f"Nije moguće generisati PDF za fakturu {invoice.invoice_number}")
+            return False
+        
+        # Pripremi email poruku
+        subject = f'Faktura {invoice.invoice_number}'
+        sender = current_app.config.get('MAIL_DEFAULT_SENDER', archive_settings.email)
+        
+        # Kreiraj HTML sadržaj emaila
+        html_body = f'''
+        <html>
+            <body>
+                <p>Poštovani,</p>
+                <p>U prilogu Vam dostavljamo fakturu broj {invoice.invoice_number}.</p>
+                <p>Molimo Vas da izvršite plaćanje u roku navedenom na fakturi.</p>
+                <p>S poštovanjem,<br>
+                {archive_settings.name}</p>
+            </body>
+        </html>
+        '''
+        
+        # Kreiraj poruku
+        msg = Message(
+            subject=subject,
+            recipients=[partner.email],
+            html=html_body,
+            sender=sender
+        )
+        
+        # Dodaj PDF kao prilog
+        msg.attach(
+            filename=f"Faktura_{invoice.invoice_number}.pdf",
+            content_type="application/pdf",
+            data=pdf_buffer.read()
+        )
+        
+        # Pošalji email
+        mail.send(msg)
+        current_app.logger.info(f"Email sa fakturom {invoice.invoice_number} uspešno poslat na {partner.email}")
+        return True
+        
+    except Exception as e:
+        current_app.logger.error(f"Greška prilikom slanja emaila za fakturu {invoice.invoice_number}: {str(e)}")
+        return False
+
+
+
+def generate_invoice_pdf(invoice_id, is_attachment=False):
     """
     Funkcija za generisanje PDF fakture na osnovu ID-a fakture.
-    Vraća HTTP response sa PDF dokumentom ili None u slučaju greške.
+    Ako je is_attachment=False, vraća HTTP response sa PDF dokumentom.
+    Ako je is_attachment=True, vraća BytesIO objekat sa PDF sadržajem za prilog emailu.
     """
     try:
         # Dohvati fakturu
@@ -18,26 +132,42 @@ def generate_invoice_pdf(invoice_id):
         
         # Proveri da li je izlazna faktura
         if invoice.incoming:
-            flash('Generisanje PDF-a je dostupno samo za izlazne fakture.', 'warning')
-            return redirect(url_for('invoices.invoice_list'))
+            if is_attachment:
+                current_app.logger.warning('Generisanje PDF-a je dostupno samo za izlazne fakture.')
+                return None
+            else:
+                flash('Generisanje PDF-a je dostupno samo za izlazne fakture.', 'warning')
+                return redirect(url_for('invoices.invoice_list'))
         
         # Dohvati podatke o arhivu
         archive_settings = ArchiveSettings.query.first()
         if not archive_settings:
-            flash('Podaci o arhivu nisu podešeni. Molimo vas da prvo podesite podatke o arhivu.', 'danger')
-            return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
+            if is_attachment:
+                current_app.logger.error('Podaci o arhivu nisu podešeni.')
+                return None
+            else:
+                flash('Podaci o arhivu nisu podešeni. Molimo vas da prvo podesite podatke o arhivu.', 'danger')
+                return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
         
         # Dohvati partnera (kupca)
         partner = Partner.query.get(invoice.partner_id)
         if not partner:
-            flash('Podaci o partneru nisu pronađeni.', 'danger')
-            return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
+            if is_attachment:
+                current_app.logger.error('Podaci o partneru nisu pronađeni.')
+                return None
+            else:
+                flash('Podaci o partneru nisu pronađeni.', 'danger')
+                return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
         
         # Dohvati stavke fakture
         invoice_items = InvoiceItem.query.filter_by(invoice_id=invoice_id).all()
         if not invoice_items:
-            flash('Faktura nema stavke. Molimo vas da dodate bar jednu stavku.', 'warning')
-            return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
+            if is_attachment:
+                current_app.logger.warning('Faktura nema stavke.')
+                return None
+            else:
+                flash('Faktura nema stavke. Molimo vas da dodate bar jednu stavku.', 'warning')
+                return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
         
         # Proveri da li postoje DejaVu fontovi - koristi apsolutnu putanju
         base_dir = current_app.root_path
@@ -47,14 +177,22 @@ def generate_invoice_pdf(invoice_id):
         
         # Provera da li fontovi postoje
         if not os.path.exists(dejavu_regular):
-            logging.error(f"Font nije pronađen na putanji: {dejavu_regular}")
-            flash('Font DejaVuSansCondensed.ttf nije pronađen. Proverite da li je font dostupan u static/fonts direktorijumu.', 'danger')
-            return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
+            if is_attachment:
+                current_app.logger.error(f"Font nije pronađen na putanji: {dejavu_regular}")
+                return None
+            else:
+                logging.error(f"Font nije pronađen na putanji: {dejavu_regular}")
+                flash('Font DejaVuSansCondensed.ttf nije pronađen. Proverite da li je font dostupan u static/fonts direktorijumu.', 'danger')
+                return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
         
         if not os.path.exists(dejavu_bold):
-            logging.error(f"Font nije pronađen na putanji: {dejavu_bold}")
-            flash('Font DejaVuSansCondensed-Bold.ttf nije pronađen. Proverite da li je font dostupan u static/fonts direktorijumu.', 'danger')
-            return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
+            if is_attachment:
+                current_app.logger.error(f"Font nije pronađen na putanji: {dejavu_bold}")
+                return None
+            else:
+                logging.error(f"Font nije pronađen na putanji: {dejavu_bold}")
+                flash('Font DejaVuSansCondensed-Bold.ttf nije pronađen. Proverite da li je font dostupan u static/fonts direktorijumu.', 'danger')
+                return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
         
         # Kreiraj PDF sa podrškom za Unicode karaktere
         class InvoicePDF(FPDF):
@@ -154,34 +292,35 @@ def generate_invoice_pdf(invoice_id):
                     self.cell(95, 5, f'PIB: {partner.pib}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
                     y_position += 5
                 
-                # MB partnera - desna strana
+                # Matični broj partnera - desna strana
                 if partner.mb:
                     self.set_xy(105, y_position)
                     self.cell(95, 5, f'MB: {partner.mb}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
                     y_position += 5
                 
-                # Sada postavljamo datume na levoj strani u ravni sa poslednja tri reda desne strane
-                # Izračunavanje pozicije za datume (3 reda iznad poslednjeg reda partnera)
-                date_y_position = y_position - 15  # 3 reda po 5mm
-                
-                # Datumi - leva strana
+                # Mesto i datum izdavanja - leva strana
                 self.set_font('DejaVu', '', 10)
-                self.set_xy(10, date_y_position)
-                self.cell(95, 5, f'Mesto i datum izdavanja: {archive_settings.city}, {invoice.issue_date.strftime("%d.%m.%Y.")}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+                self.set_xy(10, 45)
+                self.cell(95, 5, f'Mesto izdavanja: {archive_settings.city}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
                 
-                # Datum prometa
-                self.set_xy(10, date_y_position + 5)
+                # Datum izdavanja - leva strana
+                self.set_xy(10, 50)
+                self.cell(95, 5, f'Datum izdavanja: {invoice.issue_date.strftime("%d.%m.%Y.")}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+                
+                # Datum prometa - leva strana
+                self.set_xy(10, 55)
                 self.cell(95, 5, f'Datum prometa: {invoice.service_date.strftime("%d.%m.%Y.")}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
                 
-                # Datum dospeća
+                # Rok plaćanja - leva strana
                 if invoice.payment_due_date:
-                    self.set_xy(10, date_y_position + 10)
-                    self.cell(95, 5, f'Datum dospeća: {invoice.payment_due_date.strftime("%d.%m.%Y.")}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+                    self.set_xy(10, 60)
+                    self.cell(95, 5, f'Rok plaćanja: {invoice.payment_due_date.strftime("%d.%m.%Y.")}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
                 
                 # ===== TREĆI DEO: NASLOV FAKTURE =====
+                self.ln(10)  # Prazan prostor između delova
+                
                 # Naslov fakture
                 self.set_font('DejaVu', 'B', 14)
-                self.set_y(85)  # Postavlja Y poziciju za naslov fakture
                 self.cell(0, 10, f'Račun br.: {invoice.invoice_number}', 0, new_x="LMARGIN", new_y="NEXT", align="C")
             
             def footer(self):
@@ -227,7 +366,7 @@ def generate_invoice_pdf(invoice_id):
                 # Broj stranice na dnu
                 self.set_y(-5)  # 5mm od dna stranice
                 self.set_font('DejaVu', 'I', 8)
-                self.cell(0, 5, f'Strana {self.page_no()}', 0, new_x="RIGHT", new_y="LAST", align="C")
+                self.cell(0, 5, f'Strana {self.page_no()}', 0, new_x="LMARGIN", new_y="NEXT", align="C")
         
         # Kreiraj PDF dokument
         pdf = InvoicePDF()
@@ -253,39 +392,51 @@ def generate_invoice_pdf(invoice_id):
             pdf.cell(10, 10, str(i + 1), 1, new_x="RIGHT", new_y="LAST", align="C")
             pdf.cell(80, 10, service.name_sr if service.name_sr else '', 1, new_x="RIGHT", new_y="LAST", align="L")
             pdf.cell(25, 10, unit_name, 1, new_x="RIGHT", new_y="LAST", align="C")
-            pdf.cell(20, 10, str(item.quantity), 1, new_x="RIGHT", new_y="LAST", align="C")
-            pdf.cell(25, 10, f'{item.price} {item.currency}', 1, new_x="RIGHT", new_y="LAST", align="C")
+            pdf.cell(20, 10, str(item.quantity), 1, new_x="RIGHT", new_y="LAST", align="R")
+            pdf.cell(25, 10, f'{item.price} {item.currency}', 1, new_x="RIGHT", new_y="LAST", align="R")
             pdf.cell(30, 10, f'{item.total} {item.currency}', 1, new_x="LMARGIN", new_y="NEXT", align="C")
         
         # Ukupan iznos fakture
         pdf.ln(10)
         pdf.set_font('DejaVu', 'B', 12)
-        pdf.cell(0, 10, f'Ukupno za uplatu: {invoice.total_amount} {invoice.currency}', 0, new_x="LMARGIN", new_y="NEXT", align="R")
+        pdf.cell(0, 10, f'Ukupno za uplatu: {invoice.total_amount} {invoice.currency}', 1, new_x="RIGHT", new_y="LAST", align="R")
         
         # Svrha uplate i poziv na broj
         pdf.ln(10)
         pdf.set_font('DejaVu', '', 10)
-        pdf.cell(0, 6, f'Svrha uplate: 318', 0, new_x="LMARGIN", new_y="NEXT", align="L")
-        pdf.cell(0, 6, f'Poziv na broj: {archive_settings.model} {archive_settings.poziv_na_broj}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+        pdf.cell(0, 6, f'Svrha uplate: 318', 1, new_x="LMARGIN", new_y="NEXT", align="L")
+        pdf.cell(0, 6, f'Poziv na broj: {archive_settings.model} {archive_settings.poziv_na_broj}', 1, new_x="LMARGIN", new_y="NEXT", align="L")
         
         # Napomena
         pdf.ln(10)
         pdf.set_font('DejaVu', '', 10)
-        pdf.cell(0, 6, 'Napomena: ARHIV JUGOSLAVIJE nije u sistemu PDV-a u skladu sa Zakonom o PDV-u.', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+        pdf.cell(0, 6, 'Napomena: ARHIV JUGOSLAVIJE nije u sistemu PDV-a u skladu sa Zakonom o PDV-u.', 1, new_x="LMARGIN", new_y="NEXT", align="L")
         
         # Generisanje PDF-a
-        pdf_bytes = io.BytesIO()
-        pdf.output(pdf_bytes)
-        pdf_bytes.seek(0)
-        
-        response = make_response(pdf_bytes.getvalue())
-        response.headers.set('Content-Disposition', f'inline; filename=faktura_{invoice.invoice_number}.pdf')
-        response.headers.set('Content-Type', 'application/pdf')
-        
-        return response
+        if is_attachment:
+            # Vraćamo BytesIO objekat sa PDF sadržajem za prilog emailu
+            pdf_buffer = io.BytesIO()
+            pdf.output(pdf_buffer)
+            pdf_buffer.seek(0)
+            return pdf_buffer
+        else:
+            # Vraćamo HTTP response za prikaz u pretraživaču
+            pdf_bytes = io.BytesIO()
+            pdf.output(pdf_bytes)
+            pdf_bytes.seek(0)
+            
+            response = make_response(pdf_bytes.getvalue())
+            response.headers.set('Content-Disposition', f'inline; filename=faktura_{invoice.invoice_number}.pdf')
+            response.headers.set('Content-Type', 'application/pdf')
+            
+            return response
         
     except Exception as e:
-        # Loguj grešku koristeći logging umesto print
-        logging.error(f"Greška pri generisanju PDF-a: {str(e)}")
-        flash(f'Došlo je do greške prilikom generisanja PDF-a: {str(e)}.', 'danger')
-        return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
+        error_msg = f"Greška prilikom generisanja PDF-a: {str(e)}"
+        if is_attachment:
+            current_app.logger.error(error_msg)
+            return None
+        else:
+            logging.error(error_msg)
+            flash(f'Došlo je do greške prilikom generisanja PDF-a: {str(e)}.', 'danger')
+            return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))

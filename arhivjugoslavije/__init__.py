@@ -54,7 +54,12 @@ login_manager.login_message = 'Molimo prijavite se.'
 # Konfiguracija za e-mail
 app.config['JSON_AS_ASCII'] = False
 app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
-#! nastavi
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'True').lower() == 'true'
+app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'False').lower() == 'true'
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER')
 mail = Mail(app)
 
 # Import modela

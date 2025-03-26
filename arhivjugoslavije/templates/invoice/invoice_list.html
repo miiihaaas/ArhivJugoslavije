@@ -45,7 +45,7 @@
                     <th>Partner</th>
                     <th>Iznos</th>
                     <th>Valuta</th>
-                    <th>Status plaćanja</th>
+                    <th>Status</th>
                     <th>Tip fakture</th>
                     <th>Akcije</th>
                 </tr>
@@ -63,10 +63,28 @@
                     <td>{{ invoice.total_amount }}</td>
                     <td>{{ invoice.currency }}</td>
                     <td>
-                        {% if invoice.paid %}
-                            <span class="badge bg-success">Plaćeno</span>
+                        {% if invoice.status == 'nacrt' %}
+                            <span class="badge bg-secondary">Nacrt</span>
+                        {% elif invoice.status == 'sacuvano' %}
+                            <span class="badge bg-info text-dark">Sačuvano</span>
+                            {% if invoice.paid %}
+                                <span class="badge bg-success">Plaćeno</span>
+                            {% else %}
+                                <span class="badge bg-danger">Neplaćeno</span>
+                            {% endif %}
+                        {% elif invoice.status == 'poslato' %}
+                            <span class="badge bg-primary">Poslato</span>
+                            {% if invoice.paid %}
+                                <span class="badge bg-success">Plaćeno</span>
+                            {% else %}
+                                <span class="badge bg-danger">Neplaćeno</span>
+                            {% endif %}
                         {% else %}
-                            <span class="badge bg-warning text-dark">Neplaćeno</span>
+                            {% if invoice.paid %}
+                                <span class="badge bg-success">Plaćeno</span>
+                            {% else %}
+                                <span class="badge bg-danger">Neplaćeno</span>
+                            {% endif %}
                         {% endif %}
                     </td>
                     <td>
@@ -78,12 +96,24 @@
                     </td>
                     <td>
                         <a href="{{ url_for('invoices.edit_customer_invoice', invoice_id=invoice.id) }}" class="btn btn-outline-primary btn-sm edit-invoice" data-invoice-id="{{ invoice.id }}">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        {% if not invoice.incoming %}
-                            <a href="{{ url_for('invoices.generate_invoice_pdf_route', invoice_id=invoice.id) }}" class="btn btn-outline-secondary btn-sm view-invoice" data-invoice-id="{{ invoice.id }}" target="_blank">
+                            {% if invoice.status == 'nacrt' and not invoice.incoming %}
+                                <i class="fas fa-edit"></i>
+                            {% elif not invoice.paid and invoice.incoming %}
+                                <i class="fas fa-edit"></i>
+                            {% else %}
                                 <i class="fas fa-eye"></i>
+                            {% endif %}
+                        </a>
+                        {% if not invoice.incoming and invoice.status != 'nacrt' %}
+                            <a href="{{ url_for('invoices.generate_invoice_pdf_route', invoice_id=invoice.id) }}" class="btn btn-outline-secondary btn-sm view-invoice" data-invoice-id="{{ invoice.id }}" target="_blank">
+                                <i class="fas fa-file-pdf"></i>
                             </a>
+                        {% else %}
+                            {% if not invoice.paid %}
+                                <a href="" class="btn btn-outline-danger btn-sm delete-invoice" data-invoice-id="{{ invoice.id }}" data-bs-toggle="modal" data-bs-target="#deleteInvoiceModal">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            {% endif %}
                         {% endif %}
                     </td>
                 </tr>
@@ -174,6 +204,45 @@
         </div>
     </div>
 </div>
+
+<!-- Modal za brisanje fakture -->
+<div class="modal fade" id="deleteInvoiceModal" tabindex="-1" aria-labelledby="deleteInvoiceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteInvoiceModalLabel">Brisanje fakture</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Da li ste sigurni da želite da obrišete ovu fakturu?</p>
+                <div class="alert alert-info">
+                    <div class="row mb-2">
+                        <div class="col-4 fw-bold">Broj fakture:</div>
+                        <div class="col-8" id="deleteInvoiceNumber"></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4 fw-bold">Partner:</div>
+                        <div class="col-8" id="deleteInvoicePartner"></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4 fw-bold">Iznos:</div>
+                        <div class="col-8">
+                            <span id="deleteInvoiceAmount"></span>
+                            <span id="deleteInvoiceCurrency"></span>
+                        </div>
+                    </div>
+                </div>
+                <form id="deleteInvoiceForm" method="POST">
+                    <!-- Forma će biti popunjena preko JavaScript-a -->
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Odustani</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Obriši</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -231,23 +300,31 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // // Dodaj event listener za dugme za pregled fakture
-    // document.querySelectorAll('.view-invoice').forEach(button => {
-    //     button.addEventListener('click', function(e) {
-    //         e.preventDefault();
-    //         const invoiceId = this.getAttribute('data-invoice-id');
-    //         const invoiceRow = this.closest('tr');
-    //         const isIncoming = invoiceRow.getAttribute('data-incoming') === 'true';
+    // Dodaj event listener za dugme za brisanje fakture
+    document.querySelectorAll('.delete-invoice').forEach(button => {
+        button.addEventListener('click', function() {
+            const invoiceId = this.getAttribute('data-invoice-id');
+            const deleteForm = document.getElementById('deleteInvoiceForm');
+            deleteForm.action = `{{ url_for('invoices.delete_invoice', invoice_id=0) }}`.replace('0', invoiceId);
             
-    //         if (isIncoming) {
-    //             // Za ulazne fakture otvori stranicu za uređivanje
-    //             window.location.href = `{{ url_for('invoices.edit_supplier_invoice', invoice_id=0) }}`.replace('0', invoiceId);
-    //         } else {
-    //             // Za izlazne fakture otvori PDF u novom tabu
-    //             window.open(`{{ url_for('invoices.generate_invoice_pdf_route', invoice_id=0) }}`.replace('0', invoiceId), '_blank');
-    //         }
-    //     });
-    // });
+            // Popuni detalje fakture u modalu za brisanje
+            const invoiceNumber = this.parentNode.parentNode.querySelector('td:nth-child(2)').textContent;
+            const invoicePartner = this.parentNode.parentNode.querySelector('td:nth-child(6)').textContent;
+            const invoiceAmount = this.parentNode.parentNode.querySelector('td:nth-child(7)').textContent;
+            const invoiceCurrency = this.parentNode.parentNode.querySelector('td:nth-child(8)').textContent;
+            
+            document.getElementById('deleteInvoiceNumber').textContent = invoiceNumber;
+            document.getElementById('deleteInvoicePartner').textContent = invoicePartner;
+            document.getElementById('deleteInvoiceAmount').textContent = invoiceAmount;
+            document.getElementById('deleteInvoiceCurrency').textContent = invoiceCurrency;
+        });
+    });
+
+    // Dodaj event listener za dugme za potvrdu brisanja fakture
+    document.getElementById('confirmDelete').addEventListener('click', function() {
+        const deleteForm = document.getElementById('deleteInvoiceForm');
+        deleteForm.submit();
+    });
 });
 </script>
 {% endblock %}
