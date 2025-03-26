@@ -1,7 +1,23 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="content-section">
-    <div class="h1">Pregled konta</div>
+    <!-- Zaglavlje stranice sa naslovom i dugmadima za akcije -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0"><i class="fas fa-list-ol me-2 text-primary"></i>Pregled konta</h2>
+                        <div>
+                            <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-arrow-left me-1"></i> Nazad
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <!-- Flash poruke će se automatski prikazivati kroz Flask flash sistem -->
     
@@ -9,33 +25,33 @@
         <!-- Leva strana - Konta nivoa 4 -->
         <div class="col-md-6">
             <div class="card mb-4 shortcut-card">
-                <div class="card-header">
-                    <i class="fas fa-list-ol me-2"></i>Konta nivoa 4
-                </div>
-                <div class="card-body">
-                    <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addAccount4Modal">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list-ol me-2"></i>Konta nivoa 4</h5>
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAccount4Modal">
                         <i class="fas fa-plus me-1"></i> Dodaj konto 4
                     </button>
+                </div>
+                <div class="card-body p-3">
                     <div class="table-responsive">
                         <table class="table report-table table-striped table-hover" id="accounts4Table">
                             <thead>
                                 <tr>
-                                    <th><i class="fas fa-hashtag me-1"></i>Konto</th>
-                                    <th><i class="fas fa-font me-1"></i>Naziv</th>
-                                    <th class="text-center"><i class="fas fa-cogs me-1"></i>Akcije</th>
+                                    <th class="py-2"><i class="fas fa-hashtag me-1"></i>Konto</th>
+                                    <th class="py-2"><i class="fas fa-font me-1"></i>Naziv</th>
+                                    <th class="py-2 text-center"><i class="fas fa-cogs me-1"></i>Akcije</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for account in accounts4 %}
                                 <tr>
-                                    <td>{{ account.number }}</td>
-                                    <td>{{ account.name }}</td>
-                                    <td class="text-center">
+                                    <td class="py-1">{{ account.number }}</td>
+                                    <td class="py-1">{{ account.name }}</td>
+                                    <td class="py-1 text-center">
                                         <button type="button" class="btn btn-sm btn-outline-primary" 
                                                 data-bs-toggle="modal" data-bs-target="#editAccount4Modal"
                                                 data-number="{{ account.number }}"
                                                 data-name="{{ account.name }}">
-                                            <i class="fas fa-edit"></i> Izmeni
+                                            <i class="fas fa-edit"></i>
                                         </button>
                                     </td>
                                 </tr>
@@ -54,36 +70,36 @@
         <!-- Desna strana - Konta nivoa 6 -->
         <div class="col-md-6">
             <div class="card mb-4 shortcut-card">
-                <div class="card-header">
-                    <i class="fas fa-list-ol me-2"></i>Konta nivoa 6
-                </div>
-                <div class="card-body">
-                    <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addAccount6Modal">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list-ol me-2"></i>Konta nivoa 6</h5>
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAccount6Modal">
                         <i class="fas fa-plus me-1"></i> Dodaj konto 6
                     </button>
+                </div>
+                <div class="card-body p-3">
                     <div class="table-responsive">
                         <table class="table report-table table-striped table-hover" id="accounts6Table">
                             <thead>
                                 <tr>
-                                    <th><i class="fas fa-hashtag me-1"></i>Konto</th>
-                                    <th><i class="fas fa-font me-1"></i>Naziv</th>
-                                    <th><i class="fas fa-level-up-alt me-1"></i>Konto 4</th>
-                                    <th class="text-center"><i class="fas fa-cogs me-1"></i>Akcije</th>
+                                    <th class="py-2"><i class="fas fa-hashtag me-1"></i>Konto</th>
+                                    <th class="py-2"><i class="fas fa-font me-1"></i>Naziv</th>
+                                    <th class="py-2"><i class="fas fa-level-up-alt me-1"></i>Konto 4</th>
+                                    <th class="py-2 text-center"><i class="fas fa-cogs me-1"></i>Akcije</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for account in accounts6 %}
                                 <tr>
-                                    <td>{{ account.number }}</td>
-                                    <td>{{ account.name }}</td>
-                                    <td>{{ account.account_level_4_number }}</td>
-                                    <td class="text-center">
+                                    <td class="py-1">{{ account.number }}</td>
+                                    <td class="py-1">{{ account.name }}</td>
+                                    <td class="py-1">{{ account.account_level_4_number }}</td>
+                                    <td class="py-1 text-center">
                                         <button type="button" class="btn btn-sm btn-outline-primary"
                                                 data-bs-toggle="modal" data-bs-target="#editAccount6Modal"
                                                 data-number="{{ account.number }}"
                                                 data-name="{{ account.name }}"
                                                 data-account-level-4-number="{{ account.account_level_4_number }}">
-                                            <i class="fas fa-edit"></i> Izmeni
+                                            <i class="fas fa-edit"></i>
                                         </button>
                                     </td>
                                 </tr>
@@ -246,7 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
         language: {
             url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/sr-SP.json'
         },
-        pageLength: 15,
+        pageLength: 10,
         lengthMenu: [[5, 10, 15, 25, 50, -1], [5, 10, 15, 25, 50, 'Sve']],
         order: [[0, 'asc']], // Sortiranje po broju konta
         columnDefs: [
@@ -264,7 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
         language: {
             url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/sr-SP.json'
         },
-        pageLength: 15,
+        pageLength: 10,
         lengthMenu: [[5, 10, 15, 25, 50, -1], [5, 10, 15, 25, 50, 'Sve']],
         order: [[0, 'asc']], // Sortiranje po broju konta
         columnDefs: [

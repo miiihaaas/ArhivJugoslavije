@@ -1,16 +1,33 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="content-section">
-    <div class="h1">{{ legend }}</div>
-    
-    <div class="row mb-3">
-        <div class="col-12 d-flex justify-content-end">
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createServiceModal">
-                Kreiraj uslugu
-            </button>
+    <!-- Zaglavlje stranice sa naslovom i dugmadima za akcije -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0"><i class="fas fa-cogs me-2 text-primary"></i>{{ legend }}</h2>
+                        <div>
+                            <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-arrow-left me-1"></i> Nazad
+                            </a>
+                            <a href="{{ url_for('services.print_services', language='sr') }}" class="btn btn-outline-primary me-2" target="_blank">
+                                <i class="fas fa-print me-1"></i> Štampaj usluge (srpski)
+                            </a>
+                            <a href="{{ url_for('services.print_services', language='en') }}" class="btn btn-outline-primary me-2" target="_blank">
+                                <i class="fas fa-print me-1"></i> Print services (English)
+                            </a>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createServiceModal">
+                                <i class="fas fa-plus me-1"></i> Kreiraj uslugu
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
+    
     <div class="table-responsive">
         <table id="servicesTable" class="table table-striped">
             <thead>

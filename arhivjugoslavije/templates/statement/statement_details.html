@@ -1,9 +1,30 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div class="h1">{{ legend }}</div>
-
 <div class="container mt-4">
+    <!-- Zaglavlje stranice sa naslovom i dugmadima za akcije -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0"><i class="fas fa-file-invoice-dollar me-2 text-primary"></i>{{ legend }}</h2>
+                        <div>
+                            <a href="{{ url_for('statement.statement_list') }}" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-arrow-left me-1"></i> Nazad na listu izvoda
+                            </a>
+                            {% if current_user.is_authenticated %}
+                            <button type="submit" form="statementForm" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Sačuvaj izmene
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="row">
         <!-- Podaci o izvodu - gornji deo -->
         <div class="col-md-12">
@@ -53,7 +74,7 @@
 
     <!-- Stavke izvoda -->
     <div class="mt-4">
-        <form method="POST" action="{{ url_for('statement.statement_details', statement_id=statement.id) }}">
+        <form id="statementForm" method="POST" action="{{ url_for('statement.statement_details', statement_id=statement.id) }}">
             <div class="card">
                 <div class="card-header bg-success text-white">
                     <h5 class="mb-0">Stavke izvoda</h5>
@@ -144,16 +165,6 @@
                             </tbody>
                         </table>
                     </div>
-                </div>
-                <div class="card-footer">
-                    <a href="{{ url_for('statement.statement_list') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left mr-2"></i> Nazad na listu izvoda
-                    </a>
-                    {% if current_user.is_authenticated %}
-                    <button type="submit" class="btn btn-primary float-right">
-                        <i class="fas fa-save mr-2"></i> Sačuvaj izmene
-                    </button>
-                    {% endif %}
                 </div>
             </div>
         </form>

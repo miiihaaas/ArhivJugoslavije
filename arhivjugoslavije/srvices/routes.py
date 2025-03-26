@@ -1,5 +1,6 @@
 from arhivjugoslavije.models import Service, UnitOfMeasure, ArchiveSettings
 from arhivjugoslavije.srvices.forms import ServiceRegisterForm, ServiceEditForm
+from arhivjugoslavije.srvices.functions import generate_services_pdf
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from arhivjugoslavije import db, app
 from flask_login import login_required, current_user
@@ -106,3 +107,19 @@ def get_service(service_id):
         'service_value_eur': service.price_eur,
         'archived': service.archived
     })
+
+
+@services.route('/print_services')
+@services.route('/print_services/<string:language>')
+@login_required
+def print_services(language):
+    """
+    Ruta za generisanje PDF-a sa listom usluga.
+    Parametar language određuje jezik na kojem će biti generisan PDF (sr - srpski, en - engleski).
+    """
+    # Provera da li je jezik validan
+    if language not in ['sr', 'en']:
+        flash('Izabrani jezik nije podržan. Korišćen je srpski jezik.', 'warning')
+        language = 'sr'
+    
+    return generate_services_pdf(language)
