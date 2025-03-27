@@ -246,9 +246,12 @@ class BankStatement(db.Model):
     total_credit = db.Column(db.Numeric(10, 2), nullable=False)
     total_debit = db.Column(db.Numeric(10, 2), nullable=False)
     final_balance = db.Column(db.Numeric(10, 2), nullable=False)
+    bank_account_id = db.Column(db.Integer, db.ForeignKey('bank_account.id'), nullable=False)
     
     # Definišemo vezu sa statement_item
     statement_items = db.relationship('StatementItem', backref='bank_statement', lazy=True)
+    # Definišemo vezu sa bank_account
+    bank_account = db.relationship('BankAccount', backref='bank_statements', lazy=True)
     
     def __repr__(self):
         return f"BankStatement('{self.statement_number}', date: '{self.date}', final_balance: '{self.final_balance}')"
