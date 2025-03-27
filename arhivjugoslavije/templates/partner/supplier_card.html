@@ -169,7 +169,48 @@
                     </button>
                 </div>
                 <div class="card-body">
-                    <p class="text-center">Ovde će biti prikazan pregled kartice dobavljača sa svim transakcijama.</p>
+                    {% if statement_items %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Datum</th>
+                                        <th>Broj izvoda</th>
+                                        <th>Opis</th>
+                                        <th>Broj dokumenta</th>
+                                        <th>Poziv na broj</th>
+                                        <th class="text-end">Iznos</th>
+                                        <th class="text-center">Tip</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in statement_items %}
+                                        <tr>
+                                            <td>{{ item.bank_statement.date.strftime('%d.%m.%Y') }}</td>
+                                            <td>
+                                                <a href="{{ url_for('statement.statement_details', statement_id=item.bank_statement.id) }}" class="text-decoration-none">
+                                                    <i class="fas fa-file-invoice-dollar me-1 text-primary"></i> {{ item.bank_statement.statement_number }}
+                                                </a>
+                                            </td>
+                                            <td>{{ item.description }}</td>
+                                            <td>{{ item.document_number }}</td>
+                                            <td>{{ item.reference_number }}</td>
+                                            <td class="text-end">{{ '{:,.2f}'.format(item.amount)|replace(',', ' ')|replace('.', ',') }} RSD</td>
+                                            <td class="text-center">
+                                                {% if item.is_debit %}
+                                                    <span class="badge bg-success">Isplata</span>
+                                                {% else %}
+                                                    <span class="badge bg-primary">Uplata</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted my-3">Nema stavki izvoda za ovog dobavljača.</p>
+                    {% endif %}
                 </div>
             </div>
         </div>

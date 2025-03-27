@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 from arhivjugoslavije import db, app
-from arhivjugoslavije.models import Partner, Invoice
+from arhivjugoslavije.models import Partner, Invoice, StatementItem
 from arhivjugoslavije.partner.forms import PartnerForm, EditPartnerForm
 from datetime import datetime
 
@@ -130,11 +130,13 @@ def supplier_card(partner_id):
         return redirect(url_for('partner.partners'))
     
     invoices = Invoice.query.filter_by(partner_id=partner_id, incoming=True).order_by(Invoice.issue_date.desc()).all()
+    statement_items = StatementItem.query.filter_by(partner_id=partner_id).all()
     return render_template('partner/supplier_card.html',
                             partner=partner,
                             legend=f'Kartica dobavljača: {partner.name}',
                             title=f'Kartica dobavljača: {partner.name}',
                             invoices=invoices,
+                            statement_items=statement_items,
                             current_date=datetime.now().date())
 
 @partner.route('/customer_card/<int:partner_id>')
@@ -148,9 +150,11 @@ def customer_card(partner_id):
         return redirect(url_for('partner.partners'))
     
     invoices = Invoice.query.filter_by(partner_id=partner_id).order_by(Invoice.issue_date.desc()).all()
+    statement_items = StatementItem.query.filter_by(partner_id=partner_id).all()
     return render_template('partner/customer_card.html',
                             partner=partner,
                             legend=f'Kartica kupca: {partner.name}',
                             title=f'Kartica kupca: {partner.name}',
                             invoices=invoices,
+                            statement_items=statement_items,
                             current_date=datetime.now().date())

@@ -168,13 +168,13 @@
                                         {{ stavka.Iznos }}
                                     </td>
                                     <td>
-                                        <input type="hidden" name="is_debit[]" value="{% if stavka.Dug %}true{% else %}false{% endif %}">
+                                        <input type="hidden" name="is_debit[]" value="{% if stavka.Izlazna %}true{% else %}false{% endif %}">
                                         {% if stavka.Izlazna %}
-                                            <span class="badge badge-danger">Izlazna</span>
+                                            <span class="badge bg-success">Isplata</span>
                                         {% elif not stavka.Izlazna %}
-                                            <span class="badge badge-success">Ulazna</span>
-                                        {% elif stavka.Izlazna is none %}
-                                            <span class="badge badge-info">Nepoznato!</span>
+                                            <span class="badge bg-primary">Uplata</span>
+                                        {% elif stavka.Izlazna is None %}
+                                            <span class="badge bg-danger">Nepoznato!</span>
                                         {% endif %}
                                     </td>
                                     <td>

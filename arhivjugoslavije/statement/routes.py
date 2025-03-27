@@ -66,7 +66,7 @@ def statement_list():
                         
                         # proverava da li je racun_izvoda_element u bank_accounts
                         bank_account = BankAccount.query.filter_by(account_number=racun_izvoda_element).first()
-                        
+                        print(f'{bank_account=}')
                         if bank_account is None:
                             error_mesage = 'Račun izvoda nije pronađen u bankovnim računima!'
                             flash(error_mesage, 'danger')
@@ -107,16 +107,19 @@ def statement_list():
                             stavka['PozivNaBrojApp'] = stavka.get('PozivOdobrenja', '')
                             
                             # Određivanje da li je stavka izlazna ili ulazna
-                            if stavka.get('RacunOdobrenja', '') == racun_izvoda_element:
+                            bank_accounts = BankAccount.query.filter_by(active=True).all()
+                            # print(f'{bank_accounts=}')
+                            # print(f'{stavka.get('RacunOdobrenja', '')=}')
+                            if racun_izvoda_element in stavka.get('PozivOdobrenja', ''):
                                 stavka['Izlazna'] = False
-                            elif stavka.get('RacunZaduzenja', '') == racun_izvoda_element:
+                            elif stavka.get('RacunZaduzenja', '') in [bank_account.account_number for bank_account in bank_accounts]:
                                 stavka['Izlazna'] = True
                             else:
                                 stavka['Izlazna'] = None
                             
                             # Dodajemo stavku u listu
                             stavke.append(stavka)
-                            print(f'{stavka=}')
+                            # print(f'{stavka=}')
                         
                         broj_pojavljivanja = len(stavke)
                     else:

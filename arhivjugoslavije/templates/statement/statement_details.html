@@ -109,9 +109,11 @@
                                     <td>{{ item.amount }} RSD</td>
                                     <td>
                                         {% if item.is_debit %}
-                                            <span class="badge badge-danger">Isplata</span>
+                                            <span class="badge bg-success">Isplata</span>
+                                        {% elif not item.is_debit %}
+                                            <span class="badge bg-primary">Uplata</span>
                                         {% else %}
-                                            <span class="badge badge-success">Uplata</span>
+                                            <span class="badge bg-danger">Nepoznato!</span>
                                         {% endif %}
                                     </td>
                                     <td>{{ item.document_number }}</td>
