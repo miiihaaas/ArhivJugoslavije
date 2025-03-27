@@ -52,9 +52,10 @@ def statement_list():
                 error_mesage = 'Izabrani fajl nije XML fajl!'
             else:
                 try:
-                    # Parsiranje XML fajla
-                    tree = ET.parse(xml_file)
-                    root = tree.getroot()
+                    # Parsiranje XML fajla sa UTF-8 kodiranjem
+                    xml_content = xml_file.read().decode('utf-8')
+                    root = ET.fromstring(xml_content)
+                    app.logger.info(f'XML fajl uspešno parsiran.')
                     
                     # Izvlačenje podataka iz XML-a
                     zaglavlje = root.find('Zaglavlje')
