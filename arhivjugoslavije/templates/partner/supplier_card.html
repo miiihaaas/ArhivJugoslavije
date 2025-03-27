@@ -105,9 +105,9 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Ulazne fakture</h5>
-                    <a href="#" class="btn btn-success btn-sm">
+                    <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#createSupplierInvoiceModal">
                         <i class="fas fa-file-import me-1"></i> Nova ulazna faktura
-                    </a>
+                    </button>
                 </div>
                 <div class="card-body">
                     {% if invoices %}
@@ -213,6 +213,81 @@
                     {% endif %}
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal za kreiranje ulazne fakture (dobavljač) -->
+<div class="modal fade" id="createSupplierInvoiceModal" tabindex="-1" aria-labelledby="createSupplierInvoiceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createSupplierInvoiceModalLabel">Nova ulazna faktura</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('invoices.create_supplier_invoice') }}" method="POST">
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="invoice_number" class="form-label">Broj fakture *</label>
+                                <input type="text" class="form-control" id="invoice_number" name="invoice_number" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="partner_id" class="form-label">Dobavljač *</label>
+                                <input type="text" class="form-control" value="{{ partner.name }}" readonly>
+                                <input type="hidden" id="partner_id" name="partner_id" value="{{ partner.id }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="issue_date" class="form-label">Datum izdavanja *</label>
+                                <input type="date" class="form-control" id="issue_date" name="issue_date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="service_date" class="form-label">Datum prometa *</label>
+                                <input type="date" class="form-control" id="service_date" name="service_date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="payment_due_date" class="form-label">Datum dospeća</label>
+                                <input type="date" class="form-control" id="payment_due_date" name="payment_due_date">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="total_amount" class="form-label">Ukupan iznos *</label>
+                                <input type="number" step="0.01" class="form-control" id="total_amount" name="total_amount" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="currency" class="form-label">Valuta *</label>
+                                <select class="form-select" id="currency" name="currency" required>
+                                    <option value="RSD">RSD</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="USD">USD</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Odustani</button>
+                    <button type="submit" class="btn btn-primary">Sačuvaj fakturu</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

@@ -92,6 +92,24 @@
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    
+    <!-- Automatsko zatvaranje flash poruka nakon 7 sekundi -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Pronađi sve flash poruke
+            const flashMessages = document.querySelectorAll('.alert-dismissible');
+            
+            // Postavi tajmer za svaku poruku da se zatvori nakon 7 sekundi
+            flashMessages.forEach(function(alert) {
+                setTimeout(function() {
+                    // Kreiraj bootstrap alert objekat i pozovi close metodu
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 7000); // 7 sekundi = 7000 milisekundi
+            });
+        });
+    </script>
+    
     {% block scripts %}{% endblock %}
 </body>
 </html>

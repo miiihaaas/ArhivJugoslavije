@@ -55,14 +55,29 @@ def create_supplier_invoice():
             return redirect(url_for('invoices.invoice_list'))
 
 @invoices.route('/create_customer_invoice', methods=['GET', 'POST'])
+@invoices.route('/create_customer_invoice/<int:partner_id>', methods=['GET', 'POST'])
 @login_required
-def create_customer_invoice():
+def create_customer_invoice(partner_id=None):
     endpoint = request.endpoint
     form = InvoiceForm()
     
-    # Popuni izbor partnera (samo kupci)
-    customers = Partner.query.filter_by(customer=True).all()
-    form.partner_id.choices = [(p.id, p.name) for p in customers]
+    # Popuni izbor partnera
+    if partner_id:
+        # Ako je prosleđen ID partnera, samo taj partner je dostupan u izboru
+        partner = Partner.query.get_or_404(partner_id)
+        
+        if not partner.customer:
+            flash('Izabrani partner nije kupac.', 'danger')
+            return redirect(url_for('invoices.invoice_list'))
+        form.partner_id.choices = [(partner.id, partner.name)]
+        form.partner_id.data = partner_id
+        if partner.international:
+            form.currency.choices = [('RSD', 'RSD'), ('EUR', 'EUR'), ('USD', 'USD')]
+            form.currency.data = 'EUR'
+    else:
+        # Inače prikaži sve kupce
+        customers = Partner.query.filter_by(customer=True).all()
+        form.partner_id.choices = [(0, 'Izaberite kupca')] + [(p.id, p.name) for p in customers]
     
     # Dohvati poslednje tri izlazne fakture
     recent_invoices = Invoice.query.filter_by(incoming=False).order_by(Invoice.id.desc()).limit(3).all()
@@ -187,6 +202,7 @@ def edit_customer_invoice(invoice_id):
             
             db.session.commit()
             try:
+                print(f'{invoice_items=}')
                 for item in invoice_items:
                     service = Service.query.get_or_404(item.service_id)
                     item.price = service.price_rsd if invoice.currency == 'RSD' else service.price_eur
