@@ -133,6 +133,7 @@ def statement_list():
             # Konverzija datuma iz stringa u Python date objekat
             datum_izvoda = datetime.strptime(request.form.get('payment_date'), '%d.%m.%Y').date()
             broj_izvoda = request.form.get('statement_number')
+            bank_account = BankAccount.query.filter_by(account_number=request.form.get('bank_account')).first()
             
             # Provera da li izvod sa istim brojem i datumom već postoji
             existing_statement = BankStatement.query.filter_by(
@@ -151,7 +152,8 @@ def statement_list():
                 initial_balance=float(request.form.get('initial_balance').replace(',', '.')),
                 total_credit=float(request.form.get('total_credit').replace(',', '.')),
                 total_debit=float(request.form.get('total_debit').replace(',', '.')),
-                final_balance=float(request.form.get('final_balance').replace(',', '.'))
+                final_balance=float(request.form.get('final_balance').replace(',', '.')),
+                bank_account_id=bank_account.id
             )
             
             # Dodavanje u bazu podataka
