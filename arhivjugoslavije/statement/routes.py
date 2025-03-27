@@ -5,6 +5,11 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from arhivjugoslavije.models import Partner, AccountLevel6, Project, BankAccount, BankStatement, StatementItem
 from arhivjugoslavije import db, app
+import sys
+
+# Postavljanje kodiranja za standardni izlaz
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
 
 statement = Blueprint('statement', __name__)
 
@@ -112,7 +117,11 @@ def statement_list():
                         for stavka_xml in stavke_xml:
                             stavka = {}
                             for element in stavka_xml:
-                                stavka[element.tag] = element.text
+                                # Osiguravanje da je vrednost teksta unicode string
+                                if element.text is not None:
+                                    stavka[element.tag] = element.text
+                                else:
+                                    stavka[element.tag] = ''
                             
                             # Dodatna obrada podataka
                             stavka['PozivNaBrojApp'] = stavka.get('PozivOdobrenja', '')
@@ -138,6 +147,7 @@ def statement_list():
                 except Exception as e:
                     app.logger.error(f'Greška prilikom obrade XML fajla: {str(e)}')
                     error_mesage = f'Greška prilikom obrade XML fajla: {str(e)}'
+                    flash(error_mesage, 'danger')
     
     # Ako je korisnik kliknuo na dugme za čuvanje podataka
     if request.method == 'POST' and 'submitBtnSaveData' in request.form:
