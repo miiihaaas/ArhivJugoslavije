@@ -4,13 +4,17 @@ import os
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from arhivjugoslavije.models import Partner, AccountLevel6, Project, BankAccount, BankStatement, StatementItem
-from arhivjugoslavije import db
+from arhivjugoslavije import db, app
 
 statement = Blueprint('statement', __name__)
 
 @statement.route('/statement_list', methods=['GET', 'POST'])
 @login_required
 def statement_list():
+    app.logger.info(f'Request method: {request.method}')
+    app.logger.info(f'Request form: {request.form}')
+    app.logger.info(f'Request files: {request.files}')
+    
     endpoint = request.endpoint
     bank_statements = []
     error_mesage = None
@@ -34,13 +38,17 @@ def statement_list():
         
     if request.method == 'POST' and 'submitBtnImportData' in request.form:
         if 'fileInput' not in request.files:
+            app.logger.warning('fileInput nije u request.files')
             error_mesage = 'Niste izabrali XML fajl za učitavanje!'
         else:
             xml_file = request.files['fileInput']
+            app.logger.info(f'XML file: {xml_file.filename=}')
             
             if xml_file.filename == '':
+                app.logger.warning('Ime fajla je prazno')
                 error_mesage = 'Niste izabrali XML fajl za učitavanje!'
             elif not xml_file.filename.endswith('.xml'):
+                app.logger.warning('Fajl nije XML fajl')
                 error_mesage = 'Izabrani fajl nije XML fajl!'
             else:
                 try:
@@ -68,6 +76,7 @@ def statement_list():
                         bank_account = BankAccount.query.filter_by(account_number=racun_izvoda_element).first()
                         print(f'{bank_account=}')
                         if bank_account is None:
+                            app.logger.warning('Račun izvoda nije pronađen u bankovnim računima!')
                             error_mesage = 'Račun izvoda nije pronađen u bankovnim računima!'
                             flash(error_mesage, 'danger')
                             return redirect(url_for('statement.statement_list'))
@@ -92,6 +101,7 @@ def statement_list():
                             else:
                                 izvod_vec_postoji = False
                         except Exception as e:
+                            app.logger.error(f'Greška prilikom provere postojećeg izvoda: {str(e)}')
                             error_mesage = f'Greška prilikom provere postojećeg izvoda: {str(e)}.'
                             flash(error_mesage, 'danger')
                             return redirect(url_for('statement.statement_list'))
@@ -125,6 +135,7 @@ def statement_list():
                     else:
                         error_mesage = 'XML fajl nema očekivanu strukturu!'
                 except Exception as e:
+                    app.logger.error(f'Greška prilikom obrade XML fajla: {str(e)}')
                     error_mesage = f'Greška prilikom obrade XML fajla: {str(e)}'
     
     # Ako je korisnik kliknuo na dugme za čuvanje podataka
