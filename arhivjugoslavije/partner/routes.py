@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 from arhivjugoslavije import db, app
-from arhivjugoslavije.models import Partner, Invoice, StatementItem
+from arhivjugoslavije.models import Partner, Invoice, StatementItem, BankStatement
 from arhivjugoslavije.partner.forms import PartnerForm, EditPartnerForm
+from arhivjugoslavije.partner.functions import generate_partner_card_pdf
 from datetime import datetime
 
 
@@ -120,7 +121,7 @@ def edit_partner(partner_id):
                             legend='Izmena partnera',
                             title='Izmena partnera')
 
-@partner.route('/supplier_card/<int:partner_id>')
+@partner.route('/supplier_card/<int:partner_id>', methods=['GET', 'POST'])
 @login_required
 def supplier_card(partner_id):
     partner = Partner.query.get_or_404(partner_id)
@@ -129,17 +130,80 @@ def supplier_card(partner_id):
         flash('Izabrani partner nije označen kao dobavljač.', 'warning')
         return redirect(url_for('partner.partners'))
     
-    invoices = Invoice.query.filter_by(partner_id=partner_id, incoming=True).order_by(Invoice.issue_date.desc()).all()
-    statement_items = StatementItem.query.filter_by(partner_id=partner_id).all()
+    # Postavljanje podrazumevanih datuma (1. januar tekuće godine do danas)
+    today = datetime.now().date()
+    default_start_date = datetime(today.year, 1, 1).date()
+    
+    # Dobijanje datuma iz forme ili korišćenje podrazumevanih vrednosti
+    if request.method == 'POST':
+        start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d').date() if request.form.get('start_date') else default_start_date
+        end_date = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d').date() if request.form.get('end_date') else today
+    else:
+        start_date = default_start_date
+        end_date = today
+    
+    # Filtriranje faktura po datumu prometa
+    invoices = Invoice.query.filter_by(partner_id=partner_id, incoming=True)\
+                            .filter(Invoice.service_date >= start_date)\
+                            .filter(Invoice.service_date <= end_date)\
+                            .order_by(Invoice.service_date.desc()).all()
+    
+    # Filtriranje stavki izvoda po datumu
+    statement_items_query = StatementItem.query.filter_by(partner_id=partner_id, is_debit=True)\
+                                         .join(BankStatement, StatementItem.bank_statement_id == BankStatement.id)\
+                                         .filter(BankStatement.date >= start_date)\
+                                         .filter(BankStatement.date <= end_date)
+    
+    statement_items = statement_items_query.all()
+    
+    # Kreiranje kombinovane liste podataka za tabelu
+    combined_data = []
+    
+    # Dodavanje faktura u kombinovane podatke
+    for invoice in invoices:
+        combined_data.append({
+            'date': invoice.service_date,
+            'account': None,  # Fakture nemaju konto
+            'document_type': 'invoice',
+            'document_id': invoice.id,
+            'document_number': invoice.invoice_number,
+            'debit': invoice.total_amount,  # Ulazne fakture idu na duguje
+            'credit': None
+        })
+    
+    # Dodavanje stavki izvoda u kombinovane podatke
+    for item in statement_items:
+        combined_data.append({
+            'date': item.bank_statement.date,
+            'account': item.account_level_6_number,
+            'document_type': 'statement',
+            'document_id': item.bank_statement.id,
+            'document_number': f'{item.bank_statement.bank_account.account_number} ({item.bank_statement.date.year}/{item.bank_statement.statement_number})',
+            'debit': None,
+            'credit': item.amount  # Isplate idu na potražuje
+        })
+    
+    # Sortiranje po datumu, od najnovijeg ka najstarijem
+    combined_data.sort(key=lambda x: x['date'], reverse=True)
+    
+    # Računanje ukupnih vrednosti za duguje i potražuje
+    total_debit = sum(item['debit'] or 0 for item in combined_data)
+    total_credit = sum(item['credit'] or 0 for item in combined_data)
+    
     return render_template('partner/supplier_card.html',
                             partner=partner,
                             legend=f'Kartica dobavljača: {partner.name}',
                             title=f'Kartica dobavljača: {partner.name}',
                             invoices=invoices,
                             statement_items=statement_items,
-                            current_date=datetime.now().date())
+                            combined_data=combined_data,
+                            total_debit=total_debit,
+                            total_credit=total_credit,
+                            current_date=today,
+                            start_date=start_date,
+                            end_date=end_date)
 
-@partner.route('/customer_card/<int:partner_id>')
+@partner.route('/customer_card/<int:partner_id>', methods=['GET', 'POST'])
 @login_required
 def customer_card(partner_id):
     partner = Partner.query.get_or_404(partner_id)
@@ -149,12 +213,234 @@ def customer_card(partner_id):
         flash('Izabrani partner nije označen kao kupac.', 'warning')
         return redirect(url_for('partner.partners'))
     
-    invoices = Invoice.query.filter_by(partner_id=partner_id).order_by(Invoice.issue_date.desc()).all()
-    statement_items = StatementItem.query.filter_by(partner_id=partner_id).all()
+    # Postavljanje podrazumevanih datuma (1. januar tekuće godine do danas)
+    today = datetime.now().date()
+    default_start_date = datetime(today.year, 1, 1).date()
+    
+    # Dobijanje datuma iz forme ili korišćenje podrazumevanih vrednosti
+    if request.method == 'POST':
+        start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d').date() if request.form.get('start_date') else default_start_date
+        end_date = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d').date() if request.form.get('end_date') else today
+    else:
+        start_date = default_start_date
+        end_date = today
+    
+    # Filtriranje faktura po datumu prometa
+    invoices = Invoice.query.filter_by(partner_id=partner_id, incoming=False)\
+                            .filter(Invoice.status != 'nacrt')\
+                            .filter(Invoice.service_date >= start_date)\
+                            .filter(Invoice.service_date <= end_date)\
+                            .order_by(Invoice.service_date.desc()).all()
+    
+    # Filtriranje stavki izvoda po datumu
+    statement_items_query = StatementItem.query.filter_by(partner_id=partner_id, is_debit=False)\
+                                         .join(BankStatement, StatementItem.bank_statement_id == BankStatement.id)\
+                                         .filter(BankStatement.date >= start_date)\
+                                         .filter(BankStatement.date <= end_date)
+    
+    statement_items = statement_items_query.all()
+    
+    # Kreiranje kombinovane liste podataka za tabelu
+    combined_data = []
+    
+    # Dodavanje faktura u kombinovane podatke
+    for invoice in invoices:
+        combined_data.append({
+            'date': invoice.service_date,
+            'account': None,  # Fakture nemaju konto
+            'document_type': 'invoice',
+            'document_id': invoice.id,
+            'document_number': invoice.invoice_number,
+            'debit': None,
+            'credit': invoice.total_amount  # Izlazne fakture idu na potražuje
+        })
+    
+    # Dodavanje stavki izvoda u kombinovane podatke
+    for item in statement_items:
+        combined_data.append({
+            'date': item.bank_statement.date,
+            'account': item.account_level_6_number,
+            'document_type': 'statement',
+            'document_id': item.bank_statement.id,
+            'document_number': f'{item.bank_statement.bank_account.account_number} ({item.bank_statement.date.year}/{item.bank_statement.statement_number})',
+            'debit': item.amount,  # Uplate idu na duguje
+            'credit': None
+        })
+    
+    # Sortiranje po datumu, od najnovijeg ka najstarijem
+    combined_data.sort(key=lambda x: x['date'], reverse=True)
+    
+    # Računanje ukupnih vrednosti za duguje i potražuje
+    total_debit = sum(item['debit'] or 0 for item in combined_data)
+    total_credit = sum(item['credit'] or 0 for item in combined_data)
+    
     return render_template('partner/customer_card.html',
                             partner=partner,
                             legend=f'Kartica kupca: {partner.name}',
                             title=f'Kartica kupca: {partner.name}',
                             invoices=invoices,
                             statement_items=statement_items,
-                            current_date=datetime.now().date())
+                            combined_data=combined_data,
+                            total_debit=total_debit,
+                            total_credit=total_credit,
+                            current_date=today,
+                            start_date=start_date,
+                            end_date=end_date)
+
+@partner.route('/customer_card/<int:partner_id>/pdf', methods=['GET'])
+@login_required
+def customer_card_pdf(partner_id):
+    partner = Partner.query.get_or_404(partner_id)
+    
+    # Provera da li je partner kupac
+    if not partner.customer:
+        flash('Izabrani partner nije označen kao kupac.', 'warning')
+        return redirect(url_for('partner.partners'))
+    
+    # Dobijanje datuma iz URL parametara ili korišćenje podrazumevanih vrednosti
+    today = datetime.now().date()
+    default_start_date = datetime(today.year, 1, 1).date()
+    
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    
+    if start_date:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+    else:
+        start_date = default_start_date
+        
+    if end_date:
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+    else:
+        end_date = today
+    
+    # Filtriranje faktura po datumu prometa
+    invoices = Invoice.query.filter_by(partner_id=partner_id, incoming=False)\
+                            .filter(Invoice.status != 'nacrt')\
+                            .filter(Invoice.service_date >= start_date)\
+                            .filter(Invoice.service_date <= end_date)\
+                            .order_by(Invoice.service_date.desc()).all()
+    
+    # Filtriranje stavki izvoda po datumu
+    statement_items_query = StatementItem.query.filter_by(partner_id=partner_id, is_debit=False)\
+                                         .join(BankStatement, StatementItem.bank_statement_id == BankStatement.id)\
+                                         .filter(BankStatement.date >= start_date)\
+                                         .filter(BankStatement.date <= end_date)
+    
+    statement_items = statement_items_query.all()
+    
+    # Kreiranje kombinovane liste podataka za tabelu
+    combined_data = []
+    
+    # Dodavanje faktura u kombinovane podatke
+    for invoice in invoices:
+        combined_data.append({
+            'date': invoice.service_date,
+            'account': None,  # Fakture nemaju konto
+            'document_type': 'invoice',
+            'document_id': invoice.id,
+            'document_number': invoice.invoice_number,
+            'debit': None,
+            'credit': invoice.total_amount  # Izlazne fakture idu na potražuje
+        })
+    
+    # Dodavanje stavki izvoda u kombinovane podatke
+    for item in statement_items:
+        combined_data.append({
+            'date': item.bank_statement.date,
+            'account': item.account_level_6_number,
+            'document_type': 'statement',
+            'document_id': item.bank_statement.id,
+            'document_number': f'{item.bank_statement.bank_account.account_number} ({item.bank_statement.date.year}/{item.bank_statement.statement_number})',
+            'debit': item.amount,  # Uplate idu na duguje
+            'credit': None
+        })
+    
+    # Sortiranje po datumu, od najnovijeg ka najstarijem
+    combined_data.sort(key=lambda x: x['date'], reverse=True)
+    
+    # Računanje ukupnih vrednosti za duguje i potražuje
+    total_debit = sum(item['debit'] or 0 for item in combined_data)
+    total_credit = sum(item['credit'] or 0 for item in combined_data)
+    
+    # Generisanje PDF-a
+    return generate_partner_card_pdf(partner_id, start_date, end_date, combined_data, total_debit, total_credit, is_customer=True)
+
+
+@partner.route('/supplier_card/<int:partner_id>/pdf', methods=['GET'])
+@login_required
+def supplier_card_pdf(partner_id):
+    partner = Partner.query.get_or_404(partner_id)
+    
+    # Provera da li je partner dobavljač
+    if not partner.supplier:
+        flash('Izabrani partner nije označen kao dobavljač.', 'warning')
+        return redirect(url_for('partner.partners'))
+    
+    # Dobijanje datuma iz URL parametara ili korišćenje podrazumevanih vrednosti
+    today = datetime.now().date()
+    default_start_date = datetime(today.year, 1, 1).date()
+    
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    
+    if start_date:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+    else:
+        start_date = default_start_date
+        
+    if end_date:
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+    else:
+        end_date = today
+    
+    # Filtriranje faktura po datumu prometa
+    invoices = Invoice.query.filter_by(partner_id=partner_id, incoming=True)\
+                            .filter(Invoice.service_date >= start_date)\
+                            .filter(Invoice.service_date <= end_date)\
+                            .order_by(Invoice.service_date.desc()).all()
+    
+    # Filtriranje stavki izvoda po datumu
+    statement_items_query = StatementItem.query.filter_by(partner_id=partner_id, is_debit=True)\
+                                         .join(BankStatement, StatementItem.bank_statement_id == BankStatement.id)\
+                                         .filter(BankStatement.date >= start_date)\
+                                         .filter(BankStatement.date <= end_date)
+    
+    statement_items = statement_items_query.all()
+    
+    # Kreiranje kombinovane liste podataka za tabelu
+    combined_data = []
+    
+    # Dodavanje faktura u kombinovane podatke
+    for invoice in invoices:
+        combined_data.append({
+            'date': invoice.service_date,
+            'account': None,  # Fakture nemaju konto
+            'document_type': 'invoice',
+            'document_id': invoice.id,
+            'document_number': invoice.invoice_number,
+            'debit': invoice.total_amount,  # Ulazne fakture idu na duguje
+            'credit': None
+        })
+    
+    # Dodavanje stavki izvoda u kombinovane podatke
+    for item in statement_items:
+        combined_data.append({
+            'date': item.bank_statement.date,
+            'account': item.account_level_6_number,
+            'document_type': 'statement',
+            'document_id': item.bank_statement.id,
+            'document_number': f'{item.bank_statement.bank_account.account_number} ({item.bank_statement.date.year}/{item.bank_statement.statement_number})',
+            'debit': None,
+            'credit': item.amount  # Isplate idu na potražuje
+        })
+    
+    # Sortiranje po datumu, od najnovijeg ka najstarijem
+    combined_data.sort(key=lambda x: x['date'], reverse=True)
+    
+    # Računanje ukupnih vrednosti za duguje i potražuje
+    total_debit = sum(item['debit'] or 0 for item in combined_data)
+    total_credit = sum(item['credit'] or 0 for item in combined_data)
+    
+    # Generisanje PDF-a
+    return generate_partner_card_pdf(partner_id, start_date, end_date, combined_data, total_debit, total_credit, is_customer=False)

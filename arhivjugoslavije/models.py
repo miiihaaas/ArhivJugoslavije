@@ -253,6 +253,10 @@ class BankStatement(db.Model):
     # Definišemo vezu sa bank_account
     bank_account = db.relationship('BankAccount', backref='bank_statements', lazy=True)
     
+    # @property
+    # def number_of_items(self):
+    #     return len(self.statement_items)
+    
     def __repr__(self):
         return f"BankStatement('{self.statement_number}', date: '{self.date}', final_balance: '{self.final_balance}')"
 
