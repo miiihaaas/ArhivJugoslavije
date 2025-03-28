@@ -1,0 +1,148 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Zaglavlje stranice sa naslovom i dugmadima za akcije -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0"><i class="fas fa-shopping-cart me-2 text-primary"></i>Plan nabavki</h2>
+                        <div>
+                            <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-arrow-left me-1"></i> Nazad
+                            </a>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPurchasePlanModal">
+                                <i class="fas fa-plus me-1"></i> Novi plan nabavke
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-end">
+            <div class="input-group" style="width: 200px;">
+                <span class="input-group-text"><i class="fas fa-filter"></i></span>
+                <select id="yearFilter" class="form-select">
+                    <option value="">Sve godine</option>
+                    {% for plan in purchase_plans %}
+                    <option value="{{ plan.year }}">{{ plan.year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table id="planTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Godina</th>
+                    <th>Broj konta</th>
+                    <th>Iznos</th>
+                    <th>Akcije</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for plan in purchase_plans %}
+                <tr class="plan-row" data-year="{{ plan.year }}">
+                    <td>{{ plan.id }}</td>
+                    <td>{{ plan.year }}</td>
+                    <td>{{ plan.purchase_plan_accounts|length }}</td>
+                    <td class="text-end">{{ plan.amount }}</td>
+                    <td>
+                        <a href="{{ url_for('purchase_plan.edit_purchase_plan', purchase_plan_id=plan.id) }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <button class="btn btn-outline-danger btn-sm delete-plan" data-plan-id="{{ plan.id }}" data-bs-toggle="modal" data-bs-target="#deletePlanModal">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal za kreiranje plana nabavke -->
+<div class="modal fade" id="createPurchasePlanModal" tabindex="-1" aria-labelledby="createPurchasePlanModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createPurchasePlanModalLabel">Novi plan nabavke</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('purchase_plan.create_purchase_plan') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="year" class="form-label">Godina *</label>
+                        <input type="number" class="form-control" id="year" name="year" min="2000" max="2100" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Odustani</button>
+                    <button type="submit" class="btn btn-primary">Sačuvaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal za brisanje plana nabavke -->
+<div class="modal fade" id="deletePlanModal" tabindex="-1" aria-labelledby="deletePlanModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deletePlanModalLabel">Brisanje plana nabavke</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Da li ste sigurni da želite da obrišete ovaj plan nabavke?</p>
+                <p class="text-danger"><strong>Upozorenje:</strong> Brisanjem plana nabavke biće obrisani i svi povezani podaci.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Odustani</button>
+                <form id="deletePlanForm" action="{{ url_for('purchase_plan.delete_purchase_plan', purchase_plan_id=0) }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Obriši</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicijalizacija DataTables
+        var table = $('#planTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Serbian.json"
+            },
+            "order": [[1, "desc"]], // Sortiranje po godini (opadajuće)
+            "pageLength": 10,
+            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Prikaži sve"]]
+        });
+        
+        // Filter po godini
+        $('#yearFilter').on('change', function() {
+            var year = $(this).val();
+            table.column(1).search(year).draw();
+        });
+        
+        // Postavljanje ID-a plana nabavke za brisanje
+        $('.delete-plan').on('click', function() {
+            var planId = $(this).data('plan-id');
+            var form = document.getElementById('deletePlanForm');
+            form.action = form.action.replace('/0', '/' + planId);
+        });
+    });
+</script>
+{% endblock %}

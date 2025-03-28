@@ -71,6 +71,7 @@ from arhivjugoslavije.errors.routes import errors
 from arhivjugoslavije.invoice.routes import invoices
 from arhivjugoslavije.main.routes import main
 from arhivjugoslavije.partner.routes import partner
+from arhivjugoslavije.purchase_plan.routes import purchase_plan
 from arhivjugoslavije.project.routes import project
 # from arhivjugoslavije.payments.routes import payments
 from arhivjugoslavije.statement.routes import statement
@@ -82,6 +83,7 @@ app.register_blueprint(errors)
 app.register_blueprint(invoices)
 app.register_blueprint(main)
 app.register_blueprint(partner)
+app.register_blueprint(purchase_plan)
 app.register_blueprint(project)
 # app.register_blueprint(payments)
 app.register_blueprint(statement)

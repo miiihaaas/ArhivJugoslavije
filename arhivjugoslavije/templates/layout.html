@@ -38,14 +38,16 @@
                         <a class="nav-item nav-link {{ 'active' if request.endpoint in ['invoices.invoice_list', 'invoices.edit_customer_invoice', 'invoices.create_customer_invoice'] }}" href="{{ url_for('invoices.invoice_list') }}">Fakture</a>
                         <a class="nav-item nav-link {{ 'active' if request.endpoint in ['statement.statement_list', 'statement.statement_details'] }}" href="{{ url_for('statement.statement_list') }}">Izvodi</a>
                         <li class="nav-item dropdown dropdown--align-right">
-                            <a class="nav-link dropdown-toggle {{ 'active' if request.endpoint in ['users.user_list', 'main.settings', 'services.services_list', 'project.project_list', 'project.project_accounts', 'account.account_list'] }}" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#">Podešavanja</a>
+                            <a class="nav-link dropdown-toggle {{ 'active' if request.endpoint in ['users.user_list', 'main.settings', 'services.services_list', 'project.project_list', 'project.project_accounts', 'account.account_list', 'purchase_plan.purchase_plan_list', 'purchase_plan.edit_purchase_plan'] }}" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#">Podešavanja</a>
                             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
                                 <a class="dropdown-item {{ 'active' if request.endpoint in ['users.user_list'] }}" href="{{ url_for('users.user_list') }}">Korisnički nalozi</a>
                                 <a class="dropdown-item {{ 'active' if request.endpoint in ['main.settings'] }}" href="{{ url_for('main.settings', id=1) }}">Podešavanja arhiva</a>
                                 <hr>
-                                <a class="dropdown-item {{ 'active' if request.endpoint in ['account.account_list'] }}" href="{{ url_for('account.account_list')}}">Konta</a>
-                                <a class="dropdown-item {{ 'active' if request.endpoint in ['project.project_list', 'project.project_accounts'] }}" href="{{ url_for('project.project_list') }}">Projekti</a>
                                 <a class="dropdown-item {{ 'active' if request.endpoint in ['services.services_list'] }}" href="{{ url_for('services.services_list') }}">Usluge</a>
+                                <a class="dropdown-item {{ 'active' if request.endpoint in ['account.account_list'] }}" href="{{ url_for('account.account_list')}}">Konta</a>
+                                <hr>
+                                <a class="dropdown-item {{ 'active' if request.endpoint in ['project.project_list', 'project.project_accounts'] }}" href="{{ url_for('project.project_list') }}">Projekti</a>
+                                <a class="dropdown-item {{ 'active' if request.endpoint in ['purchase_plan.purchase_plan_list', 'purchase_plan.edit_purchase_plan'] }}" href="{{ url_for('purchase_plan.purchase_plan_list') }}">Plan nabavki</a>
                             </div>
                         </li>
                         <a href="{{ url_for('users.logout') }}" class="nav-link">Odjava</a>

@@ -113,6 +113,12 @@ class AccountLevel4(db.Model):
     # Definišemo vezu sa account_level_6
     accounts_level_6 = db.relationship('AccountLevel6', backref='account_level_4', lazy=True)
     
+    # Definišemo vezu sa purchase_plan_account sa eksplicitnim primaryjoin
+    purchase_plan_accounts = db.relationship('PurchasePlanAccount', 
+                                           primaryjoin="AccountLevel4.number == foreign(PurchasePlanAccount.account_level_4_number)",
+                                           backref='account_level_4', 
+                                           lazy=True)
+    
     def __repr__(self):
         return f"AccountLevel4('{self.number}', '{self.name}')"
 
@@ -167,6 +173,49 @@ class ProjectAccount(db.Model):
     
     def __repr__(self):
         return f"ProjectAccount(project_id: '{self.project_id}', account: '{self.account_level_6_number}', amount: '{self.amount}')"
+
+
+class PurchasePlan(db.Model):
+    __tablename__ = 'purchase_plan'
+    id = db.Column(db.Integer, primary_key=True)
+    year = db.Column(db.Integer, nullable=False, unique=True)
+    
+    # Definišemo vezu sa purchase_plan_account
+    purchase_plan_accounts = db.relationship('PurchasePlanAccount', backref='purchase_plan', lazy=True)
+    
+    @property
+    def amount(self):
+        """Dinamički računa ukupan iznos plana nabavke kao sumu svih povezanih PurchasePlanAccount iznosa"""
+        total = 0
+        if self.purchase_plan_accounts:
+            for account in self.purchase_plan_accounts:
+                if account.amount_1:
+                    total += account.amount_1
+                if account.amount_2:
+                    total += account.amount_2
+        return total
+    
+    def __repr__(self):
+        return f"PurchasePlan(year: '{self.year}', amount: '{self.amount}')"
+
+
+class PurchasePlanAccount(db.Model):
+    __tablename__ = 'purchase_plan_account'
+    id = db.Column(db.Integer, primary_key=True)
+    purchase_plan_id = db.Column(db.Integer, db.ForeignKey('purchase_plan.id'), nullable=False)
+    account_level_4_number = db.Column(db.String(4), nullable=False)
+    amount_1 = db.Column(db.Numeric(10, 2), nullable=True)
+    amount_2 = db.Column(db.Numeric(10, 2), nullable=True)
+    note = db.Column(db.Text, nullable=True)
+    
+    # Kreiramo indeks umesto stranog ključa
+    __table_args__ = (
+        db.Index('idx_account_level_4_number', 'account_level_4_number'),
+        {}
+    )
+    
+    def __repr__(self):
+        return f"PurchasePlanAccount(purchase_plan_id: '{self.purchase_plan_id}', account: '{self.account_level_4_number}', amount_1: '{self.amount_1}', amount_2: '{self.amount_2}', note: '{self.note}')"
 
 
 class UnitOfMeasure(db.Model):

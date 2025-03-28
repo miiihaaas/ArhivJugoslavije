@@ -1,0 +1,260 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Zaglavlje stranice sa naslovom i dugmadima za akcije -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0"><i class="fas fa-shopping-cart me-2 text-primary"></i>Plan nabavke za {{ purchase_plan.year }}. godinu</h2>
+                        <div>
+                            <a href="{{ url_for('purchase_plan.purchase_plan_list') }}" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-arrow-left me-1"></i> Nazad
+                            </a>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAccountModal">
+                                <i class="fas fa-plus me-1"></i> Dodaj konto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informacije o planu nabavke -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0 text-white"><i class="fas fa-info-circle me-2"></i>Osnovne informacije</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Godina:</label>
+                                <p class="fs-5">{{ purchase_plan.year }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Broj konta:</label>
+                                <p class="fs-5">{{ purchase_plan.purchase_plan_accounts|length }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Iznos za redovnu aktivnost:</label>
+                                <p class="fs-5">{{ '{:,.2f}'.format(amount_for_regular_activity) }} RSD</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Iznos za programnu aktivnost:</label>
+                                <p class="fs-5">{{ '{:,.2f}'.format(amount_for_program_activity) }} RSD</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela sa kontima -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0 text-white"><i class="fas fa-list me-2"></i>Lista konta</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="accountsTable" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Broj konta</th>
+                            <th>Naziv konta</th>
+                            <th>Iznos za redovnu aktivnost</th>
+                            <th>Iznos za programnu aktivnost</th>
+                            <th>Napomena</th>
+                            <th>Akcije</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for account in purchase_plan.purchase_plan_accounts %}
+                        <tr>
+                            <td>{{ account.account_level_4_number }}</td>
+                            <td>{{ account.account_level_4.name }}</td>
+                            <td class="text-end">{{ '{:,.2f}'.format(account.amount_1) if account.amount_1 else '0.00' }}</td>
+                            <td class="text-end">{{ '{:,.2f}'.format(account.amount_2) if account.amount_2 else '0.00' }}</td>
+                            <td>{{ account.note }}</td>
+                            <td>
+                                <button class="btn btn-outline-secondary btn-sm edit-account" data-account-id="{{ account.id }}" data-account-number="{{ account.account_level_4_number }}" data-amount-1="{{ account.amount_1 }}" data-amount-2="{{ account.amount_2 }}" data-note="{{ account.note }}" data-bs-toggle="modal" data-bs-target="#editAccountModal">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm delete-account" data-account-id="{{ account.id }}" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal za dodavanje konta -->
+<div class="modal fade" id="addAccountModal" tabindex="-1" aria-labelledby="addAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAccountModalLabel">Dodaj konto u plan nabavke</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('purchase_plan.add_account', purchase_plan_id=purchase_plan.id) }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="account_level_4_number" class="form-label">Konto *</label>
+                        <select class="form-select" id="account_level_4_number" name="account_level_4_number" required>
+                            <option value="">Izaberite konto</option>
+                            {% for account in accounts_level_4 %}
+                            <option value="{{ account.number }}">{{ account.number }} - {{ account.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="amount_1" class="form-label">Iznos za redovnu aktivnost</label>
+                                <input type="number" step="0.01" class="form-control" id="amount_1" name="amount_1" placeholder="0.00">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="amount_2" class="form-label">Iznos za programnu aktivnost</label>
+                                <input type="number" step="0.01" class="form-control" id="amount_2" name="amount_2" placeholder="0.00">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="note" class="form-label">Napomena</label>
+                        <textarea class="form-control" id="note" name="note" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Odustani</button>
+                    <button type="submit" class="btn btn-primary">Sačuvaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal za izmenu konta -->
+<div class="modal fade" id="editAccountModal" tabindex="-1" aria-labelledby="editAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editAccountModalLabel">Izmeni konto u planu nabavke</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editAccountForm" action="{{ url_for('purchase_plan.edit_account', purchase_plan_id=purchase_plan.id, account_id=0) }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_account_level_4_number" class="form-label">Konto *</label>
+                        <select class="form-select" id="edit_account_level_4_number" name="account_level_4_number" required disabled>
+                            {% for account in accounts_level_4 %}
+                            <option value="{{ account.number }}">{{ account.number }} - {{ account.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_amount_1" class="form-label">Iznos za redovnu aktivnost</label>
+                                <input type="number" step="0.01" class="form-control" id="edit_amount_1" name="amount_1" placeholder="0.00">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_amount_2" class="form-label">Iznos za programnu aktivnost</label>
+                                <input type="number" step="0.01" class="form-control" id="edit_amount_2" name="amount_2" placeholder="0.00">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_note" class="form-label">Napomena</label>
+                        <textarea class="form-control" id="edit_note" name="note" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Odustani</button>
+                    <button type="submit" class="btn btn-primary">Sačuvaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal za brisanje konta -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteAccountModalLabel">Brisanje konta iz plana nabavke</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Da li ste sigurni da želite da obrišete ovaj konto iz plana nabavke?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Odustani</button>
+                <form id="deleteAccountForm" action="{{ url_for('purchase_plan.delete_account', purchase_plan_id=purchase_plan.id, account_id=0) }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Obriši</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicijalizacija DataTables
+        var table = $('#accountsTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Serbian.json"
+            },
+            "pageLength": 10,
+            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Prikaži sve"]]
+        });
+        
+        // Popunjavanje forme za izmenu konta
+        $('.edit-account').on('click', function() {
+            var accountId = $(this).data('account-id');
+            var accountNumber = $(this).data('account-number');
+            var amount1 = $(this).data('amount-1');
+            var amount2 = $(this).data('amount-2');
+            var note = $(this).data('note');
+            
+            $('#edit_account_level_4_number').val(accountNumber);
+            $('#edit_amount_1').val(amount1);
+            $('#edit_amount_2').val(amount2);
+            $('#edit_note').val(note);
+            
+            var form = document.getElementById('editAccountForm');
+            form.action = form.action.replace('/0', '/' + accountId);
+        });
+        
+        // Postavljanje ID-a konta za brisanje
+        $('.delete-account').on('click', function() {
+            var accountId = $(this).data('account-id');
+            var form = document.getElementById('deleteAccountForm');
+            form.action = form.action.replace('/0', '/' + accountId);
+        });
+    });
+</script>
+{% endblock %}
