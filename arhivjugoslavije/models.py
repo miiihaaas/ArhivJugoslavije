@@ -4,10 +4,6 @@ from itsdangerous.url_safe import URLSafeTimedSerializer as Serializer
 from datetime import datetime
 from sqlalchemy.ext.declarative import declared_attr
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
 
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
@@ -32,6 +28,11 @@ class User(db.Model, UserMixin):
     
     def __repr__(self):
         return f"User('{self.name}', '{self.surname}', '{self.email}')"
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 
 class ArchiveSettings(db.Model):
