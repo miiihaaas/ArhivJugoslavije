@@ -4,7 +4,7 @@ import io
 import logging
 from pathlib import Path
 from flask import make_response, flash, redirect, url_for, current_app
-from arhivjugoslavije.models import Invoice, Partner, InvoiceItem, Service, ArchiveSettings, UnitOfMeasure, BankAccount
+from arhivjugoslavije.models import Invoice, Partner, InvoiceItem, Service, ArchiveSettings, UnitOfMeasure, BankAccount, User
 from arhivjugoslavije import db, mail
 from flask_mail import Message
 
@@ -23,6 +23,32 @@ def save_invoice_to_db(invoice_id):
     db.session.commit()
     message['success'] = f'Faktura {invoice.invoice_number} je uspešno sačuvana u data bazi.'
     return message
+
+
+def notify_partner_about_canceled_invoice(invoice_number, partner_id):
+    """
+    Funkcija za slanje mejla partneru o storniranoj fakturi.
+    Vraća poruku sa statusom slanja.
+    """
+    partner = Partner.query.get_or_404(partner_id)
+    cc = User.query.all()
+    message = {}
+    if partner.email:
+        msg = Message(
+            subject=f'Faktura {invoice_number} stornirana',
+            recipients=[partner.email],
+            cc=[user.email for user in cc],
+            body=f'Faktura {invoice_number} je stornirana.'
+        )
+        try:
+            mail.send(msg)
+            message['success'] = f'Faktura {invoice_number} je uspešno stornirana.'
+        except Exception as e:
+            message['error'] = f'Nije moguće poslati mejl partneru o storniranoj fakturi: {str(e)}'
+    else:
+        message['error'] = 'Partner nema mejl adresu.'
+    return message
+
 
 
 def send_invoice_to_partner(invoice_id):
@@ -79,7 +105,12 @@ def send_email(invoice):
         
         # Pripremi email poruku
         subject = f'Faktura {invoice.invoice_number}'
-        sender = current_app.config.get('MAIL_DEFAULT_SENDER', archive_settings.email)
+        # sender = current_app.config.get('MAIL_DEFAULT_SENDER', archive_settings.email)
+        sender = os.getenv('MAIL_DEFAULT_SENDER')
+        users = User.query.all()
+        cc = []
+        for user in users:
+            cc.append(user.email)
         
         # Kreiraj HTML sadržaj emaila
         html_body = f'''
@@ -98,6 +129,7 @@ def send_email(invoice):
         msg = Message(
             subject=subject,
             recipients=[partner.email],
+            cc=cc,
             html=html_body,
             sender=sender
         )
@@ -258,7 +290,8 @@ def generate_invoice_pdf(invoice_id, is_attachment=False):
                 bank_accounts = BankAccount.query.filter_by(settings_id=archive_settings.id).all()
                 if bank_accounts:
                     self.set_xy(105, 28)
-                    self.cell(95, 5, f'Tek. rač: {bank_accounts[0].account_number}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+                    # self.cell(95, 5, f'Tek. rač: {bank_accounts[2].account_number}', 0, new_x="LMARGIN", new_y="NEXT", align="L") #! [2] - je u db 840-31120845-93, ako bude nekih izmena možda treba izmeniti ovaj parametar
+                    self.cell(95, 5, f'Tek. rač: 840000003112084593', 0, new_x="LMARGIN", new_y="NEXT", align="L") #! ovo možda treba menjati da bude promenjivo
                 
                 # ===== DRUGI DEO: DATUMI I PODACI O PARTNERU =====
                 self.ln(10)  # Prazan prostor između delova

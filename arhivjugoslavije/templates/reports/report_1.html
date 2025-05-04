@@ -1,0 +1,100 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container mt-4">
+    <!-- Zaglavlje stranice sa naslovom i dugmadima za akcije -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0"><i class="fas fa-chart-line me-2 text-primary"></i>Realizacija po kontima</h2>
+                        <div>
+                            <a href="{{ url_for('reports.report_list') }}" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-arrow-left me-1"></i> Nazad
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter po godinama -->
+    <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-end">
+            <div class="input-group" style="width: 200px;">
+                <span class="input-group-text"><i class="fas fa-filter"></i></span>
+                <select id="yearFilter" class="form-select">
+                    <option value="">Sve godine</option>
+                    {% for plan in purchase_plans %}
+                    <option value="{{ plan.year }}">{{ plan.year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela sa podacima -->
+    <div class="table-responsive">
+        <table id="reportTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Konto</th>
+                    <th>Planirano</th>
+                    <th>Budžet doznačeno</th>
+                    <th>Budžet potrošeno</th>
+                    <th>Saldo Budžeta</th>
+                    <th>Sopstveni potrošeno</th>
+                    <th>Ukupan trošak</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for account in accounts %}
+                <tr class="account-row" data-year="{{ account.year }}">
+                    <td>{{ account.account_number }} - {{ account.account_name }}</td>
+                    <td class="text-end">{{ account.planned | format_currency }}</td>
+                    <td class="text-end">{{ account.budget_received | format_currency }}</td>
+                    <td class="text-end">{{ account.budget_spent | format_currency }}</td>
+                    <td class="text-end">{{ account.budget_balance | format_currency }}</td>
+                    <td class="text-end">{{ account.own_spent | format_currency }}</td>
+                    <td class="text-end">{{ account.total_expense | format_currency }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="table-secondary fw-bold">
+                    <td>UKUPNO</td>
+                    <td class="text-end">{{ totals.planned | format_currency }}</td>
+                    <td class="text-end">{{ totals.budget_received | format_currency }}</td>
+                    <td class="text-end">{{ totals.budget_spent | format_currency }}</td>
+                    <td class="text-end">{{ totals.budget_balance | format_currency }}</td>
+                    <td class="text-end">{{ totals.own_spent | format_currency }}</td>
+                    <td class="text-end">{{ totals.total_expense | format_currency }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicijalizacija DataTables
+        var table = $('#reportTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Serbian.json"
+            },
+            "order": [[0, "asc"]], // Sortiranje po kontu (rastuu0107e)
+            "pageLength": 10,
+            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Prikau017ei sve"]]
+        });
+        
+        // Filter po godini
+        $('#yearFilter').on('change', function() {
+            var year = $(this).val();
+            table.column(0).search(year).draw();
+        });
+    });
+</script>
+{% endblock %}

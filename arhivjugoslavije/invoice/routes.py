@@ -1,10 +1,10 @@
 from datetime import datetime
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from flask_login import login_required
-from arhivjugoslavije import db
+from arhivjugoslavije import db, app
 from arhivjugoslavije.models import Partner, Invoice, InvoiceItem, Service
 from arhivjugoslavije.invoice.forms import InvoiceForm, InvoiceItemForm, EditInvoiceForm
-from arhivjugoslavije.invoice.functions import generate_invoice_pdf, save_invoice_to_db, send_invoice_to_partner
+from arhivjugoslavije.invoice.functions import generate_invoice_pdf, save_invoice_to_db, send_invoice_to_partner, notify_partner_about_canceled_invoice
 import os
 from pathlib import Path
 
@@ -112,13 +112,12 @@ def create_customer_invoice(partner_id=None):
                             recent_invoices=recent_invoices)
 
 
-@invoices.route('/delete_invoice/<int:invoice_id>', methods=['POST'])
+@invoices.route('/delete_invoice/<int:invoice_id>', methods=['GET', 'POST'])
 @login_required
 def delete_invoice(invoice_id):
     invoice = Invoice.query.get_or_404(invoice_id)
-    if invoice.status != 'nacrt':
-        flash('Faktura nije u nacrтu, ne može se obrisati.', 'warning')
-        return redirect(url_for('invoices.invoice_list'))
+    invoice_number = invoice.invoice_number
+    partner_id = invoice.partner_id
     if invoice.incoming and invoice.paid:
         flash('Ulazna faktura je plaćena, ne može se obrisati.', 'warning')
         return redirect(url_for('invoices.invoice_list'))
@@ -127,7 +126,16 @@ def delete_invoice(invoice_id):
         db.session.delete(item)
     db.session.delete(invoice)
     db.session.commit()
-    flash('Faktura uspešno obrisana.', 'success')
+    if invoice.status != 'nacrt':
+        app.logger.warning('Implementirati slanje mejla partneru o storniranoj fakturi.')
+        message = notify_partner_about_canceled_invoice(invoice_number, partner_id)
+        if 'error' in message:
+            flash(message['error'], 'danger')
+            return redirect(url_for('invoices.invoice_list'))
+        if 'success' in message:
+            flash(message['success'], 'success')
+    else:
+        flash('Faktura uspešno obrisana.', 'success')
     return redirect(url_for('invoices.invoice_list'))
 
 

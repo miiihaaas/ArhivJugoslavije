@@ -115,78 +115,25 @@ def edit_settings(id):
 def update_eur_rate(id):
     archive = ArchiveSettings.query.get_or_404(id)
     try:
-        # Direktno preuzimanje HTML stranice sa kursom evra
-        url = 'https://www.kursna-lista.com/kursna-lista-nbs'
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        response = requests.get(url, headers=headers)
-        
-        if response.status_code == 200:
-            try:
-                # Parsiranje HTML-a da bismo pronašli kurs evra
-                soup = BeautifulSoup(response.text, 'html.parser')
-                
-                # Tražimo red sa evrom u tabeli
-                eur_rate = None
-                
-                # Tražimo sve redove u tabeli
-                rows = soup.find_all('tr')
-                for row in rows:
-                    # Tražimo ćelije u redu
-                    cells = row.find_all('td')
-                    # Proveravamo da li red sadrži tekst "Evro" ili "EUR"
-                    if cells and len(cells) > 0:
-                        row_text = row.text.strip()
-                        if 'Evro' in row_text or 'EUR' in row_text:
-                            # Na osnovu slike, srednji kurs je u petoj koloni (indeks 4)
-                            if len(cells) >= 5:
-                                try:
-                                    # Pokušavamo da dobijemo vrednost srednjeg kursa
-                                    srednji_kurs_text = cells[5].text.strip().replace(',', '.')
-                                    eur_rate = round(float(srednji_kurs_text), 2)
-                                    break
-                                except (ValueError, IndexError):
-                                    pass
-                
-                # Ako nismo pronašli kurs evra, probajmo još jedan način
-                if not eur_rate:
-                    # Tražimo direktno vrednost za EUR u srednjem kursu
-                    eur_elements = soup.find_all(string=lambda text: 'EUR' in text if text else False)
-                    for element in eur_elements:
-                        parent = element.parent
-                        if parent:
-                            # Tražimo najbliži red koji sadrži ovaj element
-                            row = parent
-                            while row and row.name != 'tr':
-                                row = row.parent
-                            
-                            if row:
-                                # Tražimo ćeliju sa srednjim kursom
-                                cells = row.find_all('td')
-                                if cells and len(cells) >= 5:
-                                    try:
-                                        srednji_kurs_text = cells[4].text.strip().replace(',', '.')
-                                        eur_rate = round(float(srednji_kurs_text), 2)
-                                        break
-                                    except (ValueError, IndexError):
-                                        pass
-                
-                # Ako smo uspešno dobili kurs evra, ažuriramo podatke
-                if eur_rate:
-                    archive.eur_rate = eur_rate
-                    archive.eur_rate_date = datetime.now()
-                    db.session.commit()
-                    flash('Kurs evra je uspešno ažuriran.', 'success')
-                else:
-                    flash('Nije pronađen kurs evra na stranici. Podaci nisu promenjeni.', 'warning')
-            except Exception as e:
-                flash(f'Greška pri parsiranju HTML stranice: {str(e)}.', 'danger')
-        else:
-            flash('Nije moguće pristupiti stranici sa kursnom listom.', 'danger')
+        eur_rate_str = request.form.get('eur_rate')
+        if not eur_rate_str:
+            flash('Morate uneti vrednost kursa evra.', 'warning')
+            return redirect(url_for('main.settings', id=id))
+        try:
+            eur_rate = float(eur_rate_str.replace(',', '.'))
+            eur_rate = round(eur_rate, 2)
+            if eur_rate <= 0:
+                flash('Kurs evra mora biti pozitivan broj.', 'danger')
+                return redirect(url_for('main.settings', id=id))
+        except ValueError:
+            flash('Uneta vrednost kursa nije validan broj.', 'danger')
+            return redirect(url_for('main.settings', id=id))
+        archive.eur_rate = eur_rate
+        archive.eur_rate_date = datetime.now()
+        db.session.commit()
+        flash('Kurs evra je uspešno sačuvan.', 'success')
     except Exception as e:
-        flash(f'Greška pri komunikaciji sa sajtom: {str(e)}.', 'danger')
-    
+        flash(f'Greška pri čuvanju kursa evra: {str(e)}.', 'danger')
     return redirect(url_for('main.settings', id=id))
 
 @main.route('/add_bank_account/<int:settings_id>', methods=['POST'])
@@ -199,6 +146,8 @@ def add_bank_account(settings_id):
         bank_account = BankAccount(
             settings_id=settings_id,
             account_number=form.account_number.data,
+            sub_account_number=form.sub_account_number.data,
+            account_type=form.account_type.data,
             purpose=form.purpose.data,
             active=form.active.data
         )
@@ -221,6 +170,8 @@ def edit_bank_account(account_id):
     
     if form.validate_on_submit():
         bank_account.account_number = form.account_number.data
+        bank_account.sub_account_number = form.sub_account_number.data
+        bank_account.account_type = form.account_type.data
         bank_account.purpose = form.purpose.data
         bank_account.active = form.active.data
         
@@ -252,6 +203,8 @@ def get_bank_account(account_id):
     return jsonify({
         'id': bank_account.id,
         'account_number': bank_account.account_number,
+        'sub_account_number': bank_account.sub_account_number,
+        'account_type': bank_account.account_type,
         'purpose': bank_account.purpose,
         'active': bank_account.active
     })

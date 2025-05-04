@@ -91,6 +91,7 @@
                                     <th style="width: 15%" class="bg-light"><strong>Konto</strong></th>
                                     <th style="width: 15%" class="bg-light"><strong>Projekat</strong></th>
                                     <th style="width: 10%" class="bg-light"><strong>Javna nabavka</strong></th>
+                                    <th style="width: 10%" class="bg-light"><strong>Beleška</strong></th>
                                     <th style="width: 5%" class="bg-light text-center"><strong>Knjiži</strong></th>
                                 </tr>
                             </thead>
@@ -151,6 +152,9 @@
                                     </td>
                                     <td class="bg-light">
                                         <input type="text" name="public_procurement_{{ item.id }}" class="form-control form-control-sm" value="{{ item.public_procurement }}" placeholder="Javna nabavka" {% if not current_user.is_authenticated %}disabled{% endif %}>
+                                    </td>
+                                    <td class="bg-light">
+                                        <input type="text" name="note_{{ item.id }}" class="form-control form-control-sm" value="{{ item.note }}" placeholder="Beleška" {% if not current_user.is_authenticated %}disabled{% endif %}>
                                     </td>
                                     <td class="bg-light text-center">
                                         <div class="form-check form-switch d-flex justify-content-center">

@@ -141,39 +141,40 @@
                 </div>
                 <div class="card-body">
                     <div class="row g-4">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="card h-100">
                                 <div class="card-header bg-secondary text-white">
                                     <h6 class="card-title mb-0">Kurs evra</h6>
                                 </div>
                                 <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <div>
-                                            <p class="mb-2"><strong>Trenutni kurs:</strong> 
-                                                {% if archive.eur_rate %}
-                                                    {{ "%.2f"|format(archive.eur_rate|float) }} RSD
-                                                {% else %}
-                                                    Nije postavljen
-                                                {% endif %}
-                                            </p>
-                                            <p class="mb-2"><strong>Datum ažuriranja:</strong> 
-                                                {% if archive.eur_rate_date %}
-                                                    {{ archive.eur_rate_date.strftime('%d.%m.%Y. %H:%M') }}
-                                                {% else %}
-                                                    -
-                                                {% endif %}
-                                            </p>
+                                    <form action="{{ url_for('main.update_eur_rate', id=id) }}" method="POST" class="mb-3">
+                                        {{ csrf_token() if csrf_token is defined else '' }}
+                                        <div class="mb-2">
+                                            <label for="eur_rate" class="form-label">Unesite kurs evra</label>
+                                            <input type="text" class="form-control" id="eur_rate" name="eur_rate" placeholder="npr. 117,20" value="{{ archive.eur_rate if archive.eur_rate else '' }}" required pattern="^[0-9]+([\.,][0-9]{1,2})?$" title="Unesite broj sa najviše 2 decimale">
                                         </div>
-                                        <form action="{{ url_for('main.update_eur_rate', id=id) }}" method="POST">
-                                            <button type="submit" class="btn btn-primary">
-                                                <i class="fa fa-sync-alt me-2"></i>Ažuriraj kurs
-                                            </button>
-                                        </form>
-                                    </div>
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="fa fa-save me-2"></i>Sačuvaj kurs
+                                        </button>
+                                    </form>
+                                    <p class="mb-2"><strong>Trenutni kurs:</strong> 
+                                        {% if archive.eur_rate %}
+                                            {{ "%.2f"|format(archive.eur_rate|float) }} RSD
+                                        {% else %}
+                                            Nije postavljen
+                                        {% endif %}
+                                    </p>
+                                    <p class="mb-0"><strong>Datum ažuriranja:</strong> 
+                                        {% if archive.eur_rate_date %}
+                                            {{ archive.eur_rate_date.strftime('%d.%m.%Y. %H:%M') }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </p>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-8">
                             <div class="card h-100">
                                 <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
                                     <h6 class="card-title mb-0">Žiro računi</h6>
@@ -188,6 +189,8 @@
                                                 <thead>
                                                     <tr>
                                                         <th>Broj računa</th>
+                                                        <th>Podračun</th>
+                                                        <th>Tip</th>
                                                         <th>Namena</th>
                                                         <th>Status</th>
                                                         <th class="text-end">Akcije</th>
@@ -197,6 +200,10 @@
                                                     {% for account in archive.bank_accounts %}
                                                     <tr>
                                                         <td>{{ account.account_number }}</td>
+                                                        <td>{{ account.sub_account_number or '' }}</td>
+                                                        <td>
+                                                            {% if account.account_type == 'budget' %}Budžetski{% elif account.account_type == 'own' %}Sopstveni{% elif account.account_type == 'other' %}Ostalo{% else %}-{% endif %}
+                                                        </td>
                                                         <td>{{ account.purpose }}</td>
                                                         <td>
                                                             {% if account.active %}
@@ -546,6 +553,32 @@
                             {% endif %}
                         </div>
                         <div class="col-md-12">
+                            {{ bank_account_form.sub_account_number.label(class="form-label") }}
+                            {% if bank_account_form.sub_account_number.errors %}
+                                {{ bank_account_form.sub_account_number(class="form-control is-invalid", id="bank_account_sub_account_number") }}
+                                <div class="invalid-feedback">
+                                    {% for error in bank_account_form.sub_account_number.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ bank_account_form.sub_account_number(class="form-control", id="bank_account_sub_account_number") }}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-12">
+                            {{ bank_account_form.account_type.label(class="form-label") }}
+                            {% if bank_account_form.account_type.errors %}
+                                {{ bank_account_form.account_type(class="form-select is-invalid", id="bank_account_account_type") }}
+                                <div class="invalid-feedback">
+                                    {% for error in bank_account_form.account_type.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ bank_account_form.account_type(class="form-select", id="bank_account_account_type") }}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-12">
                             <div class="form-check">
                                 {% if bank_account_form.active.errors %}
                                     {{ bank_account_form.active(class="form-check-input is-invalid", id="bank_account_active") }}
@@ -637,6 +670,8 @@
                     $('#bank_account_id').val(data.id);
                     $('#bank_account_purpose').val(data.purpose);
                     $('#bank_account_number').val(data.account_number);
+                    $('#bank_account_sub_account_number').val(data.sub_account_number);
+                    $('#bank_account_account_type').val(data.account_type);
                     $('#bank_account_active').prop('checked', data.active);
                     
                     // Promeni naslov i akciju forme

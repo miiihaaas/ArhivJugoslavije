@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, BooleanField, FloatField, HiddenField, FileField
+from wtforms import StringField, SubmitField, BooleanField, FloatField, HiddenField, FileField, SelectField
 from wtforms.validators import DataRequired, Optional, Length, Regexp
 from flask_wtf.file import FileAllowed
 
@@ -29,5 +29,7 @@ class BankAccountForm(FlaskForm):
     id = HiddenField('ID')
     account_number = StringField('Broj računa', validators=[DataRequired()])
     purpose = StringField('Namena', validators=[DataRequired()])
+    account_type = SelectField('Tip računa', choices=[('budget', 'Budžetski'), ('own', 'Sopstveni'), ('other', 'Ostalo')], validators=[DataRequired()])
+    sub_account_number = StringField('Podračun', validators=[])
     active = BooleanField('Aktivan', default=True)
     submit = SubmitField('Sačuvaj')

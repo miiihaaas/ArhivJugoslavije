@@ -72,6 +72,8 @@ class BankAccount(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     settings_id = db.Column(db.Integer, db.ForeignKey('archive_settings.id'), nullable=False)
     account_number = db.Column(db.String(50), nullable=False)
+    sub_account_number = db.Column(db.String(50), nullable=True)
+    account_type = db.Column(db.String(50), nullable=False) #! budget, own, other
     purpose = db.Column(db.String(100), nullable=False)
     active = db.Column(db.Boolean, default=True, nullable=False)
     
@@ -320,6 +322,7 @@ class StatementItem(db.Model):
     account_level_6_number = db.Column(db.String(6), db.ForeignKey('account_level_6.number'), nullable=True)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True)
     public_procurement = db.Column(db.String(100), nullable=True)  # Javna nabavka - zamenjuje invoice_id
+    note = db.Column(db.Text, nullable=True)
     account_in_project = db.Column(db.Boolean, default=False, nullable=False) #? Označava da li se ova stavka knjiži u projekat. Ako je True, znači da se ova stavka uračunava u finansije projekta. Podrazumevana vrednost je False.
     #? Polje account_in_project nije redundantno iako imamo project_id i account_level_6_number.
     #? Razlog je što samo postojanje veze sa projektom (project_id) ne znači automatski da ta stavka treba da se knjiži u finansije projekta. account_in_project služi kao eksplicitna oznaka koja govori sistemu da li ovu stavku treba uključiti u finansijske izveštaje projekta.

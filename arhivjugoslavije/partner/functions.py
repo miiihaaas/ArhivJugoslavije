@@ -152,16 +152,16 @@ def get_partner_card_data(partner_id, start_date=None, end_date=None, is_custome
 
 def generate_partner_card_pdf(partner_id, start_date, end_date, combined_data, total_debit, total_credit, is_customer=True):
     """
-    Funkcija za generisanje PDF kartice partnera (kupca ili dobavljau010da).
+    Funkcija za generisanje PDF kartice partnera (kupca ili dobavljača).
     
     Args:
         partner_id (int): ID partnera
-        start_date (date): Pou010detni datum perioda
+        start_date (date): Početni datum perioda
         end_date (date): Krajnji datum perioda
         combined_data (list): Lista kombinovanih podataka (fakture i stavke izvoda)
         total_debit (Decimal): Ukupan iznos na dugovnoj strani
-        total_credit (Decimal): Ukupan iznos na potrau017enoj strani
-        is_customer (bool): True ako je kupac, False ako je dobavljau010d
+        total_credit (Decimal): Ukupan iznos na potražuju strani
+        is_customer (bool): True ako je kupac, False ako je dobavljač
     
     Returns:
         Response: HTTP response sa PDF dokumentom

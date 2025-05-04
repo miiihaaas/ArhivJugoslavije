@@ -56,12 +56,19 @@
                     <td>{{ plan.purchase_plan_accounts|length }}</td>
                     <td class="text-end">{{ plan.amount }}</td>
                     <td>
-                        <a href="{{ url_for('purchase_plan.edit_purchase_plan', purchase_plan_id=plan.id) }}" class="btn btn-outline-secondary btn-sm">
+                        {% set readonly = plan.year < current_year %}
+                        {% if readonly %}
+                        <a href="{{ url_for('purchase_plan.edit_purchase_plan', purchase_plan_id=plan.id) }}" class="btn btn-outline-info btn-sm" title="Pregled">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('purchase_plan.edit_purchase_plan', purchase_plan_id=plan.id) }}" class="btn btn-outline-secondary btn-sm" title="Izmeni">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <button class="btn btn-outline-danger btn-sm delete-plan" data-plan-id="{{ plan.id }}" data-bs-toggle="modal" data-bs-target="#deletePlanModal">
+                        <button class="btn btn-outline-danger btn-sm delete-plan" data-plan-id="{{ plan.id }}" data-bs-toggle="modal" data-bs-target="#deletePlanModal" title="Obriši">
                             <i class="fas fa-trash"></i>
                         </button>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

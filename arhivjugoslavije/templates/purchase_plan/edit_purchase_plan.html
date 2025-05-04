@@ -13,9 +13,11 @@
                             <a href="{{ url_for('purchase_plan.purchase_plan_list') }}" class="btn btn-outline-secondary me-2">
                                 <i class="fas fa-arrow-left me-1"></i> Nazad
                             </a>
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAccountModal">
+                            {% if not readonly %}
+                            <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addAccountModal">
                                 <i class="fas fa-plus me-1"></i> Dodaj konto
                             </button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -89,12 +91,16 @@
                             <td class="text-end">{{ '{:,.2f}'.format(account.amount_2) if account.amount_2 else '0.00' }}</td>
                             <td>{{ account.note }}</td>
                             <td>
+                                {% if not readonly %}
                                 <button class="btn btn-outline-secondary btn-sm edit-account" data-account-id="{{ account.id }}" data-account-number="{{ account.account_level_4_number }}" data-amount-1="{{ account.amount_1 }}" data-amount-2="{{ account.amount_2 }}" data-note="{{ account.note }}" data-bs-toggle="modal" data-bs-target="#editAccountModal">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="btn btn-outline-danger btn-sm delete-account" data-account-id="{{ account.id }}" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                                <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteAccountModal" data-account-id="{{ account.id }}">
                                     <i class="fas fa-trash"></i>
                                 </button>
+                                {% else %}
+                                <span class="text-muted small">Nije moguće menjati</span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -106,6 +112,7 @@
 </div>
 
 <!-- Modal za dodavanje konta -->
+{% if not readonly %}
 <div class="modal fade" id="addAccountModal" tabindex="-1" aria-labelledby="addAccountModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -151,8 +158,10 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 <!-- Modal za izmenu konta -->
+{% if not readonly %}
 <div class="modal fade" id="editAccountModal" tabindex="-1" aria-labelledby="editAccountModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -197,8 +206,10 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 <!-- Modal za brisanje konta -->
+{% if not readonly %}
 <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -218,6 +229,10 @@
         </div>
     </div>
 </div>
+{% endif %}
+
+{# Dugme za čuvanje izmena je sada u zaglavlju, a poruka izbačena #}
+
 {% endblock %}
 
 {% block scripts %}

@@ -316,6 +316,9 @@ def statement_details(statement_id):
                 if f'public_procurement_{item_id}' in request.form:
                     item.public_procurement = request.form.get(f'public_procurement_{item_id}')
                 
+                if f'note_{item_id}' in request.form:
+                    item.note = request.form.get(f'note_{item_id}')
+                
                 # Checkbox za knjiženje u projekat
                 item.account_in_project = f'account_in_project_{item_id}' in request.form
             

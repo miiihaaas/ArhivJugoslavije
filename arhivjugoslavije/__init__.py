@@ -54,13 +54,33 @@ login_manager.login_message = 'Molimo prijavite se.'
 # Konfiguracija za e-mail
 app.config['JSON_AS_ASCII'] = False
 app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
-app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
-app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'True').lower() == 'true'
-app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'False').lower() == 'true'
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 465))
+app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'False').lower() == 'true'
+app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'True').lower() == 'true'
+print(f'{app.config["MAIL_SERVER"]=}, {app.config["MAIL_PORT"]=}, {app.config["MAIL_USE_TLS"]=}, {app.config["MAIL_USE_SSL"]=}')
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER')
+sender_raw = os.environ.get('MAIL_DEFAULT_SENDER')
+if sender_raw and sender_raw.startswith('(') and ',' in sender_raw:
+    name, email = sender_raw.strip('()').split(',')
+    app.config['MAIL_DEFAULT_SENDER'] = (name.strip(), email.strip())
+else:
+    app.config['MAIL_DEFAULT_SENDER'] = sender_raw
+
+print(f'{app.config["MAIL_USERNAME"]=}, {app.config["MAIL_PASSWORD"]=}, {app.config["MAIL_DEFAULT_SENDER"]=}')
 mail = Mail(app)
+
+# Dodavanje filtera za formatiranje valute
+@app.template_filter('format_currency')
+def format_currency(value):
+    if value is None:
+        return "-"
+    try:
+        # Formatiranje brojeva sa razmakom kao separatorom hiljada i zarezom za decimale
+        value = float(value)
+        return f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", " ") + " RSD"
+    except (ValueError, TypeError):
+        return str(value)
 
 # Import modela
 from arhivjugoslavije import models
@@ -73,6 +93,7 @@ from arhivjugoslavije.main.routes import main
 from arhivjugoslavije.partner.routes import partner
 from arhivjugoslavije.purchase_plan.routes import purchase_plan
 from arhivjugoslavije.project.routes import project
+from arhivjugoslavije.reports.routes import reports
 # from arhivjugoslavije.payments.routes import payments
 from arhivjugoslavije.statement.routes import statement
 from arhivjugoslavije.srvices.routes import services
@@ -85,6 +106,7 @@ app.register_blueprint(main)
 app.register_blueprint(partner)
 app.register_blueprint(purchase_plan)
 app.register_blueprint(project)
+app.register_blueprint(reports)
 # app.register_blueprint(payments)
 app.register_blueprint(statement)
 app.register_blueprint(services)

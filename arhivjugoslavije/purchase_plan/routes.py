@@ -2,14 +2,20 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from arhivjugoslavije.models import PurchasePlan, PurchasePlanAccount, AccountLevel4
 from arhivjugoslavije import db
 from flask_login import login_required
+from datetime import datetime
 
 purchase_plan = Blueprint('purchase_plan', __name__)
 
 @login_required
 @purchase_plan.route("/purchase_plan_list", methods=["GET"])
 def purchase_plan_list():
+    current_year = datetime.now().year
     purchase_plans = PurchasePlan.query.all()
-    return render_template("purchase_plan/purchase_plan_list.html", purchase_plans=purchase_plans)
+    plans_with_readonly = []
+    for plan in purchase_plans:
+        readonly = plan.year < current_year
+        plans_with_readonly.append({"plan": plan, "readonly": readonly})
+    return render_template("purchase_plan/purchase_plan_list.html", purchase_plans=purchase_plans, plans_with_readonly=plans_with_readonly, current_year=current_year)
 
 
 
@@ -31,7 +37,10 @@ def create_purchase_plan():
 def edit_purchase_plan(purchase_plan_id):
     purchase_plan = PurchasePlan.query.get_or_404(purchase_plan_id)
     accounts_level_4 = AccountLevel4.query.all()
-    print(f'{purchase_plan.purchase_plan_accounts=}')
+    current_year = datetime.now().year
+    readonly = purchase_plan.year < current_year
+    if readonly:
+        flash(f"Plan nabavke za {purchase_plan.year}. godinu je moguće samo pregledati. Izmene nisu dozvoljene.", "warning")
     amount_for_regular_activity = sum([account.amount_1 for account in purchase_plan.purchase_plan_accounts])
     amount_for_program_activity = sum([account.amount_2 for account in purchase_plan.purchase_plan_accounts])
     return render_template("purchase_plan/edit_purchase_plan.html",
@@ -40,7 +49,8 @@ def edit_purchase_plan(purchase_plan_id):
                             purchase_plan=purchase_plan, 
                             accounts_level_4=accounts_level_4, 
                             amount_for_regular_activity=amount_for_regular_activity,
-                            amount_for_program_activity=amount_for_program_activity)
+                            amount_for_program_activity=amount_for_program_activity,
+                            readonly=readonly)
 
 
 @login_required
