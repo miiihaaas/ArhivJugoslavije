@@ -93,14 +93,6 @@ def format_currency(value):
 # Import modela
 from arhivjugoslavije import models
 
-# Definišemo funkciju za učitavanje korisnika
-@login_manager.user_loader
-def load_user(user_id):
-    with app.app_context():
-        from arhivjugoslavije.models import User
-        return User.query.get(int(user_id))
-app.logger.info(f"ID login_manager objekta u init: {id(login_manager)}")
-
 
 # Registracija blueprint-a
 from arhivjugoslavije.accounts.routes import account

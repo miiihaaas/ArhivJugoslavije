@@ -1,8 +1,15 @@
-from arhivjugoslavije import db, login_manager, app
+from arhivjugoslavije import db, login_manager
+from flask import current_app
 from flask_login import UserMixin
 from itsdangerous.url_safe import URLSafeTimedSerializer as Serializer
 from datetime import datetime
 from sqlalchemy.ext.declarative import declared_attr
+
+@login_manager.user_loader
+def load_user(user_id):
+    with current_app.app_context():
+        from arhivjugoslavije.models import User
+        return User.query.get(int(user_id))
 
 
 class User(db.Model, UserMixin):
@@ -14,12 +21,12 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(60), nullable=False)
     
     def get_reset_token(self, expires_sec=1800):
-        s = Serializer(app.config['SECRET_KEY'])
+        s = Serializer(current_app.config['SECRET_KEY'])
         return s.dumps({'user_id': self.id})
     
     @staticmethod
     def verify_reset_token(token):
-        s = Serializer(app.config['SECRET_KEY'])
+        s = Serializer(current_app.config['SECRET_KEY'])
         try:
             user_id = s.loads(token, max_age=1800)['user_id']
         except:
