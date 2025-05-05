@@ -43,13 +43,21 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['FLASK_APP'] = 'run.py'
 
 # Inicijalizacija ekstenzija
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-bcrypt = Bcrypt(app)
-login_manager = LoginManager(app)
+db = SQLAlchemy()
+login_manager = LoginManager()
+migrate = Migrate()
+bcrypt = Bcrypt()
+
+# Konfigurisanje ekstenzija
 login_manager.login_view = 'users.login'
 login_manager.login_message_category = 'info'
 login_manager.login_message = 'Molimo prijavite se.'
+
+# Inicijalizacija sa aplikacijom
+db.init_app(app)
+migrate.init_app(app, db)
+bcrypt.init_app(app)
+login_manager.init_app(app)
 
 # Konfiguracija za e-mail
 app.config['JSON_AS_ASCII'] = False
@@ -88,7 +96,11 @@ from arhivjugoslavije import models
 # Definišemo funkciju za učitavanje korisnika
 @login_manager.user_loader
 def load_user(user_id):
-    return models.User.query.get(int(user_id))
+    with app.app_context():
+        from arhivjugoslavije.models import User
+        return User.query.get(int(user_id))
+app.logger.info(f"ID login_manager objekta u init: {id(login_manager)}")
+
 
 # Registracija blueprint-a
 from arhivjugoslavije.accounts.routes import account
