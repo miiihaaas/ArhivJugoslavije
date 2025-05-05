@@ -30,9 +30,6 @@ class User(db.Model, UserMixin):
         return f"User('{self.name}', '{self.surname}', '{self.email}')"
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
 
 
 class ArchiveSettings(db.Model):
