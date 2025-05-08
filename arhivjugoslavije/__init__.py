@@ -1,4 +1,5 @@
 import os
+import sys  # Dodajte ovu liniju
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -14,6 +15,10 @@ from flask_migrate import Migrate
 root_path = Path(__file__).resolve().parent.parent
 env_path = root_path / '.env'
 load_dotenv(dotenv_path=env_path, override=True)
+
+# U __init__.py, posle učitavanja .env fajla, dodajte:
+print(f"Loaded config: SQLALCHEMY_DATABASE_URI exists: {'SQLALCHEMY_DATABASE_URI' in os.environ}", file=sys.stderr)
+print(f"SECRET_KEY exists: {'SECRET_KEY' in os.environ}", file=sys.stderr)
 
 # Podešavanje logovanja
 if not os.path.exists('app_logs'):
@@ -59,6 +64,12 @@ migrate.init_app(app, db)
 bcrypt.init_app(app)
 login_manager.init_app(app)
 
+# Registracija user_loader
+@login_manager.user_loader
+def load_user(user_id):
+    from arhivjugoslavije.models import User
+    return User.query.get(int(user_id))
+
 # Konfiguracija za e-mail
 app.config['JSON_AS_ASCII'] = False
 app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
@@ -92,6 +103,10 @@ def format_currency(value):
 
 # Import modela
 from arhivjugoslavije import models
+
+# Provera da li je user_loader registrovan
+if not hasattr(login_manager, '_user_callback'):
+    raise RuntimeError("User loader nije registrovan!")
 
 
 # Registracija blueprint-a

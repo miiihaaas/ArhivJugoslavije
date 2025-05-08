@@ -56,13 +56,11 @@ def report_1():
             ).all()
             
             # Pronađi budžetski račun (pretpostavljamo da je to račun sa ID 1)
-            budget_account = BankAccount.query.filter_by(account_type='budget').first()
+            budget_account = BankAccount.query.filter(BankAccount.account_type=='budget').first()
             
             # Pronađi sopstvene račune (pretpostavljamo da su to računi sa ID 2 i 3)
             own_accounts = BankAccount.query.filter(BankAccount.account_type.in_(['own', 'other'])).all()
             own_account_ids = [acc.id for acc in own_accounts]
-            print(f'{own_account_ids=}, {own_accounts=}')
-            print(f'{budget_account.id=}, {budget_account=}')
             
             # Za svaki konto iz plana nabavke, izračunaj potrebne vrednosti
             for account_data in plan_accounts:

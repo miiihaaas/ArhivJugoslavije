@@ -1,0 +1,1143 @@
+[1mdiff --git a/arhivjugoslavije/__init__.py b/arhivjugoslavije/__init__.py[m
+[1mindex 7fefb92..6398e06 100644[m
+[1m--- a/arhivjugoslavije/__init__.py[m
+[1m+++ b/arhivjugoslavije/__init__.py[m
+[36m@@ -54,14 +54,34 @@[m [mlogin_manager.login_message = 'Molimo prijavite se.'[m
+ # Konfiguracija za e-mail[m
+ app.config['JSON_AS_ASCII'] = False[m
+ app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')[m
+[31m-app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))[m
+[31m-app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'True').lower() == 'true'[m
+[31m-app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'False').lower() == 'true'[m
+[32m+[m[32mapp.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 465))[m
+[32m+[m[32mapp.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'False').lower() == 'true'[m
+[32m+[m[32mapp.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'True').lower() == 'true'[m
+[32m+[m[32mprint(f'{app.config["MAIL_SERVER"]=}, {app.config["MAIL_PORT"]=}, {app.config["MAIL_USE_TLS"]=}, {app.config["MAIL_USE_SSL"]=}')[m
+ app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')[m
+ app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')[m
+[31m-app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER')[m
+[32m+[m[32msender_raw = os.environ.get('MAIL_DEFAULT_SENDER')[m
+[32m+[m[32mif sender_raw and sender_raw.startswith('(') and ',' in sender_raw:[m
+[32m+[m[32m    name, email = sender_raw.strip('()').split(',')[m
+[32m+[m[32m    app.config['MAIL_DEFAULT_SENDER'] = (name.strip(), email.strip())[m
+[32m+[m[32melse:[m
+[32m+[m[32m    app.config['MAIL_DEFAULT_SENDER'] = sender_raw[m
+[32m+[m
+[32m+[m[32mprint(f'{app.config["MAIL_USERNAME"]=}, {app.config["MAIL_PASSWORD"]=}, {app.config["MAIL_DEFAULT_SENDER"]=}')[m
+ mail = Mail(app)[m
+ [m
+[32m+[m[32m# Dodavanje filtera za formatiranje valute[m
+[32m+[m[32m@app.template_filter('format_currency')[m
+[32m+[m[32mdef format_currency(value):[m
+[32m+[m[32m    if value is None:[m
+[32m+[m[32m        return "-"[m
+[32m+[m[32m    try:[m
+[32m+[m[32m        # Formatiranje brojeva sa razmakom kao separatorom hiljada i zarezom za decimale[m
+[32m+[m[32m        value = float(value)[m
+[32m+[m[32m        return f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", " ") + " RSD"[m
+[32m+[m[32m    except (ValueError, TypeError):[m
+[32m+[m[32m        return str(value)[m
+[32m+[m
+ # Import modela[m
+ from arhivjugoslavije import models[m
+ [m
+[36m@@ -73,6 +93,7 @@[m [mfrom arhivjugoslavije.main.routes import main[m
+ from arhivjugoslavije.partner.routes import partner[m
+ from arhivjugoslavije.purchase_plan.routes import purchase_plan[m
+ from arhivjugoslavije.project.routes import project[m
+[32m+[m[32mfrom arhivjugoslavije.reports.routes import reports[m
+ # from arhivjugoslavije.payments.routes import payments[m
+ from arhivjugoslavije.statement.routes import statement[m
+ from arhivjugoslavije.srvices.routes import services[m
+[36m@@ -85,6 +106,7 @@[m [mapp.register_blueprint(main)[m
+ app.register_blueprint(partner)[m
+ app.register_blueprint(purchase_plan)[m
+ app.register_blueprint(project)[m
+[32m+[m[32mapp.register_blueprint(reports)[m
+ # app.register_blueprint(payments)[m
+ app.register_blueprint(statement)[m
+ app.register_blueprint(services)[m
+[1mdiff --git a/arhivjugoslavije/invoice/functions.py b/arhivjugoslavije/invoice/functions.py[m
+[1mindex 3960586..8568ddd 100644[m
+[1m--- a/arhivjugoslavije/invoice/functions.py[m
+[1m+++ b/arhivjugoslavije/invoice/functions.py[m
+[36m@@ -4,7 +4,7 @@[m [mimport io[m
+ import logging[m
+ from pathlib import Path[m
+ from flask import make_response, flash, redirect, url_for, current_app[m
+[31m-from arhivjugoslavije.models import Invoice, Partner, InvoiceItem, Service, ArchiveSettings, UnitOfMeasure, BankAccount[m
+[32m+[m[32mfrom arhivjugoslavije.models import Invoice, Partner, InvoiceItem, Service, ArchiveSettings, UnitOfMeasure, BankAccount, User[m
+ from arhivjugoslavije import db, mail[m
+ from flask_mail import Message[m
+ [m
+[36m@@ -25,6 +25,32 @@[m [mdef save_invoice_to_db(invoice_id):[m
+     return message[m
+ [m
+ [m
+[32m+[m[32mdef notify_partner_about_canceled_invoice(invoice_number, partner_id):[m
+[32m+[m[32m    """[m
+[32m+[m[32m    Funkcija za slanje mejla partneru o storniranoj fakturi.[m
+[32m+[m[32m    Vraća poruku sa statusom slanja.[m
+[32m+[m[32m    """[m
+[32m+[m[32m    partner = Partner.query.get_or_404(partner_id)[m
+[32m+[m[32m    cc = User.query.all()[m
+[32m+[m[32m    message = {}[m
+[32m+[m[32m    if partner.email:[m
+[32m+[m[32m        msg = Message([m
+[32m+[m[32m            subject=f'Faktura {invoice_number} stornirana',[m
+[32m+[m[32m            recipients=[partner.email],[m
+[32m+[m[32m            cc=[user.email for user in cc],[m
+[32m+[m[32m            body=f'Faktura {invoice_number} je stornirana.'[m
+[32m+[m[32m        )[m
+[32m+[m[32m        try:[m
+[32m+[m[32m            mail.send(msg)[m
+[32m+[m[32m            message['success'] = f'Faktura {invoice_number} je uspešno stornirana.'[m
+[32m+[m[32m        except Exception as e:[m
+[32m+[m[32m            message['error'] = f'Nije moguće poslati mejl partneru o storniranoj fakturi: {str(e)}'[m
+[32m+[m[32m    else:[m
+[32m+[m[32m        message['error'] = 'Partner nema mejl adresu.'[m
+[32m+[m[32m    return message[m
+[32m+[m
+[32m+[m
+[32m+[m
+ def send_invoice_to_partner(invoice_id):[m
+     """[m
+     Funkcija za slanje fakture partneru.[m
+[36m@@ -79,7 +105,12 @@[m [mdef send_email(invoice):[m
+         [m
+         # Pripremi email poruku[m
+         subject = f'Faktura {invoice.invoice_number}'[m
+[31m-        sender = current_app.config.get('MAIL_DEFAULT_SENDER', archive_settings.email)[m
+[32m+[m[32m        # sender = current_app.config.get('MAIL_DEFAULT_SENDER', archive_settings.email)[m
+[32m+[m[32m        sender = os.getenv('MAIL_DEFAULT_SENDER')[m
+[32m+[m[32m        users = User.query.all()[m
+[32m+[m[32m        cc = [][m
+[32m+[m[32m        for user in users:[m
+[32m+[m[32m            cc.append(user.email)[m
+         [m
+         # Kreiraj HTML sadržaj emaila[m
+         html_body = f'''[m
+[36m@@ -98,6 +129,7 @@[m [mdef send_email(invoice):[m
+         msg = Message([m
+             subject=subject,[m
+             recipients=[partner.email],[m
+[32m+[m[32m            cc=cc,[m
+             html=html_body,[m
+             sender=sender[m
+         )[m
+[36m@@ -258,7 +290,8 @@[m [mdef generate_invoice_pdf(invoice_id, is_attachment=False):[m
+                 bank_accounts = BankAccount.query.filter_by(settings_id=archive_settings.id).all()[m
+                 if bank_accounts:[m
+                     self.set_xy(105, 28)[m
+[31m-                    self.cell(95, 5, f'Tek. rač: {bank_accounts[0].account_number}', 0, new_x="LMARGIN", new_y="NEXT", align="L")[m
+[32m+[m[32m                    # self.cell(95, 5, f'Tek. rač: {bank_accounts[2].account_number}', 0, new_x="LMARGIN", new_y="NEXT", align="L") #! [2] - je u db 840-31120845-93, ako bude nekih izmena možda treba izmeniti ovaj parametar[m
+[32m+[m[32m                    self.cell(95, 5, f'Tek. rač: 840000003112084593', 0, new_x="LMARGIN", new_y="NEXT", align="L") #! ovo možda treba menjati da bude promenjivo[m
+                 [m
+                 # ===== DRUGI DEO: DATUMI I PODACI O PARTNERU =====[m
+                 self.ln(10)  # Prazan prostor između delova[m
+[1mdiff --git a/arhivjugoslavije/invoice/routes.py b/arhivjugoslavije/invoice/routes.py[m
+[1mindex 557af29..506178f 100644[m
+[1m--- a/arhivjugoslavije/invoice/routes.py[m
+[1m+++ b/arhivjugoslavije/invoice/routes.py[m
+[36m@@ -1,10 +1,10 @@[m
+ from datetime import datetime[m
+ from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify[m
+ from flask_login import login_required[m
+[31m-from arhivjugoslavije import db[m
+[32m+[m[32mfrom arhivjugoslavije import db, app[m
+ from arhivjugoslavije.models import Partner, Invoice, InvoiceItem, Service[m
+ from arhivjugoslavije.invoice.forms import InvoiceForm, InvoiceItemForm, EditInvoiceForm[m
+[31m-from arhivjugoslavije.invoice.functions import generate_invoice_pdf, save_invoice_to_db, send_invoice_to_partner[m
+[32m+[m[32mfrom arhivjugoslavije.invoice.functions import generate_invoice_pdf, save_invoice_to_db, send_invoice_to_partner, notify_partner_about_canceled_invoice[m
+ import os[m
+ from pathlib import Path[m
+ [m
+[36m@@ -112,13 +112,12 @@[m [mdef create_customer_invoice(partner_id=None):[m
+                             recent_invoices=recent_invoices)[m
+ [m
+ [m
+[31m-@invoices.route('/delete_invoice/<int:invoice_id>', methods=['POST'])[m
+[32m+[m[32m@invoices.route('/delete_invoice/<int:invoice_id>', methods=['GET', 'POST'])[m
+ @login_required[m
+ def delete_invoice(invoice_id):[m
+     invoice = Invoice.query.get_or_404(invoice_id)[m
+[31m-    if invoice.status != 'nacrt':[m
+[31m-        flash('Faktura nije u nacrтu, ne može se obrisati.', 'warning')[m
+[31m-        return redirect(url_for('invoices.invoice_list'))[m
+[32m+[m[32m    invoice_number = invoice.invoice_number[m
+[32m+[m[32m    partner_id = invoice.partner_id[m
+     if invoice.incoming and invoice.paid:[m
+         flash('Ulazna faktura je plaćena, ne može se obrisati.', 'warning')[m
+         return redirect(url_for('invoices.invoice_list'))[m
+[36m@@ -127,7 +126,16 @@[m [mdef delete_invoice(invoice_id):[m
+         db.session.delete(item)[m
+     db.session.delete(invoice)[m
+     db.session.commit()[m
+[31m-    flash('Faktura uspešno obrisana.', 'success')[m
+[32m+[m[32m    if invoice.status != 'nacrt':[m
+[32m+[m[32m        app.logger.warning('Implementirati slanje mejla partneru o storniranoj fakturi.')[m
+[32m+[m[32m        message = notify_partner_about_canceled_invoice(invoice_number, partner_id)[m
+[32m+[m[32m        if 'error' in message:[m
+[32m+[m[32m            flash(message['error'], 'danger')[m
+[32m+[m[32m            return redirect(url_for('invoices.invoice_list'))[m
+[32m+[m[32m        if 'success' in message:[m
+[32m+[m[32m            flash(message['success'], 'success')[m
+[32m+[m[32m    else:[m
+[32m+[m[32m        flash('Faktura uspešno obrisana.', 'success')[m
+     return redirect(url_for('invoices.invoice_list'))[m
+ [m
+ [m
+[1mdiff --git a/arhivjugoslavije/main/forms.py b/arhivjugoslavije/main/forms.py[m
+[1mindex 29041ac..a8280b8 100644[m
+[1m--- a/arhivjugoslavije/main/forms.py[m
+[1m+++ b/arhivjugoslavije/main/forms.py[m
+[36m@@ -1,5 +1,5 @@[m
+ from flask_wtf import FlaskForm[m
+[31m-from wtforms import StringField, SubmitField, BooleanField, FloatField, HiddenField, FileField[m
+[32m+[m[32mfrom wtforms import StringField, SubmitField, BooleanField, FloatField, HiddenField, FileField, SelectField[m
+ from wtforms.validators import DataRequired, Optional, Length, Regexp[m
+ from flask_wtf.file import FileAllowed[m
+ [m
+[36m@@ -29,5 +29,7 @@[m [mclass BankAccountForm(FlaskForm):[m
+     id = HiddenField('ID')[m
+     account_number = StringField('Broj računa', validators=[DataRequired()])[m
+     purpose = StringField('Namena', validators=[DataRequired()])[m
+[32m+[m[32m    account_type = SelectField('Tip računa', choices=[('budget', 'Budžetski'), ('own', 'Sopstveni'), ('other', 'Ostalo')], validators=[DataRequired()])[m
+[32m+[m[32m    sub_account_number = StringField('Podračun', validators=[])[m
+     active = BooleanField('Aktivan', default=True)[m
+     submit = SubmitField('Sačuvaj')[m
+\ No newline at end of file[m
+[1mdiff --git a/arhivjugoslavije/main/routes.py b/arhivjugoslavije/main/routes.py[m
+[1mindex c22fad6..3e24fb0 100644[m
+[1m--- a/arhivjugoslavije/main/routes.py[m
+[1m+++ b/arhivjugoslavije/main/routes.py[m
+[36m@@ -115,78 +115,25 @@[m [mdef edit_settings(id):[m
+ def update_eur_rate(id):[m
+     archive = ArchiveSettings.query.get_or_404(id)[m
+     try:[m
+[31m-        # Direktno preuzimanje HTML stranice sa kursom evra[m
+[31m-        url = 'https://www.kursna-lista.com/kursna-lista-nbs'[m
+[31m-        headers = {[m
+[31m-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'[m
+[31m-        }[m
+[31m-        response = requests.get(url, headers=headers)[m
+[31m-        [m
+[31m-        if response.status_code == 200:[m
+[31m-            try:[m
+[31m-                # Parsiranje HTML-a da bismo pronašli kurs evra[m
+[31m-                soup = BeautifulSoup(response.text, 'html.parser')[m
+[31m-                [m
+[31m-                # Tražimo red sa evrom u tabeli[m
+[31m-                eur_rate = None[m
+[31m-                [m
+[31m-                # Tražimo sve redove u tabeli[m
+[31m-                rows = soup.find_all('tr')[m
+[31m-                for row in rows:[m
+[31m-                    # Tražimo ćelije u redu[m
+[31m-                    cells = row.find_all('td')[m
+[31m-                    # Proveravamo da li red sadrži tekst "Evro" ili "EUR"[m
+[31m-                    if cells and len(cells) > 0:[m
+[31m-                        row_text = row.text.strip()[m
+[31m-                        if 'Evro' in row_text or 'EUR' in row_text:[m
+[31m-                            # Na osnovu slike, srednji kurs je u petoj koloni (indeks 4)[m
+[31m-                            if len(cells) >= 5:[m
+[31m-                                try:[m
+[31m-                                    # Pokušavamo da dobijemo vrednost srednjeg kursa[m
+[31m-                                    srednji_kurs_text = cells[5].text.strip().replace(',', '.')[m
+[31m-                                    eur_rate = round(float(srednji_kurs_text), 2)[m
+[31m-                                    break[m
+[31m-                                except (ValueError, IndexError):[m
+[31m-                                    pass[m
+[31m-                [m
+[31m-                # Ako nismo pronašli kurs evra, probajmo još jedan način[m
+[31m-                if not eur_rate:[m
+[31m-                    # Tražimo direktno vrednost za EUR u srednjem kursu[m
+[31m-                    eur_elements = soup.find_all(string=lambda text: 'EUR' in text if text else False)[m
+[31m-                    for element in eur_elements:[m
+[31m-                        parent = element.parent[m
+[31m-                        if parent:[m
+[31m-                            # Tražimo najbliži red koji sadrži ovaj element[m
+[31m-                            row = parent[m
+[31m-                            while row and row.name != 'tr':[m
+[31m-                                row = row.parent[m
+[31m-                            [m
+[31m-                            if row:[m
+[31m-                                # Tražimo ćeliju sa srednjim kursom[m
+[31m-                                cells = row.find_all('td')[m
+[31m-                                if cells and len(cells) >= 5:[m
+[31m-                                    try:[m
+[31m-                                        srednji_kurs_text = cells[4].text.strip().replace(',', '.')[m
+[31m-                                        eur_rate = round(float(srednji_kurs_text), 2)[m
+[31m-                                        break[m
+[31m-                                    except (ValueError, IndexError):[m
+[31m-                                        pass[m
+[31m-                [m
+[31m-                # Ako smo uspešno dobili kurs evra, ažuriramo podatke[m
+[31m-                if eur_rate:[m
+[31m-                    archive.eur_rate = eur_rate[m
+[31m-                    archive.eur_rate_date = datetime.now()[m
+[31m-                    db.session.commit()[m
+[31m-                    flash('Kurs evra je uspešno ažuriran.', 'success')[m
+[31m-                else:[m
+[31m-                    flash('Nije pronađen kurs evra na stranici. Podaci nisu promenjeni.', 'warning')[m
+[31m-            except Exception as e:[m
+[31m-                flash(f'Greška pri parsiranju HTML stranice: {str(e)}.', 'danger')[m
+[31m-        else:[m
+[31m-            flash('Nije moguće pristupiti stranici sa kursnom listom.', 'danger')[m
+[32m+[m[32m        eur_rate_str = request.form.get('eur_rate')[m
+[32m+[m[32m        if not eur_rate_str:[m
+[32m+[m[32m            flash('Morate uneti vrednost kursa evra.', 'warning')[m
+[32m+[m[32m            return redirect(url_for('main.settings', id=id))[m
+[32m+[m[32m        try:[m
+[32m+[m[32m            eur_rate = float(eur_rate_str.replace(',', '.'))[m
+[32m+[m[32m            eur_rate = round(eur_rate, 2)[m
+[32m+[m[32m            if eur_rate <= 0:[m
+[32m+[m[32m                flash('Kurs evra mora biti pozitivan broj.', 'danger')[m
+[32m+[m[32m                return redirect(url_for('main.settings', id=id))[m
+[32m+[m[32m        except ValueError:[m
+[32m+[m[32m            flash('Uneta vrednost kursa nije validan broj.', 'danger')[m
+[32m+[m[32m            return redirect(url_for('main.settings', id=id))[m
+[32m+[m[32m        archive.eur_rate = eur_rate[m
+[32m+[m[32m        archive.eur_rate_date = datetime.now()[m
+[32m+[m[32m        db.session.commit()[m
+[32m+[m[32m        flash('Kurs evra je uspešno sačuvan.', 'success')[m
+     except Exception as e:[m
+[31m-        flash(f'Greška pri komunikaciji sa sajtom: {str(e)}.', 'danger')[m
+[31m-    [m
+[32m+[m[32m        flash(f'Greška pri čuvanju kursa evra: {str(e)}.', 'danger')[m
+     return redirect(url_for('main.settings', id=id))[m
+ [m
+ @main.route('/add_bank_account/<int:settings_id>', methods=['POST'])[m
+[36m@@ -199,6 +146,8 @@[m [mdef add_bank_account(settings_id):[m
+         bank_account = BankAccount([m
+             settings_id=settings_id,[m
+             account_number=form.account_number.data,[m
+[32m+[m[32m            sub_account_number=form.sub_account_number.data,[m
+[32m+[m[32m            account_type=form.account_type.data,[m
+             purpose=form.purpose.data,[m
+             active=form.active.data[m
+         )[m
+[36m@@ -221,6 +170,8 @@[m [mdef edit_bank_account(account_id):[m
+     [m
+     if form.validate_on_submit():[m
+         bank_account.account_number = form.account_number.data[m
+[32m+[m[32m        bank_account.sub_account_number = form.sub_account_number.data[m
+[32m+[m[32m        bank_account.account_type = form.account_type.data[m
+         bank_account.purpose = form.purpose.data[m
+         bank_account.active = form.active.data[m
+         [m
+[36m@@ -252,6 +203,8 @@[m [mdef get_bank_account(account_id):[m
+     return jsonify({[m
+         'id': bank_account.id,[m
+         'account_number': bank_account.account_number,[m
+[32m+[m[32m        'sub_account_number': bank_account.sub_account_number,[m
+[32m+[m[32m        'account_type': bank_account.account_type,[m
+         'purpose': bank_account.purpose,[m
+         'active': bank_account.active[m
+     })[m
+[1mdiff --git a/arhivjugoslavije/models.py b/arhivjugoslavije/models.py[m
+[1mindex 60a3fed..56c10cc 100644[m
+[1m--- a/arhivjugoslavije/models.py[m
+[1m+++ b/arhivjugoslavije/models.py[m
+[36m@@ -72,6 +72,8 @@[m [mclass BankAccount(db.Model):[m
+     id = db.Column(db.Integer, primary_key=True)[m
+     settings_id = db.Column(db.Integer, db.ForeignKey('archive_settings.id'), nullable=False)[m
+     account_number = db.Column(db.String(50), nullable=False)[m
+[32m+[m[32m    sub_account_number = db.Column(db.String(50), nullable=True)[m
+[32m+[m[32m    account_type = db.Column(db.String(50), nullable=False) #! budget, own, other[m
+     purpose = db.Column(db.String(100), nullable=False)[m
+     active = db.Column(db.Boolean, default=True, nullable=False)[m
+     [m
+[36m@@ -320,6 +322,7 @@[m [mclass StatementItem(db.Model):[m
+     account_level_6_number = db.Column(db.String(6), db.ForeignKey('account_level_6.number'), nullable=True)[m
+     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True)[m
+     public_procurement = db.Column(db.String(100), nullable=True)  # Javna nabavka - zamenjuje invoice_id[m
+[32m+[m[32m    note = db.Column(db.Text, nullable=True)[m
+     account_in_project = db.Column(db.Boolean, default=False, nullable=False) #? Označava da li se ova stavka knjiži u projekat. Ako je True, znači da se ova stavka uračunava u finansije projekta. Podrazumevana vrednost je False.[m
+     #? Polje account_in_project nije redundantno iako imamo project_id i account_level_6_number.[m
+     #? Razlog je što samo postojanje veze sa projektom (project_id) ne znači automatski da ta stavka treba da se knjiži u finansije projekta. account_in_project služi kao eksplicitna oznaka koja govori sistemu da li ovu stavku treba uključiti u finansijske izveštaje projekta.[m
+[1mdiff --git a/arhivjugoslavije/partner/functions.py b/arhivjugoslavije/partner/functions.py[m
+[1mindex 06ed0d0..de36271 100644[m
+[1m--- a/arhivjugoslavije/partner/functions.py[m
+[1m+++ b/arhivjugoslavije/partner/functions.py[m
+[36m@@ -152,16 +152,16 @@[m [mdef get_partner_card_data(partner_id, start_date=None, end_date=None, is_custome[m
+ [m
+ def generate_partner_card_pdf(partner_id, start_date, end_date, combined_data, total_debit, total_credit, is_customer=True):[m
+     """[m
+[31m-    Funkcija za generisanje PDF kartice partnera (kupca ili dobavljau010da).[m
+[32m+[m[32m    Funkcija za generisanje PDF kartice partnera (kupca ili dobavljača).[m
+     [m
+     Args:[m
+         partner_id (int): ID partnera[m
+[31m-        start_date (date): Pou010detni datum perioda[m
+[32m+[m[32m        start_date (date): Početni datum perioda[m
+         end_date (date): Krajnji datum perioda[m
+         combined_data (list): Lista kombinovanih podataka (fakture i stavke izvoda)[m
+         total_debit (Decimal): Ukupan iznos na dugovnoj strani[m
+[31m-        total_credit (Decimal): Ukupan iznos na potrau017enoj strani[m
+[31m-        is_customer (bool): True ako je kupac, False ako je dobavljau010d[m
+[32m+[m[32m        total_credit (Decimal): Ukupan iznos na potražuju strani[m
+[32m+[m[32m        is_customer (bool): True ako je kupac, False ako je dobavljač[m
+     [m
+     Returns:[m
+         Response: HTTP response sa PDF dokumentom[m
+[1mdiff --git a/arhivjugoslavije/purchase_plan/routes.py b/arhivjugoslavije/purchase_plan/routes.py[m
+[1mindex 0ba2cf2..e866bdd 100644[m
+[1m--- a/arhivjugoslavije/purchase_plan/routes.py[m
+[1m+++ b/arhivjugoslavije/purchase_plan/routes.py[m
+[36m@@ -2,14 +2,20 @@[m [mfrom flask import Blueprint, render_template, request, redirect, url_for, flash[m
+ from arhivjugoslavije.models import PurchasePlan, PurchasePlanAccount, AccountLevel4[m
+ from arhivjugoslavije import db[m
+ from flask_login import login_required[m
+[32m+[m[32mfrom datetime import datetime[m
+ [m
+ purchase_plan = Blueprint('purchase_plan', __name__)[m
+ [m
+ @login_required[m
+ @purchase_plan.route("/purchase_plan_list", methods=["GET"])[m
+ def purchase_plan_list():[m
+[32m+[m[32m    current_year = datetime.now().year[m
+     purchase_plans = PurchasePlan.query.all()[m
+[31m-    return render_template("purchase_plan/purchase_plan_list.html", purchase_plans=purchase_plans)[m
+[32m+[m[32m    plans_with_readonly = [][m
+[32m+[m[32m    for plan in purchase_plans:[m
+[32m+[m[32m        readonly = plan.year < current_year[m
+[32m+[m[32m        plans_with_readonly.append({"plan": plan, "readonly": readonly})[m
+[32m+[m[32m    return render_template("purchase_plan/purchase_plan_list.html", purchase_plans=purchase_plans, plans_with_readonly=plans_with_readonly, current_year=current_year)[m
+ [m
+ [m
+ [m
+[36m@@ -31,7 +37,10 @@[m [mdef create_purchase_plan():[m
+ def edit_purchase_plan(purchase_plan_id):[m
+     purchase_plan = PurchasePlan.query.get_or_404(purchase_plan_id)[m
+     accounts_level_4 = AccountLevel4.query.all()[m
+[31m-    print(f'{purchase_plan.purchase_plan_accounts=}')[m
+[32m+[m[32m    current_year = datetime.now().year[m
+[32m+[m[32m    readonly = purchase_plan.year < current_year[m
+[32m+[m[32m    if readonly:[m
+[32m+[m[32m        flash(f"Plan nabavke za {purchase_plan.year}. godinu je moguće samo pregledati. Izmene nisu dozvoljene.", "warning")[m
+     amount_for_regular_activity = sum([account.amount_1 for account in purchase_plan.purchase_plan_accounts])[m
+     amount_for_program_activity = sum([account.amount_2 for account in purchase_plan.purchase_plan_accounts])[m
+     return render_template("purchase_plan/edit_purchase_plan.html",[m
+[36m@@ -40,7 +49,8 @@[m [mdef edit_purchase_plan(purchase_plan_id):[m
+                             purchase_plan=purchase_plan, [m
+                             accounts_level_4=accounts_level_4, [m
+                             amount_for_regular_activity=amount_for_regular_activity,[m
+[31m-                            amount_for_program_activity=amount_for_program_activity)[m
+[32m+[m[32m                            amount_for_program_activity=amount_for_program_activity,[m
+[32m+[m[32m                            readonly=readonly)[m
+ [m
+ [m
+ @login_required[m
+[1mdiff --git a/arhivjugoslavije/reports/__init__.py b/arhivjugoslavije/reports/__init__.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..e69de29[m
+[1mdiff --git a/arhivjugoslavije/reports/routes.py b/arhivjugoslavije/reports/routes.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..da43ca3[m
+[1m--- /dev/null[m
+[1m+++ b/arhivjugoslavije/reports/routes.py[m
+[36m@@ -0,0 +1,152 @@[m
+[32m+[m[32mfrom flask import Blueprint, render_template, request[m
+[32m+[m[32mfrom flask_login import login_required[m
+[32m+[m[32mfrom sqlalchemy import func, and_, or_[m
+[32m+[m[32mfrom decimal import Decimal[m
+[32m+[m[32mfrom arhivjugoslavije import db[m
+[32m+[m[32mfrom arhivjugoslavije.models import PurchasePlan, PurchasePlanAccount, AccountLevel4, StatementItem, BankAccount, BankStatement[m
+[32m+[m
+[32m+[m[32mreports = Blueprint('reports', __name__)[m
+[32m+[m
+[32m+[m[32m@reports.route('/report_list', methods=['GET', 'POST'])[m
+[32m+[m[32m@login_required[m
+[32m+[m[32mdef report_list():[m
+[32m+[m[32m    return render_template('reports/report_list.html')[m
+[32m+[m
+[32m+[m
+[32m+[m[32m@reports.route('/report_1', methods=['GET', 'POST'])[m
+[32m+[m[32m@login_required[m
+[32m+[m[32mdef report_1():[m
+[32m+[m[32m    # Dobavljanje svih planova nabavki za filter po godinama[m
+[32m+[m[32m    purchase_plans = PurchasePlan.query.order_by(PurchasePlan.year.desc()).all()[m
+[32m+[m[41m    [m
+[32m+[m[32m    # Ako je odabrana godina, filtriraj po njoj, inače uzmi najnoviju godinu[m
+[32m+[m[32m    selected_year = request.args.get('year', None)[m
+[32m+[m[32m    if not selected_year and purchase_plans:[m
+[32m+[m[32m        selected_year = purchase_plans[0].year[m
+[32m+[m[41m    [m
+[32m+[m[32m    # Inicijalizacija rezultata[m
+[32m+[m[32m    accounts = [][m
+[32m+[m[32m    totals = {[m
+[32m+[m[32m        'planned': Decimal('0.00'),[m
+[32m+[m[32m        'budget_received': Decimal('0.00'),[m
+[32m+[m[32m        'budget_spent': Decimal('0.00'),[m
+[32m+[m[32m        'budget_balance': Decimal('0.00'),[m
+[32m+[m[32m        'own_spent': Decimal('0.00'),[m
+[32m+[m[32m        'total_expense': Decimal('0.00')[m
+[32m+[m[32m    }[m
+[32m+[m[41m    [m
+[32m+[m[32m    # Dobavljanje svih konta iz plana nabavki za odabranu godinu[m
+[32m+[m[32m    if selected_year:[m
+[32m+[m[32m        # Pronađi plan nabavke za odabranu godinu[m
+[32m+[m[32m        purchase_plan = PurchasePlan.query.filter_by(year=selected_year).first()[m
+[32m+[m[41m        [m
+[32m+[m[32m        if purchase_plan:[m
+[32m+[m[32m            # Dobavi sva konta iz plana nabavke[m
+[32m+[m[32m            plan_accounts = db.session.query([m
+[32m+[m[32m                PurchasePlanAccount.account_level_4_number,[m
+[32m+[m[32m                AccountLevel4.name,[m
+[32m+[m[32m                func.sum(PurchasePlanAccount.amount_1 + func.coalesce(PurchasePlanAccount.amount_2, 0)).label('planned_amount')[m
+[32m+[m[32m            ).join([m
+[32m+[m[32m                AccountLevel4, AccountLevel4.number == PurchasePlanAccount.account_level_4_number[m
+[32m+[m[32m            ).filter([m
+[32m+[m[32m                PurchasePlanAccount.purchase_plan_id == purchase_plan.id[m
+[32m+[m[32m            ).group_by([m
+[32m+[m[32m                PurchasePlanAccount.account_level_4_number,[m
+[32m+[m[32m                AccountLevel4.name[m
+[32m+[m[32m            ).all()[m
+[32m+[m[41m            [m
+[32m+[m[32m            # Pronađi budžetski račun (pretpostavljamo da je to račun sa ID 1)[m
+[32m+[m[32m            budget_account = BankAccount.query.filter_by(account_type='budget').first()[m
+[32m+[m[41m            [m
+[32m+[m[32m            # Pronađi sopstvene račune (pretpostavljamo da su to računi sa ID 2 i 3)[m
+[32m+[m[32m            own_accounts = BankAccount.query.filter(BankAccount.account_type.in_(['own', 'other'])).all()[m
+[32m+[m[32m            own_account_ids = [acc.id for acc in own_accounts][m
+[32m+[m[32m            print(f'{own_account_ids=}, {own_accounts=}')[m
+[32m+[m[32m            print(f'{budget_account.id=}, {budget_account=}')[m
+[32m+[m[41m            [m
+[32m+[m[32m            # Za svaki konto iz plana nabavke, izračunaj potrebne vrednosti[m
+[32m+[m[32m            for account_data in plan_accounts:[m
+[32m+[m[32m                account_number = account_data.account_level_4_number[m
+[32m+[m[32m                account_name = account_data.name[m
+[32m+[m[32m                planned_amount = account_data.planned_amount or Decimal('0.00')[m
+[32m+[m[41m                [m
+[32m+[m[32m                # Izračunaj iznose koji su doznačeni na budžetski račun sa sopstvenih računa[m
+[32m+[m[32m                budget_received = Decimal('0.00')[m
+[32m+[m[32m                if budget_account and own_account_ids:[m
+[32m+[m[32m                    # Pronađi sve uplate na budžetski račun sa sopstvenih računa[m
+[32m+[m[32m                    budget_received_items = db.session.query([m
+[32m+[m[32m                        func.sum(StatementItem.amount)[m
+[32m+[m[32m                    ).join([m
+[32m+[m[32m                        BankStatement, BankStatement.id == StatementItem.bank_statement_id[m
+[32m+[m[32m                    ).filter([m
+[32m+[m[32m                        BankStatement.bank_account_id == budget_account.id,[m
+[32m+[m[32m                        StatementItem.is_debit == False,  # Uplate (prihodi)[m
+[32m+[m[32m                        StatementItem.account_level_6_number.like(f'{account_number}%')  # Konta koja počinju sa account_number[m
+[32m+[m[32m                    ).scalar() or Decimal('0.00')[m
+[32m+[m[41m                    [m
+[32m+[m[32m                    budget_received = budget_received_items[m
+[32m+[m[32m                    print(f'{budget_received=}')[m
+[32m+[m[41m                [m
+[32m+[m[32m                # Izračunaj iznose koji su potrošeni sa budžetskog računa[m
+[32m+[m[32m                budget_spent = Decimal('0.00')[m
+[32m+[m[32m                if budget_account:[m
+[32m+[m[32m                    # Pronađi sve isplate sa budžetskog računa[m
+[32m+[m[32m                    budget_spent_items = db.session.query([m
+[32m+[m[32m                        func.sum(StatementItem.amount)[m
+[32m+[m[32m                    ).join([m
+[32m+[m[32m                        BankStatement, BankStatement.id == StatementItem.bank_statement_id[m
+[32m+[m[32m                    ).filter([m
+[32m+[m[32m                        BankStatement.bank_account_id == budget_account.id,[m
+[32m+[m[32m                        StatementItem.is_debit == True,  # Isplate (rashodi)[m
+[32m+[m[32m                        StatementItem.account_level_6_number.like(f'{account_number}%')  # Konta koja počinju sa account_number[m
+[32m+[m[32m                    ).scalar() or Decimal('0.00')[m
+[32m+[m[41m                    [m
+[32m+[m[32m                    budget_spent = budget_spent_items[m
+[32m+[m[41m                [m
+[32m+[m[32m                # Izračunaj iznose koji su potrošeni sa sopstvenih računa[m
+[32m+[m[32m                own_spent = Decimal('0.00')[m
+[32m+[m[32m                if own_account_ids:[m
+[32m+[m[32m                    # Pronađi sve isplate sa sopstvenih računa[m
+[32m+[m[32m                    own_spent_items = db.session.query([m
+[32m+[m[32m                        func.sum(StatementItem.amount)[m
+[32m+[m[32m                    ).join([m
+[32m+[m[32m                        BankStatement, BankStatement.id == StatementItem.bank_statement_id[m
+[32m+[m[32m                    ).filter([m
+[32m+[m[32m                        BankStatement.bank_account_id.in_(own_account_ids),[m
+[32m+[m[32m                        StatementItem.is_debit == True,  # Isplate (rashodi)[m
+[32m+[m[32m                        StatementItem.account_level_6_number.like(f'{account_number}%')  # Konta koja počinju sa account_number[m
+[32m+[m[32m                    ).scalar() or Decimal('0.00')[m
+[32m+[m[41m                    [m
+[32m+[m[32m                    own_spent = own_spent_items[m
+[32m+[m[41m                [m
+[32m+[m[32m                # Izračunaj saldo budžeta i ukupan trošak[m
+[32m+[m[32m                budget_balance = budget_received - budget_spent[m
+[32m+[m[32m                total_expense = budget_spent + own_spent[m
+[32m+[m[41m                [m
+[32m+[m[32m                # Dodaj podatke u listu[m
+[32m+[m[32m                account_data = {[m
+[32m+[m[32m                    'year': selected_year,[m
+[32m+[m[32m                    'account_number': account_number,[m
+[32m+[m[32m                    'account_name': account_name,[m
+[32m+[m[32m                    'planned': planned_amount,[m
+[32m+[m[32m                    'budget_received': budget_received,[m
+[32m+[m[32m                    'budget_spent': budget_spent,[m
+[32m+[m[32m                    'budget_balance': budget_balance,[m
+[32m+[m[32m                    'own_spent': own_spent,[m
+[32m+[m[32m                    'total_expense': total_expense[m
+[32m+[m[32m                }[m
+[32m+[m[32m                accounts.append(account_data)[m
+[32m+[m[41m                [m
+[32m+[m[32m                # Ažuriraj ukupne iznose[m
+[32m+[m[32m                totals['planned'] += planned_amount[m
+[32m+[m[32m                totals['budget_received'] += budget_received[m
+[32m+[m[32m                totals['budget_spent'] += budget_spent[m
+[32m+[m[32m                totals['budget_balance'] += budget_balance[m
+[32m+[m[32m                totals['own_spent'] += own_spent[m
+[32m+[m[32m                totals['total_expense'] += total_expense[m
+[32m+[m[41m    [m
+[32m+[m[32m    return render_template('reports/report_1.html',[m[41m [m
+[32m+[m[32m                            purchase_plans=purchase_plans,[m[41m [m
+[32m+[m[32m                            accounts=accounts,[m[41m [m
+[32m+[m[32m                            totals=totals,[m
+[32m+[m[32m                            selected_year=selected_year)[m
+\ No newline at end of file[m
+[1mdiff --git a/arhivjugoslavije/statement/routes.py b/arhivjugoslavije/statement/routes.py[m
+[1mindex 5b8fd55..0f816b6 100644[m
+[1m--- a/arhivjugoslavije/statement/routes.py[m
+[1m+++ b/arhivjugoslavije/statement/routes.py[m
+[36m@@ -316,6 +316,9 @@[m [mdef statement_details(statement_id):[m
+                 if f'public_procurement_{item_id}' in request.form:[m
+                     item.public_procurement = request.form.get(f'public_procurement_{item_id}')[m
+                 [m
+[32m+[m[32m                if f'note_{item_id}' in request.form:[m
+[32m+[m[32m                    item.note = request.form.get(f'note_{item_id}')[m
+[32m+[m[41m                [m
+                 # Checkbox za knjiženje u projekat[m
+                 item.account_in_project = f'account_in_project_{item_id}' in request.form[m
+             [m
+[1mdiff --git a/arhivjugoslavije/templates/home.html b/arhivjugoslavije/templates/home.html[m
+[1mindex 094bd74..45264b7 100644[m
+[1m--- a/arhivjugoslavije/templates/home.html[m
+[1m+++ b/arhivjugoslavije/templates/home.html[m
+[36m@@ -58,7 +58,7 @@[m
+         [m
+         <!-- Izveštaji -->[m
+         <div class="col-md-4">[m
+[31m-            <a href="#" class="text-decoration-none">[m
+[32m+[m[32m            <a href="{{ url_for('reports.report_list') }}" class="text-decoration-none">[m
+                 <div class="card shortcut-card h-100">[m
+                     <div class="card-body text-center">[m
+                         <i class="fas fa-chart-bar fa-3x mb-3 text-danger"></i>[m
+[1mdiff --git a/arhivjugoslavije/templates/invoice/edit_customer_invoice.html b/arhivjugoslavije/templates/invoice/edit_customer_invoice.html[m
+[1mindex 9249606..36c3f08 100644[m
+[1m--- a/arhivjugoslavije/templates/invoice/edit_customer_invoice.html[m
+[1m+++ b/arhivjugoslavije/templates/invoice/edit_customer_invoice.html[m
+[36m@@ -28,6 +28,9 @@[m
+                                 <a href="{{ url_for('invoices.generate_invoice_pdf_route', invoice_id=invoice.id) }}" class="btn btn-outline-primary" target="_blank">[m
+                                     <i class="fas fa-file-pdf me-1"></i> PDF[m
+                                 </a>[m
+[32m+[m[32m                                <a href="{{ url_for('invoices.delete_invoice', invoice_id=invoice.id) }}" class="btn btn-outline-danger">[m
+[32m+[m[32m                                    <i class="fas fa-trash me-1"></i> Storniraj fakturu[m
+[32m+[m[32m                                </a>[m
+                             {% endif %}[m
+                             {% if invoice.status == 'sacuvano' %}[m
+                                 <a href="{{ url_for('invoices.send_invoice', invoice_id=invoice.id) }}" class="btn btn-outline-success">[m
+[1mdiff --git a/arhivjugoslavije/templates/layout.html b/arhivjugoslavije/templates/layout.html[m
+[1mindex 4b5243d..03e43cd 100644[m
+[1m--- a/arhivjugoslavije/templates/layout.html[m
+[1m+++ b/arhivjugoslavije/templates/layout.html[m
+[36m@@ -37,6 +37,14 @@[m
+                         <a class="nav-item nav-link {{ 'active' if request.endpoint in ['partner.partners', 'partner.supplier_card', 'partner.customer_card', 'partner.edit_partner'] }}" href="{{ url_for('partner.partners') }}">Poslovni partneri</a>[m
+                         <a class="nav-item nav-link {{ 'active' if request.endpoint in ['invoices.invoice_list', 'invoices.edit_customer_invoice', 'invoices.create_customer_invoice'] }}" href="{{ url_for('invoices.invoice_list') }}">Fakture</a>[m
+                         <a class="nav-item nav-link {{ 'active' if request.endpoint in ['statement.statement_list', 'statement.statement_details'] }}" href="{{ url_for('statement.statement_list') }}">Izvodi</a>[m
+[32m+[m[32m                        <li class="nav-item dropdown dropdown--align-right">[m
+[32m+[m[32m                            <a class="nav-link dropdown-toggle {{ 'active' if request.endpoint in ['reports.report_list', 'reports.report_1', 'reports.report_2', 'reports.report_3'] }}" href="{{ url_for('reports.report_list') }}" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Izveštaji</a>[m
+[32m+[m[32m                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">[m
+[32m+[m[32m                                <a class="dropdown-item {{ 'active' if request.endpoint in ['reports.report_1'] }}" href="{{ url_for('reports.report_1') }}">Izveštaj 1</a>[m
+[32m+[m[32m                                <a class="dropdown-item {{ 'active' if request.endpoint in ['reports.report_2'] }}" href="">Izveštaj 2</a>[m
+[32m+[m[32m                                <a class="dropdown-item {{ 'active' if request.endpoint in ['reports.report_3'] }}" href="">Izveštaj 3</a>[m
+[32m+[m[32m                            </div>[m
+[32m+[m[32m                        </li>[m
+                         <li class="nav-item dropdown dropdown--align-right">[m
+                             <a class="nav-link dropdown-toggle {{ 'active' if request.endpoint in ['users.user_list', 'main.settings', 'services.services_list', 'project.project_list', 'project.project_accounts', 'account.account_list', 'purchase_plan.purchase_plan_list', 'purchase_plan.edit_purchase_plan'] }}" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#">Podešavanja</a>[m
+                             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">[m
+[1mdiff --git a/arhivjugoslavije/templates/purchase_plan/edit_purchase_plan.html b/arhivjugoslavije/templates/purchase_plan/edit_purchase_plan.html[m
+[1mindex 9d027d5..a957bcf 100644[m
+[1m--- a/arhivjugoslavije/templates/purchase_plan/edit_purchase_plan.html[m
+[1m+++ b/arhivjugoslavije/templates/purchase_plan/edit_purchase_plan.html[m
+[36m@@ -13,9 +13,11 @@[m
+                             <a href="{{ url_for('purchase_plan.purchase_plan_list') }}" class="btn btn-outline-secondary me-2">[m
+                                 <i class="fas fa-arrow-left me-1"></i> Nazad[m
+                             </a>[m
+[31m-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAccountModal">[m
+[32m+[m[32m                            {% if not readonly %}[m
+[32m+[m[32m                            <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addAccountModal">[m
+                                 <i class="fas fa-plus me-1"></i> Dodaj konto[m
+                             </button>[m
+[32m+[m[32m                            {% endif %}[m
+                         </div>[m
+                     </div>[m
+                 </div>[m
+[36m@@ -89,12 +91,16 @@[m
+                             <td class="text-end">{{ '{:,.2f}'.format(account.amount_2) if account.amount_2 else '0.00' }}</td>[m
+                             <td>{{ account.note }}</td>[m
+                             <td>[m
+[32m+[m[32m                                {% if not readonly %}[m
+                                 <button class="btn btn-outline-secondary btn-sm edit-account" data-account-id="{{ account.id }}" data-account-number="{{ account.account_level_4_number }}" data-amount-1="{{ account.amount_1 }}" data-amount-2="{{ account.amount_2 }}" data-note="{{ account.note }}" data-bs-toggle="modal" data-bs-target="#editAccountModal">[m
+                                     <i class="fas fa-edit"></i>[m
+                                 </button>[m
+[31m-                                <button class="btn btn-outline-danger btn-sm delete-account" data-account-id="{{ account.id }}" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">[m
+[32m+[m[32m                                <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteAccountModal" data-account-id="{{ account.id }}">[m
+                                     <i class="fas fa-trash"></i>[m
+                                 </button>[m
+[32m+[m[32m                                {% else %}[m
+[32m+[m[32m                                <span class="text-muted small">Nije moguće menjati</span>[m
+[32m+[m[32m                                {% endif %}[m
+                             </td>[m
+                         </tr>[m
+                         {% endfor %}[m
+[36m@@ -106,6 +112,7 @@[m
+ </div>[m
+ [m
+ <!-- Modal za dodavanje konta -->[m
+[32m+[m[32m{% if not readonly %}[m
+ <div class="modal fade" id="addAccountModal" tabindex="-1" aria-labelledby="addAccountModalLabel" aria-hidden="true">[m
+     <div class="modal-dialog modal-lg">[m
+         <div class="modal-content">[m
+[36m@@ -151,8 +158,10 @@[m
+         </div>[m
+     </div>[m
+ </div>[m
+[32m+[m[32m{% endif %}[m
+ [m
+ <!-- Modal za izmenu konta -->[m
+[32m+[m[32m{% if not readonly %}[m
+ <div class="modal fade" id="editAccountModal" tabindex="-1" aria-labelledby="editAccountModalLabel" aria-hidden="true">[m
+     <div class="modal-dialog modal-lg">[m
+         <div class="modal-content">[m
+[36m@@ -197,8 +206,10 @@[m
+         </div>[m
+     </div>[m
+ </div>[m
+[32m+[m[32m{% endif %}[m
+ [m
+ <!-- Modal za brisanje konta -->[m
+[32m+[m[32m{% if not readonly %}[m
+ <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">[m
+     <div class="modal-dialog">[m
+         <div class="modal-content">[m
+[36m@@ -218,6 +229,10 @@[m
+         </div>[m
+     </div>[m
+ </div>[m
+[32m+[m[32m{% endif %}[m
+[32m+[m
+[32m+[m[32m{# Dugme za čuvanje izmena je sada u zaglavlju, a poruka izbačena #}[m
+[32m+[m
+ {% endblock %}[m
+ [m
+ {% block scripts %}[m
+[1mdiff --git a/arhivjugoslavije/templates/purchase_plan/purchase_plan_list.html b/arhivjugoslavije/templates/purchase_plan/purchase_plan_list.html[m
+[1mindex 890f593..ff89c1a 100644[m
+[1m--- a/arhivjugoslavije/templates/purchase_plan/purchase_plan_list.html[m
+[1m+++ b/arhivjugoslavije/templates/purchase_plan/purchase_plan_list.html[m
+[36m@@ -56,12 +56,19 @@[m
+                     <td>{{ plan.purchase_plan_accounts|length }}</td>[m
+                     <td class="text-end">{{ plan.amount }}</td>[m
+                     <td>[m
+[31m-                        <a href="{{ url_for('purchase_plan.edit_purchase_plan', purchase_plan_id=plan.id) }}" class="btn btn-outline-secondary btn-sm">[m
+[32m+[m[32m                        {% set readonly = plan.year < current_year %}[m
+[32m+[m[32m                        {% if readonly %}[m
+[32m+[m[32m                        <a href="{{ url_for('purchase_plan.edit_purchase_plan', purchase_plan_id=plan.id) }}" class="btn btn-outline-info btn-sm" title="Pregled">[m
+[32m+[m[32m                            <i class="fas fa-eye"></i>[m
+[32m+[m[32m                        </a>[m
+[32m+[m[32m                        {% else %}[m
+[32m+[m[32m                        <a href="{{ url_for('purchase_plan.edit_purchase_plan', purchase_plan_id=plan.id) }}" class="btn btn-outline-secondary btn-sm" title="Izmeni">[m
+                             <i class="fas fa-edit"></i>[m
+                         </a>[m
+[31m-                        <button class="btn btn-outline-danger btn-sm delete-plan" data-plan-id="{{ plan.id }}" data-bs-toggle="modal" data-bs-target="#deletePlanModal">[m
+[32m+[m[32m                        <button class="btn btn-outline-danger btn-sm delete-plan" data-plan-id="{{ plan.id }}" data-bs-toggle="modal" data-bs-target="#deletePlanModal" title="Obriši">[m
+                             <i class="fas fa-trash"></i>[m
+                         </button>[m
+[32m+[m[32m                        {% endif %}[m
+                     </td>[m
+                 </tr>[m
+                 {% endfor %}[m
+[1mdiff --git a/arhivjugoslavije/templates/reports/report_1.html b/arhivjugoslavije/templates/reports/report_1.html[m
+[1mnew file mode 100644[m
+[1mindex 0000000..9baf2df[m
+[1m--- /dev/null[m
+[1m+++ b/arhivjugoslavije/templates/reports/report_1.html[m
+[36m@@ -0,0 +1,100 @@[m
+[32m+[m[32m{% extends 'layout.html' %}[m
+[32m+[m[32m{% block content %}[m
+[32m+[m[32m<div class="container mt-4">[m
+[32m+[m[32m    <!-- Zaglavlje stranice sa naslovom i dugmadima za akcije -->[m
+[32m+[m[32m    <div class="row mb-4">[m
+[32m+[m[32m        <div class="col-12">[m
+[32m+[m[32m            <div class="card bg-light">[m
+[32m+[m[32m                <div class="card-body py-3">[m
+[32m+[m[32m                    <div class="d-flex justify-content-between align-items-center">[m
+[32m+[m[32m                        <h2 class="mb-0"><i class="fas fa-chart-line me-2 text-primary"></i>Realizacija po kontima</h2>[m
+[32m+[m[32m                        <div>[m
+[32m+[m[32m                            <a href="{{ url_for('reports.report_list') }}" class="btn btn-outline-secondary me-2">[m
+[32m+[m[32m                                <i class="fas fa-arrow-left me-1"></i> Nazad[m
+[32m+[m[32m                            </a>[m
+[32m+[m[32m                        </div>[m
+[32m+[m[32m                    </div>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m    </div>[m
+[32m+[m
+[32m+[m[32m    <!-- Filter po godinama -->[m
+[32m+[m[32m    <div class="row mb-3">[m
+[32m+[m[32m        <div class="col-12 d-flex justify-content-end">[m
+[32m+[m[32m            <div class="input-group" style="width: 200px;">[m
+[32m+[m[32m                <span class="input-group-text"><i class="fas fa-filter"></i></span>[m
+[32m+[m[32m                <select id="yearFilter" class="form-select">[m
+[32m+[m[32m                    <option value="">Sve godine</option>[m
+[32m+[m[32m                    {% for plan in purchase_plans %}[m
+[32m+[m[32m                    <option value="{{ plan.year }}">{{ plan.year }}</option>[m
+[32m+[m[32m                    {% endfor %}[m
+[32m+[m[32m                </select>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m    </div>[m
+[32m+[m
+[32m+[m[32m    <!-- Tabela sa podacima -->[m
+[32m+[m[32m    <div class="table-responsive">[m
+[32m+[m[32m        <table id="reportTable" class="table table-striped">[m
+[32m+[m[32m            <thead>[m
+[32m+[m[32m                <tr>[m
+[32m+[m[32m                    <th>Konto</th>[m
+[32m+[m[32m                    <th>Planirano</th>[m
+[32m+[m[32m                    <th>Budžet doznačeno</th>[m
+[32m+[m[32m                    <th>Budžet potrošeno</th>[m
+[32m+[m[32m                    <th>Saldo Budžeta</th>[m
+[32m+[m[32m                    <th>Sopstveni potrošeno</th>[m
+[32m+[m[32m                    <th>Ukupan trošak</th>[m
+[32m+[m[32m                </tr>[m
+[32m+[m[32m            </thead>[m
+[32m+[m[32m            <tbody>[m
+[32m+[m[32m                {% for account in accounts %}[m
+[32m+[m[32m                <tr class="account-row" data-year="{{ account.year }}">[m
+[32m+[m[32m                    <td>{{ account.account_number }} - {{ account.account_name }}</td>[m
+[32m+[m[32m                    <td class="text-end">{{ account.planned | format_currency }}</td>[m
+[32m+[m[32m                    <td class="text-end">{{ account.budget_received | format_currency }}</td>[m
+[32m+[m[32m                    <td class="text-end">{{ account.budget_spent | format_currency }}</td>[m
+[32m+[m[32m                    <td class="text-end">{{ account.budget_balance | format_currency }}</td>[m
+[32m+[m[32m                    <td class="text-end">{{ account.own_spent | format_currency }}</td>[m
+[32m+[m[32m                    <td class="text-end">{{ account.total_expense | format_currency }}</td>[m
+[32m+[m[32m                </tr>[m
+[32m+[m[32m                {% endfor %}[m
+[32m+[m[32m            </tbody>[m
+[32m+[m[32m            <tfoot>[m
+[32m+[m[32m                <tr class="table-secondary fw-bold">[m
+[32m+[m[32m                    <td>UKUPNO</td>[m
+[32m+[m[32m                    <td class="text-end">{{ totals.planned | format_currency }}</td>[m
+[32m+[m[32m                    <td class="text-end">{{ totals.budget_received | format_currency }}</td>[m
+[32m+[m[32m                    <td class="text-end">{{ totals.budget_spent | format_currency }}</td>[m
+[32m+[m[32m                    <td class="text-end">{{ totals.budget_balance | format_currency }}</td>[m
+[32m+[m[32m                    <td class="text-end">{{ totals.own_spent | format_currency }}</td>[m
+[32m+[m[32m                    <td class="text-end">{{ totals.total_expense | format_currency }}</td>[m
+[32m+[m[32m                </tr>[m
+[32m+[m[32m            </tfoot>[m
+[32m+[m[32m        </table>[m
+[32m+[m[32m    </div>[m
+[32m+[m[32m</div>[m
+[32m+[m[32m{% endblock %}[m
+[32m+[m
+[32m+[m[32m{% block scripts %}[m
+[32m+[m[32m<script>[m
+[32m+[m[32m    document.addEventListener('DOMContentLoaded', function() {[m
+[32m+[m[32m        // Inicijalizacija DataTables[m
+[32m+[m[32m        var table = $('#reportTable').DataTable({[m
+[32m+[m[32m            "language": {[m
+[32m+[m[32m                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Serbian.json"[m
+[32m+[m[32m            },[m
+[32m+[m[32m            "order": [[0, "asc"]], // Sortiranje po kontu (rastuu0107e)[m
+[32m+[m[32m            "pageLength": 10,[m
+[32m+[m[32m            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Prikau017ei sve"]][m
+[32m+[m[32m        });[m
+[32m+[m[41m        [m
+[32m+[m[32m        // Filter po godini[m
+[32m+[m[32m        $('#yearFilter').on('change', function() {[m
+[32m+[m[32m            var year = $(this).val();[m
+[32m+[m[32m            table.column(0).search(year).draw();[m
+[32m+[m[32m        });[m
+[32m+[m[32m    });[m
+[32m+[m[32m</script>[m
+[32m+[m[32m{% endblock %}[m
+\ No newline at end of file[m
+[1mdiff --git a/arhivjugoslavije/templates/reports/report_list.html b/arhivjugoslavije/templates/reports/report_list.html[m
+[1mnew file mode 100644[m
+[1mindex 0000000..7d6c847[m
+[1m--- /dev/null[m
+[1m+++ b/arhivjugoslavije/templates/reports/report_list.html[m
+[36m@@ -0,0 +1,111 @@[m
+[32m+[m[32m{% extends 'layout.html' %}[m
+[32m+[m[32m{% block content %}[m
+[32m+[m[32m<div class="container mt-4">[m
+[32m+[m[32m    <!-- Zaglavlje stranice sa naslovom i dugmadima za akcije -->[m
+[32m+[m[32m    <div class="row mb-4">[m
+[32m+[m[32m        <div class="col-12">[m
+[32m+[m[32m            <div class="card bg-light">[m
+[32m+[m[32m                <div class="card-body py-3">[m
+[32m+[m[32m                    <div class="d-flex justify-content-between align-items-center">[m
+[32m+[m[32m                        <h2 class="mb-0"><i class="fas fa-chart-bar me-2 text-danger"></i>Izveštaji</h2>[m
+[32m+[m[32m                        <div>[m
+[32m+[m[32m                            <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary me-2">[m
+[32m+[m[32m                                <i class="fas fa-arrow-left me-1"></i> Nazad[m
+[32m+[m[32m                            </a>[m
+[32m+[m[32m                        </div>[m
+[32m+[m[32m                    </div>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m    </div>[m
+[32m+[m[41m    [m
+[32m+[m[32m    <div class="row g-4">[m
+[32m+[m[32m        <!-- Realizacija po kontima -->[m
+[32m+[m[32m        <div class="col-md-4">[m
+[32m+[m[32m            <a href="{{ url_for('reports.report_1') }}" class="text-decoration-none">[m
+[32m+[m[32m                <div class="card shortcut-card h-100">[m
+[32m+[m[32m                    <div class="card-body text-center">[m
+[32m+[m[32m                        <i class="fas fa-file-invoice fa-3x mb-3 text-primary"></i>[m
+[32m+[m[32m                        <h5 class="card-title">Realizacija po kontima</h5>[m
+[32m+[m[32m                        <p class="card-text text-muted">Pregled realizacije po kontima</p>[m
+[32m+[m[32m                    </div>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m            </a>[m
+[32m+[m[32m        </div>[m
+[32m+[m[41m        [m
+[32m+[m[32m        <!-- Finansijski izveštaj -->[m
+[32m+[m[32m        <div class="col-md-4">[m
+[32m+[m[32m            <a href="#" class="text-decoration-none">[m
+[32m+[m[32m                <div class="card shortcut-card h-100">[m
+[32m+[m[32m                    <div class="card-body text-center">[m
+[32m+[m[32m                        <i class="fas fa-chart-line fa-3x mb-3 text-success"></i>[m
+[32m+[m[32m                        <h5 class="card-title">Finansijski izveštaj</h5>[m
+[32m+[m[32m                        <p class="card-text text-muted">Pregled finansijskih pokazatelja</p>[m
+[32m+[m[32m                    </div>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m            </a>[m
+[32m+[m[32m        </div>[m
+[32m+[m[41m        [m
+[32m+[m[32m        <!-- Izveštaj o partnerima -->[m
+[32m+[m[32m        <div class="col-md-4">[m
+[32m+[m[32m            <a href="#" class="text-decoration-none">[m
+[32m+[m[32m                <div class="card shortcut-card h-100">[m
+[32m+[m[32m                    <div class="card-body text-center">[m
+[32m+[m[32m                        <i class="fas fa-handshake fa-3x mb-3 text-info"></i>[m
+[32m+[m[32m                        <h5 class="card-title">Izveštaj o partnerima</h5>[m
+[32m+[m[32m                        <p class="card-text text-muted">Pregled poslovnih partnera</p>[m
+[32m+[m[32m                    </div>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m            </a>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m    </div>[m
+[32m+[m
+[32m+[m[32m    <!-- Vreme i datum -->[m
+[32m+[m[32m    <div class="text-center mt-5">[m
+[32m+[m[32m        <div class="time-display">[m
+[32m+[m[32m            <div class="time-section">[m
+[32m+[m[32m                <i class="fas fa-clock me-2"></i>[m
+[32m+[m[32m                <span id="current-time" class="time-text"></span>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m            <div class="date-section mt-2">[m
+[32m+[m[32m                <i class="fas fa-calendar-alt me-2"></i>[m
+[32m+[m[32m                <span id="current-date" class="date-text"></span>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m    </div>[m
+[32m+[m[32m</div>[m
+[32m+[m[32m{% endblock %}[m
+[32m+[m
+[32m+[m[32m{% block scripts %}[m
+[32m+[m[32m<script>[m
+[32m+[m[32mfunction updateDateTime() {[m
+[32m+[m[32m    const now = new Date();[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Formatiranje vremena[m
+[32m+[m[32m    const timeOptions = {[m[41m [m
+[32m+[m[32m        hour: '2-digit',[m[41m [m
+[32m+[m[32m        minute: '2-digit',[m[41m [m
+[32m+[m[32m        second: '2-digit',[m[41m [m
+[32m+[m[32m        hour12: false[m[41m [m
+[32m+[m[32m    };[m
+[32m+[m[32m    const timeStr = now.toLocaleTimeString('sr-Latn-RS', timeOptions);[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Formatiranje datuma[m
+[32m+[m[32m    const dateOptions = {[m[41m [m
+[32m+[m[32m        weekday: 'long',[m[41m [m
+[32m+[m[32m        year: 'numeric',[m[41m [m
+[32m+[m[32m        month: 'long',[m[41m [m
+[32m+[m[32m        day: 'numeric'[m
+[32m+[m[32m    };[m
+[32m+[m[32m    const dateStr = now.toLocaleDateString('sr-Latn-RS', dateOptions);[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Ažuriranje DOM-a[m
+[32m+[m[32m    document.getElementById('current-time').textContent = timeStr;[m
+[32m+[m[32m    document.getElementById('current-date').textContent = dateStr;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m// Inicijalno postavljanje i ažuriranje svakog sekunda[m
+[32m+[m[32mupdateDateTime();[m
+[32m+[m[32msetInterval(updateDateTime, 1000);[m
+[32m+[m[32m</script>[m
+[32m+[m[32m{% endblock %}[m
+\ No newline at end of file[m
+[1mdiff --git a/arhivjugoslavije/templates/settings.html b/arhivjugoslavije/templates/settings.html[m
+[1mindex 2436ec2..0726e82 100644[m
+[1m--- a/arhivjugoslavije/templates/settings.html[m
+[1m+++ b/arhivjugoslavije/templates/settings.html[m
+[36m@@ -141,39 +141,40 @@[m
+                 </div>[m
+                 <div class="card-body">[m
+                     <div class="row g-4">[m
+[31m-                        <div class="col-md-6">[m
+[32m+[m[32m                        <div class="col-md-4">[m
+                             <div class="card h-100">[m
+                                 <div class="card-header bg-secondary text-white">[m
+                                     <h6 class="card-title mb-0">Kurs evra</h6>[m
+                                 </div>[m
+                                 <div class="card-body">[m
+[31m-                                    <div class="d-flex justify-content-between align-items-center mb-3">[m
+[31m-                                        <div>[m
+[31m-                                            <p class="mb-2"><strong>Trenutni kurs:</strong> [m
+[31m-                                                {% if archive.eur_rate %}[m
+[31m-                                                    {{ "%.2f"|format(archive.eur_rate|float) }} RSD[m
+[31m-                                                {% else %}[m
+[31m-                                                    Nije postavljen[m
+[31m-                                                {% endif %}[m
+[31m-                                            </p>[m
+[31m-                                            <p class="mb-2"><strong>Datum ažuriranja:</strong> [m
+[31m-                                                {% if archive.eur_rate_date %}[m
+[31m-                                                    {{ archive.eur_rate_date.strftime('%d.%m.%Y. %H:%M') }}[m
+[31m-                                                {% else %}[m
+[31m-                                                    -[m
+[31m-                                                {% endif %}[m
+[31m-                                            </p>[m
+[32m+[m[32m                                    <form action="{{ url_for('main.update_eur_rate', id=id) }}" method="POST" class="mb-3">[m
+[32m+[m[32m                                        {{ csrf_token() if csrf_token is defined else '' }}[m
+[32m+[m[32m                                        <div class="mb-2">[m
+[32m+[m[32m                                            <label for="eur_rate" class="form-label">Unesite kurs evra</label>[m
+[32m+[m[32m                                            <input type="text" class="form-control" id="eur_rate" name="eur_rate" placeholder="npr. 117,20" value="{{ archive.eur_rate if archive.eur_rate else '' }}" required pattern="^[0-9]+([\.,][0-9]{1,2})?$" title="Unesite broj sa najviše 2 decimale">[m
+                                         </div>[m
+[31m-                                        <form action="{{ url_for('main.update_eur_rate', id=id) }}" method="POST">[m
+[31m-                                            <button type="submit" class="btn btn-primary">[m
+[31m-                                                <i class="fa fa-sync-alt me-2"></i>Ažuriraj kurs[m
+[31m-                                            </button>[m
+[31m-                                        </form>[m
+[31m-                                    </div>[m
+[32m+[m[32m                                        <button type="submit" class="btn btn-primary w-100">[m
+[32m+[m[32m                                            <i class="fa fa-save me-2"></i>Sačuvaj kurs[m
+[32m+[m[32m                                        </button>[m
+[32m+[m[32m                                    </form>[m
+[32m+[m[32m                                    <p class="mb-2"><strong>Trenutni kurs:</strong>[m[41m [m
+[32m+[m[32m                                        {% if archive.eur_rate %}[m
+[32m+[m[32m                                            {{ "%.2f"|format(archive.eur_rate|float) }} RSD[m
+[32m+[m[32m                                        {% else %}[m
+[32m+[m[32m                                            Nije postavljen[m
+[32m+[m[32m                                        {% endif %}[m
+[32m+[m[32m                                    </p>[m
+[32m+[m[32m                                    <p class="mb-0"><strong>Datum ažuriranja:</strong>[m[41m [m
+[32m+[m[32m                                        {% if archive.eur_rate_date %}[m
+[32m+[m[32m                                            {{ archive.eur_rate_date.strftime('%d.%m.%Y. %H:%M') }}[m
+[32m+[m[32m                                        {% else %}[m
+[32m+[m[32m                                            -[m
+[32m+[m[32m                                        {% endif %}[m
+[32m+[m[32m                                    </p>[m
+                                 </div>[m
+                             </div>[m
+                         </div>[m
+[31m-                        <div class="col-md-6">[m
+[32m+[m[32m                        <div class="col-md-8">[m
+                             <div class="card h-100">[m
+                                 <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">[m
+                                     <h6 class="card-title mb-0">Žiro računi</h6>[m
+[36m@@ -188,6 +189,8 @@[m
+                                                 <thead>[m
+                                                     <tr>[m
+                                                         <th>Broj računa</th>[m
+[32m+[m[32m                                                        <th>Podračun</th>[m
+[32m+[m[32m                                                        <th>Tip</th>[m
+                                                         <th>Namena</th>[m
+                                                         <th>Status</th>[m
+                                                         <th class="text-end">Akcije</th>[m
+[36m@@ -197,6 +200,10 @@[m
+                                                     {% for account in archive.bank_accounts %}[m
+                                                     <tr>[m
+                                                         <td>{{ account.account_number }}</td>[m
+[32m+[m[32m                                                        <td>{{ account.sub_account_number or '' }}</td>[m
+[32m+[m[32m                                                        <td>[m
+[32m+[m[32m                                                            {% if account.account_type == 'budget' %}Budžetski{% elif account.account_type == 'own' %}Sopstveni{% elif account.account_type == 'other' %}Ostalo{% else %}-{% endif %}[m
+[32m+[m[32m                                                        </td>[m
+                                                         <td>{{ account.purpose }}</td>[m
+                                                         <td>[m
+                                                             {% if account.active %}[m
+[36m@@ -545,6 +552,32 @@[m
+                                 {{ bank_account_form.account_number(class="form-control", id="bank_account_number") }}[m
+                             {% endif %}[m
+                         </div>[m
+[32m+[m[32m                        <div class="col-md-12">[m
+[32m+[m[32m                            {{ bank_account_form.sub_account_number.label(class="form-label") }}[m
+[32m+[m[32m                            {% if bank_account_form.sub_account_number.errors %}[m
+[32m+[m[32m                                {{ bank_account_form.sub_account_number(class="form-control is-invalid", id="bank_account_sub_account_number") }}[m
+[32m+[m[32m                                <div class="invalid-feedback">[m
+[32m+[m[32m                                    {% for error in bank_account_form.sub_account_number.errors %}[m
+[32m+[m[32m                                        <span>{{ error }}</span>[m
+[32m+[m[32m                                    {% endfor %}[m
+[32m+[m[32m                                </div>[m
+[32m+[m[32m                            {% else %}[m
+[32m+[m[32m                                {{ bank_account_form.sub_account_number(class="form-control", id="bank_account_sub_account_number") }}[m
+[32m+[m[32m                            {% endif %}[m
+[32m+[m[32m                        </div>[m
+[32m+[m[32m                        <div class="col-md-12">[m
+[32m+[m[32m                            {{ bank_account_form.account_type.label(class="form-label") }}[m
+[32m+[m[32m                            {% if bank_account_form.account_type.errors %}[m
+[32m+[m[32m                                {{ bank_account_form.account_type(class="form-select is-invalid", id="bank_account_account_type") }}[m
+[32m+[m[32m                                <div class="invalid-feedback">[m
+[32m+[m[32m                                    {% for error in bank_account_form.account_type.errors %}[m
+[32m+[m[32m                                        <span>{{ error }}</span>[m
+[32m+[m[32m                                    {% endfor %}[m
+[32m+[m[32m                                </div>[m
+[32m+[m[32m                            {% else %}[m
+[32m+[m[32m                                {{ bank_account_form.account_type(class="form-select", id="bank_account_account_type") }}[m
+[32m+[m[32m                            {% endif %}[m
+[32m+[m[32m                        </div>[m
+                         <div class="col-md-12">[m
+                             <div class="form-check">[m
+                                 {% if bank_account_form.active.errors %}[m
+[36m@@ -637,6 +670,8 @@[m
+                     $('#bank_account_id').val(data.id);[m
+                     $('#bank_account_purpose').val(data.purpose);[m
+                     $('#bank_account_number').val(data.account_number);[m
+[32m+[m[32m                    $('#bank_account_sub_account_number').val(data.sub_account_number);[m
+[32m+[m[32m                    $('#bank_account_account_type').val(data.account_type);[m
+                     $('#bank_account_active').prop('checked', data.active);[m
+                     [m
+                     // Promeni naslov i akciju forme[m
+[1mdiff --git a/arhivjugoslavije/templates/statement/statement_details.html b/arhivjugoslavije/templates/statement/statement_details.html[m
+[1mindex f802e84..16005a1 100644[m
+[1m--- a/arhivjugoslavije/templates/statement/statement_details.html[m
+[1m+++ b/arhivjugoslavije/templates/statement/statement_details.html[m
+[36m@@ -91,6 +91,7 @@[m
+                                     <th style="width: 15%" class="bg-light"><strong>Konto</strong></th>[m
+                                     <th style="width: 15%" class="bg-light"><strong>Projekat</strong></th>[m
+                                     <th style="width: 10%" class="bg-light"><strong>Javna nabavka</strong></th>[m
+[32m+[m[32m                                    <th style="width: 10%" class="bg-light"><strong>Beleška</strong></th>[m
+                                     <th style="width: 5%" class="bg-light text-center"><strong>Knjiži</strong></th>[m
+                                 </tr>[m
+                             </thead>[m
+[36m@@ -152,6 +153,9 @@[m
+                                     <td class="bg-light">[m
+                                         <input type="text" name="public_procurement_{{ item.id }}" class="form-control form-control-sm" value="{{ item.public_procurement }}" placeholder="Javna nabavka" {% if not current_user.is_authenticated %}disabled{% endif %}>[m
+                                     </td>[m
+[32m+[m[32m                                    <td class="bg-light">[m
+[32m+[m[32m                                        <input type="text" name="note_{{ item.id }}" class="form-control form-control-sm" value="{{ item.note }}" placeholder="Beleška" {% if not current_user.is_authenticated %}disabled{% endif %}>[m
+[32m+[m[32m                                    </td>[m
+                                     <td class="bg-light text-center">[m
+                                         <div class="form-check form-switch d-flex justify-content-center">[m
+                                             <input type="checkbox" class="form-check-input" id="account_in_project_{{ item.id }}" name="account_in_project_{{ item.id }}" {% if item.account_in_project %}checked{% endif %} {% if not current_user.is_authenticated %}disabled{% endif %}>[m
+[1mdiff --git a/migrations/versions/0e48a68791fe_dodata_kolona_sub_account_number_u_.py b/migrations/versions/0e48a68791fe_dodata_kolona_sub_account_number_u_.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..2059abf[m
+[1m--- /dev/null[m
+[1m+++ b/migrations/versions/0e48a68791fe_dodata_kolona_sub_account_number_u_.py[m
+[36m@@ -0,0 +1,32 @@[m
+[32m+[m[32m"""dodata kolona sub_account_number u BankAccount[m
+[32m+[m
+[32m+[m[32mRevision ID: 0e48a68791fe[m
+[32m+[m[32mRevises: 4cc

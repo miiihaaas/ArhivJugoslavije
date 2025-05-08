@@ -5,11 +5,6 @@ from itsdangerous.url_safe import URLSafeTimedSerializer as Serializer
 from datetime import datetime
 from sqlalchemy.ext.declarative import declared_attr
 
-@login_manager.user_loader
-def load_user(user_id):
-    with current_app.app_context():
-        from arhivjugoslavije.models import User
-        return User.query.get(int(user_id))
 
 
 class User(db.Model, UserMixin):

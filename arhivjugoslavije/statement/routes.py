@@ -8,8 +8,8 @@ from arhivjugoslavije import db, app
 import sys
 
 # Postavljanje kodiranja za standardni izlaz
-if sys.stdout.encoding != 'utf-8':
-    sys.stdout.reconfigure(encoding='utf-8')
+# if sys.stdout.encoding != 'utf-8':
+#     sys.stdout.reconfigure(encoding='utf-8')
 
 statement = Blueprint('statement', __name__)
 
