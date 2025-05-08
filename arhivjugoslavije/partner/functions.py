@@ -58,9 +58,9 @@ def get_partner_card_data(partner_id, start_date=None, end_date=None, is_custome
         
         # Filtriranje stavki izvoda po datumu (uplate od kupaca)
         statement_items_query = StatementItem.query.filter_by(partner_id=partner_id, is_debit=False)\
-                                             .join(BankStatement, StatementItem.bank_statement_id == BankStatement.id)\
-                                             .filter(BankStatement.date >= start_date)\
-                                             .filter(BankStatement.date <= end_date)
+                                                .join(BankStatement, StatementItem.bank_statement_id == BankStatement.id)\
+                                                .filter(BankStatement.date >= start_date)\
+                                                .filter(BankStatement.date <= end_date)
     else:
         # Za dobavljača, prikazujemo ulazne fakture
         invoices = Invoice.query.filter_by(partner_id=partner_id, incoming=True)\
@@ -70,9 +70,9 @@ def get_partner_card_data(partner_id, start_date=None, end_date=None, is_custome
         
         # Filtriranje stavki izvoda po datumu (isplate dobavljačima)
         statement_items_query = StatementItem.query.filter_by(partner_id=partner_id, is_debit=True)\
-                                             .join(BankStatement, StatementItem.bank_statement_id == BankStatement.id)\
-                                             .filter(BankStatement.date >= start_date)\
-                                             .filter(BankStatement.date <= end_date)
+                                                .join(BankStatement, StatementItem.bank_statement_id == BankStatement.id)\
+                                                .filter(BankStatement.date >= start_date)\
+                                                .filter(BankStatement.date <= end_date)
     
     statement_items = statement_items_query.all()
     

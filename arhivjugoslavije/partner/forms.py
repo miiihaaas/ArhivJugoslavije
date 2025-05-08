@@ -20,14 +20,14 @@ class PartnerForm(FlaskForm):
         Email(message='Unesite ispravnu email adresu.')
     ])
     pib = StringField('PIB', validators=[
-        DataRequired(message='PIB je obavezan.'),
-        Length(min=9, max=9, message='PIB mora sadržati tačno 9 cifara.'),
-        Regexp('^[0-9]*$', message='PIB može sadržati samo cifre.')
+        Optional(),
+        Length(min=9, max=9, message='PIB nije obavezan, ali ako ga unosite mora sadržati tačno 9 cifara. Ostavite polje prazno ako ne želite uneti PIB.'),
+        Regexp('^[0-9]*$', message='PIB nije obavezan, ali ako ga unosite može sadržati samo cifre. Ostavite polje prazno ako ne želite uneti PIB.')
     ])
     mb = StringField('Matični broj', validators=[
-        DataRequired(message='Matični broj je obavezan.'),
-        Length(min=8, max=8, message='Matični broj mora sadržati tačno 8 cifara.'),
-        Regexp('^[0-9]*$', message='Matični broj može sadržati samo cifre.')
+        Optional(),
+        Length(min=8, max=8, message='Matični broj nije obavezan, ali ako ga unosite mora sadržati tačno 8 cifara. Ostavite polje prazno ako ne želite uneti matični broj.'),
+        Regexp('^[0-9]*$', message='Matični broj nije obavezan, ali ako ga unosite može sadržati samo cifre. Ostavite polje prazno ako ne želite uneti matični broj.')
     ])
     customer = BooleanField('Kupac')
     supplier = BooleanField('Dobavljač')
@@ -38,9 +38,11 @@ class PartnerForm(FlaskForm):
         """Validacija da PIB nije već registrovan kod drugog partnera"""
         # Ova validacija se primenjuje samo pri kreiranju novog partnera
         # Za editovanje se koristi posebna validacija u EditPartnerForm
-        partner = Partner.query.filter_by(pib=pib.data).first()
-        if partner:
-            raise ValidationError(f'U bazi već postoji partner sa PIB brojem {pib.data}.')
+        # Proveravamo samo ako je PIB unet (polje nije prazno)
+        if pib.data and pib.data.strip():
+            partner = Partner.query.filter_by(pib=pib.data).first()
+            if partner:
+                raise ValidationError(f'U bazi već postoji partner sa PIB brojem {pib.data}.')
 
 
 class EditPartnerForm(PartnerForm):
@@ -54,6 +56,8 @@ class EditPartnerForm(PartnerForm):
     
     def validate_pib(self, pib):
         """Validacija da PIB nije već registrovan kod drugog partnera"""
-        partner = Partner.query.filter_by(pib=pib.data).first()
-        if partner and partner.id != self.original_partner_id:
-            raise ValidationError(f'U bazi već postoji partner sa PIB brojem {pib.data}.')
+        # Proveravamo samo ako je PIB unet (polje nije prazno)
+        if pib.data and pib.data.strip():
+            partner = Partner.query.filter_by(pib=pib.data).first()
+            if partner and partner.id != self.original_partner_id:
+                raise ValidationError(f'U bazi već postoji partner sa PIB brojem {pib.data}.')

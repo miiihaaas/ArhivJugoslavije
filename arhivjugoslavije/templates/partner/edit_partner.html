@@ -97,15 +97,15 @@
                     <div class="col-md-6">
                         <div class="form-group mb-3">
                             {{ form.pib.label(class="form-label") }}
-                            {{ form.pib(class="form-control", required=true, value=partner.pib, maxlength="9", pattern="[0-9]{9}") }}
-                            <div class="form-text">PIB mora sadržati 9 cifara</div>
+                            {{ form.pib(class="form-control", value=partner.pib, maxlength="9", pattern="[0-9]{9}") }}
+                            <div class="form-text">PIB nije obavezan, ali ako ga unosite mora sadržati tačno 9 cifara</div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group mb-3">
                             {{ form.mb.label(class="form-label") }}
-                            {{ form.mb(class="form-control", required=true, value=partner.mb, maxlength="8", pattern="[0-9]{8}") }}
-                            <div class="form-text">Matični broj mora sadržati 8 cifara</div>
+                            {{ form.mb(class="form-control", value=partner.mb, maxlength="8", pattern="[0-9]{8}") }}
+                            <div class="form-text">Matični broj nije obavezan, ali ako ga unosite mora sadržati tačno 8 cifara</div>
                         </div>
                     </div>
                 </div>
