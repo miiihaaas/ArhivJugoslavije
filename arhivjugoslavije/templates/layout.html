@@ -103,6 +103,11 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     
+    <!-- Select2 CSS i JS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
     <!-- Automatsko zatvaranje flash poruka nakon 7 sekundi -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -112,11 +117,37 @@
             // Postavi tajmer za svaku poruku da se zatvori nakon 7 sekundi
             flashMessages.forEach(function(alert) {
                 setTimeout(function() {
-                    // Kreiraj bootstrap alert objekat i pozovi close metodu
+                    // Kreiraj bootstrap alert objekat i pozovi close metoda
                     const bsAlert = new bootstrap.Alert(alert);
                     bsAlert.close();
                 }, 7000); // 7 sekundi = 7000 milisekundi
             });
+            
+            // Globalne postavke za Select2
+            if ($.fn.select2 !== undefined) {
+                $.fn.select2.defaults.set('language', {
+                    noResults: function() {
+                        return 'Nema rezultata.';
+                    },
+                    searching: function() {
+                        return 'Pretraga...';
+                    },
+                    loadingMore: function() {
+                        return 'Učitavanje više rezultata...';
+                    },
+                    inputTooShort: function(args) {
+                        var remainingChars = args.minimum - args.input.length;
+                        return 'Unesite još ' + remainingChars + ' karakter' + (remainingChars > 1 ? 'a' : '');
+                    }
+                });
+                
+                // Inicijalizacija Select2 za sve elemente sa klasom 'select2-field'
+                $('.select2-field').select2({
+                    width: '100%',
+                    theme: 'bootstrap-5',
+                    allowClear: true
+                });
+            }
         });
     </script>
     

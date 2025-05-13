@@ -45,7 +45,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     {{ form.partner_id.label(class="form-label fw-bold") }}
-                                    {{ form.partner_id(class="form-select", id="partner_id") }}
+                                    {{ form.partner_id(class="form-select select2-field", id="partner_id") }}
                                     {% if form.partner_id.errors %}
                                         {% for error in form.partner_id.errors %}
                                             <div class="invalid-feedback d-block">{{ error }}</div>
@@ -186,22 +186,14 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- Select2 CSS -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 $(document).ready(function() {
+    // Dodatna podešavanja za Select2 na ovoj stranici
     $('#partner_id').select2({
-        width: '100%',
-        placeholder: 'Izaberite partnera',
-        allowClear: true,
-        language: {
-            noResults: function() {
-                return 'Nema rezultata.';
-            }
-        }
+        placeholder: 'Izaberite partnera'
     });
 });
+
 document.addEventListener('DOMContentLoaded', function() {
     // Elementi datuma
     const issueDateInput = document.getElementById('issue_date');

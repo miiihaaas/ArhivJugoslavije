@@ -208,7 +208,7 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     {{ item_form.service_id.label(class="form-label fw-semibold") }}
-                                    <select class="form-select" id="service_id" name="service_id" required>
+                                    <select class="form-select select2-field" id="service_id" name="service_id" required>
                                         <option value="" selected disabled>Izaberi uslugu</option>
                                         {% for service_id, service_name in item_form.service_id.choices %}
                                             <option value="{{ service_id }}">{{ service_name }}</option>
@@ -510,6 +510,67 @@
 
 {% block scripts %}
 <script>
+// Globalna funkcija za izračunavanje ukupne vrednosti stavke
+function calculateTotal() {
+    const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+    const price = parseFloat(document.getElementById('price').value) || 0;
+    const total = quantity * price;
+    document.getElementById('total').value = total.toFixed(2);
+}
+
+// Funkcija za izračunavanje ukupne vrednosti stavke u modalu za uređivanje
+function calculateEditTotal() {
+    const quantity = parseFloat(document.getElementById('edit_quantity').value) || 0;
+    const price = parseFloat(document.getElementById('edit_price').value) || 0;
+    const total = quantity * price;
+    document.getElementById('edit_total').value = total.toFixed(2);
+}
+
+// Funkcija za dohvatanje cene usluge
+function updateServicePrice(serviceId) {
+    if (serviceId) {
+        fetch(`{{ url_for('invoices.get_service_price', service_id=0) }}`.replace('0', serviceId))
+            .then(response => response.json())
+            .then(data => {
+                const currency = document.getElementById('invoice_currency').value;
+                let price = 0;
+                
+                if (currency === 'RSD' && data.price_rsd) {
+                    price = data.price_rsd;
+                } else if (currency === 'EUR' && data.price_eur) {
+                    price = data.price_eur;
+                }
+                
+                // Postavi količinu na 1 ako je polje prazno
+                const quantityField = document.getElementById('quantity');
+                if (!quantityField.value || quantityField.value === '0') {
+                    quantityField.value = '1';
+                }
+                
+                // Postavi cenu i jedinicu mere
+                document.getElementById('price').value = price;
+                document.getElementById('unit_of_measure').value = data.unit_of_measure;
+                
+                // Odloži izračunavanje da bismo bili sigurni da su vrednosti ažurirane u DOM-u
+                setTimeout(function() {
+                    calculateTotal();
+                }, 50);
+            })
+            .catch(error => console.error('Error:', error));
+    }
+}
+
+$(document).ready(function() {
+    // Inicijalizacija Select2 za polje usluge
+    $('#service_id').select2({
+        placeholder: 'Izaberi uslugu',
+        width: '100%'
+    }).on('change', function(e) {
+        // Ručno aktiviraj funkciju za dohvatanje cene
+        updateServicePrice(this.value);
+    });
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     // Elementi datuma
     const issueDateInput = document.getElementById('issue_date');
@@ -567,29 +628,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('edit_quantity').addEventListener('input', calculateEditTotal);
     document.getElementById('edit_price').addEventListener('input', calculateEditTotal);
     
-    // Ažuriraj cenu kada se promeni usluga
-    document.getElementById('service_id').addEventListener('change', function() {
-        const serviceId = this.value;
-        if (serviceId) {
-            fetch(`{{ url_for('invoices.get_service_price', service_id=0) }}`.replace('0', serviceId))
-                .then(response => response.json())
-                .then(data => {
-                    const currency = document.getElementById('invoice_currency').value;
-                    let price = 0;
-                    
-                    if (currency === 'RSD' && data.price_rsd) {
-                        price = data.price_rsd;
-                    } else if (currency === 'EUR' && data.price_eur) {
-                        price = data.price_eur;
-                    }
-                    
-                    document.getElementById('price').value = price;
-                    document.getElementById('unit_of_measure').value = data.unit_of_measure;
-                    calculateTotal();
-                })
-                .catch(error => console.error('Error:', error));
-        }
-    });
+    // Select2 za polje usluge već ima implementiran event handler koji poziva updateServicePrice
     
     // Ažuriraj cenu kada se promeni usluga u modalu za uređivanje
     document.getElementById('edit_service_id').addEventListener('change', function() {

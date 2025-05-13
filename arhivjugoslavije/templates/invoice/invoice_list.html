@@ -143,7 +143,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="partner_id" class="form-label">Dobavljač *</label>
-                                <select class="form-select" id="partner_id" name="partner_id" required>
+                                <select class="form-select select2-field" id="partner_id" name="partner_id" required>
                                     <option value="">Izaberite dobavljača</option>
                                     {% for partner in suppliers %}
                                     <option value="{{ partner.id }}">{{ partner.name }}</option>
@@ -247,6 +247,16 @@
 
 {% block scripts %}
 <script>
+$(document).ready(function() {
+    // Inicijalizacija Select2 za polje dobavljača u modalu
+    $('#createSupplierInvoiceModal').on('shown.bs.modal', function () {
+        $('#partner_id').select2({
+            dropdownParent: $('#createSupplierInvoiceModal'),
+            placeholder: 'Izaberite dobavljača'
+        });
+    });
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     // Inicijalizacija tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
