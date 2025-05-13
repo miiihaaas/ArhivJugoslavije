@@ -17,6 +17,9 @@
                                 <a href="{{ url_for('invoices.delete_invoice', invoice_id=invoice.id) }}" class="btn btn-outline-danger" onclick="return confirm('Da li ste sigurni da želite da obrisete ovu fakturu?')">
                                     <i class="fas fa-trash me-1"></i> Obriši
                                 </a>
+                                <a href="{{ url_for('invoices.generate_invoice_pdf_route', invoice_id=invoice.id) }}" class="btn btn-outline-primary" target="_blank">
+                                    <i class="fas fa-file-pdf me-1"></i> PDF
+                                </a>
                                 <a href="{{ url_for('invoices.save_invoice', invoice_id=invoice.id) }}" class="btn btn-outline-success">
                                     <i class="fas fa-save me-1"></i> Sačuvaj u bazu
                                 </a>

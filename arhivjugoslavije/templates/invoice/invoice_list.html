@@ -104,7 +104,7 @@
                                 <i class="fas fa-eye"></i>
                             {% endif %}
                         </a>
-                        {% if not invoice.incoming and invoice.status != 'nacrt' %}
+                        {% if not invoice.incoming %}  <!-- and invoice.status != 'nacrt' -->
                             <a href="{{ url_for('invoices.generate_invoice_pdf_route', invoice_id=invoice.id) }}" class="btn btn-outline-secondary btn-sm view-invoice" data-invoice-id="{{ invoice.id }}" target="_blank">
                                 <i class="fas fa-file-pdf"></i>
                             </a>

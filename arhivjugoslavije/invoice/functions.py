@@ -378,7 +378,10 @@ def generate_invoice_pdf(invoice_id, is_attachment=False):
                 # Naslov fakture - centriran ispod svih prethodnih podataka
                 self.set_font('DejaVu', 'B', 14)
                 self.set_xy(10, max_y + 5)  # 5mm razmaka od prethodnog dela
-                self.cell(0, 10, f'Račun br.: {invoice.invoice_number}', 0, new_x="LMARGIN", new_y="NEXT", align="C")
+                if invoice.status == 'nacrt':
+                    self.cell(0, 10, f'Predračun br.: {invoice.invoice_number}', 0, new_x="LMARGIN", new_y="NEXT", align="C")
+                else:
+                    self.cell(0, 10, f'Račun br.: {invoice.invoice_number}', 0, new_x="LMARGIN", new_y="NEXT", align="C")
             
             def footer(self):
                 # Postavi Y poziciju za footer (30mm od dna stranice)
