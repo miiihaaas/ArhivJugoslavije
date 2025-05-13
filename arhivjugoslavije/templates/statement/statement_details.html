@@ -119,14 +119,14 @@
                                     <!-- Editabilna polja - istaknuta sa pozadinom -->
                                     <td class="bg-light">
                                         {% if item.is_debit %}
-                                            <select name="partner_id_{{ item.id }}" class="form-select form-select-sm" {% if not current_user.is_authenticated %}disabled{% endif %}>
+                                            <select name="partner_id_{{ item.id }}" class="form-select form-select-sm select2-field" data-type="partner" {% if not current_user.is_authenticated %}disabled{% endif %}>
                                                 <option value="">-- Izaberite --</option>
                                                 {% for supplier in suppliers %}
                                                     <option value="{{ supplier.id }}" {% if item.partner_id == supplier.id %}selected{% endif %}>{{ supplier.name }}</option>
                                                 {% endfor %}
                                             </select>
                                         {% else %}
-                                            <select name="partner_id_{{ item.id }}" class="form-select form-select-sm" {% if not current_user.is_authenticated %}disabled{% endif %}>
+                                            <select name="partner_id_{{ item.id }}" class="form-select form-select-sm select2-field" data-type="partner" {% if not current_user.is_authenticated %}disabled{% endif %}>
                                                 <option value="">-- Izaberite --</option>
                                                 {% for customer in customers %}
                                                     <option value="{{ customer.id }}" {% if item.partner_id == customer.id %}selected{% endif %}>{{ customer.name }}</option>
@@ -135,7 +135,7 @@
                                         {% endif %}
                                     </td>
                                     <td class="bg-light">
-                                        <select name="account_level_6_number_{{ item.id }}" class="form-select form-select-sm" {% if not current_user.is_authenticated %}disabled{% endif %}>
+                                        <select name="account_level_6_number_{{ item.id }}" class="form-select form-select-sm select2-field" data-type="konto" {% if not current_user.is_authenticated %}disabled{% endif %}>
                                             <option value="">-- Izaberite --</option>
                                             {% for account in accounts_level_6 %}
                                                 <option value="{{ account.number }}" {% if item.account_level_6_number == account.number %}selected{% endif %}>{{ account.number }} - {{ account.name }}</option>
@@ -143,7 +143,7 @@
                                         </select>
                                     </td>
                                     <td class="bg-light">
-                                        <select name="project_id_{{ item.id }}" class="form-select form-select-sm" {% if not current_user.is_authenticated %}disabled{% endif %}>
+                                        <select name="project_id_{{ item.id }}" class="form-select form-select-sm select2-field" data-type="projekat" {% if not current_user.is_authenticated %}disabled{% endif %}>
                                             <option value="">-- Izaberite --</option>
                                             {% for project in projects %}
                                                 <option value="{{ project.id }}" {% if item.project_id == project.id %}selected{% endif %}>{{ project.name }}</option>
@@ -172,4 +172,42 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Inicijalizacija Select2 za polja Partner, Konto i Projekat
+    $('.select2-field[data-type="partner"]').select2({
+        placeholder: '-- Izaberite --',
+        width: '100%',
+        theme: 'bootstrap-5',
+        allowClear: true,
+        dropdownParent: $('.table-responsive')
+    });
+    
+    $('.select2-field[data-type="konto"]').select2({
+        placeholder: '-- Izaberite --',
+        width: '100%',
+        theme: 'bootstrap-5',
+        allowClear: true,
+        dropdownParent: $('.table-responsive')
+    });
+    
+    $('.select2-field[data-type="projekat"]').select2({
+        placeholder: '-- Izaberite --',
+        width: '100%',
+        theme: 'bootstrap-5',
+        allowClear: true,
+        dropdownParent: $('.table-responsive')
+    });
+    
+    // Stilizacija Select2 za tabele
+    setTimeout(function() {
+        $('.select2-container--bootstrap-5').each(function() {
+            $(this).css('width', '100%');
+        });
+    }, 100);
+});
+</script>
 {% endblock %}
