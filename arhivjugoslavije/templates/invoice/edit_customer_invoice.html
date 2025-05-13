@@ -161,6 +161,25 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Polje za napomenu -->
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    {{ form.note.label(class="form-label fw-semibold") }}
+                                    {% if invoice.status == 'nacrt' %}
+                                        {{ form.note(class="form-control", rows=3) }}
+                                    {% else %}
+                                        {{ form.note(class="form-control", rows=3, readonly=true) }}
+                                    {% endif %}
+                                    {% if form.note.errors %}
+                                        {% for error in form.note.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
                         
                         {% if invoice.status == 'nacrt' %}
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">

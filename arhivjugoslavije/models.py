@@ -264,6 +264,7 @@ class Invoice(db.Model):
     paid = db.Column(db.Boolean, default=False, nullable=False)
     currency = db.Column(db.String(3), nullable=False, default='RSD')
     incoming = db.Column(db.Boolean, default=False, nullable=False)
+    note = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), nullable=True) #! izlazne (incoming=False): nacrt, sacuvano, poslato; dolazne (incoming=True): null
     
     # Definišemo veze sa invoice_item i statement_item

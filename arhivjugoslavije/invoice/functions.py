@@ -240,7 +240,12 @@ def generate_invoice_pdf(invoice_id, is_attachment=False):
             def header(self):
                 # ===== PRVI DEO: PODACI O ARHIVU I KONTAKT PODACI =====
                 
-                # Logo iznad naziva arhiva
+                # Definisanje širina kolona
+                logo_column_width = 40  # Prva kolona - samo za logo
+                info_column_width = 70   # Druga kolona - podaci o arhivu
+                contact_column_width = 70 # Treća kolona - kontakt podaci
+                
+                # ===== PRVA KOLONA: LOGO =====
                 logo_path = None
                 if archive_settings.logo:
                     # Provera da li putanja već sadrži 'uploads/'
@@ -249,111 +254,130 @@ def generate_invoice_pdf(invoice_id, is_attachment=False):
                     else:
                         logo_path = os.path.join(base_dir, 'static', 'uploads', archive_settings.logo)
                 
-                logo_height = 0
+                # Postavljanje loga u prvu kolonu
                 if logo_path and os.path.exists(logo_path):
-                    # Postavlja logo na vrh stranice
+                    # Postavlja logo na vrh stranice u prvoj koloni
                     self.image(logo_path, x=10, y=8, w=30)
-                    logo_height = 20  # Procenjena visina loga
                 
-                # Naziv arhiva - leva strana (ispod loga)
+                # ===== DRUGA KOLONA: PODACI O ARHIVU =====
+                # Početak druge kolone (sredina)
+                second_column_x = 10 + logo_column_width
+                
+                # Naziv arhiva - srednja kolona
                 self.set_font('DejaVu', 'B', 12)
-                self.set_xy(10, 8 + logo_height)
-                self.cell(95, 6, archive_settings.name, 0, new_x="LMARGIN", new_y="NEXT", align="L")
+                self.set_xy(second_column_x, 8)
+                self.cell(info_column_width, 6, archive_settings.name, 0, new_x="RIGHT", new_y="TOP", align="L")
                 
-                # Adresa arhiva - leva strana
+                # Adresa arhiva - srednja kolona
                 self.set_font('DejaVu', '', 10)
-                self.set_x(10)
-                self.cell(95, 5, f'{archive_settings.address}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+                self.set_xy(second_column_x, 14)
+                self.cell(info_column_width, 5, f'{archive_settings.address}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 
-                # Poštanski broj i grad - leva strana
-                self.set_x(10)
-                self.cell(95, 5, f'{archive_settings.zip_code} {archive_settings.city}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+                # Poštanski broj i grad - srednja kolona
+                self.set_xy(second_column_x, 19)
+                self.cell(info_column_width, 5, f'{archive_settings.zip_code} {archive_settings.city}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 
-                # Matični broj i PIB - leva strana
-                self.set_x(10)
-                self.cell(95, 5, f'MB: {archive_settings.mb}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
-                self.set_x(10)
-                self.cell(95, 5, f'PIB: {archive_settings.pib}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+                # Matični broj i PIB - srednja kolona
+                self.set_xy(second_column_x, 24)
+                self.cell(info_column_width, 5, f'MB: {archive_settings.mb}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                self.set_xy(second_column_x, 29)
+                self.cell(info_column_width, 5, f'PIB: {archive_settings.pib}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                
+                # Tekući račun - srednja kolona
+                bank_accounts = BankAccount.query.filter_by(settings_id=archive_settings.id).all()
+                if bank_accounts:
+                    self.set_xy(second_column_x, 34)
+                    # self.cell(info_column_width, 5, f'Tek. rač: {bank_accounts[2].account_number}', 0, new_x="RIGHT", new_y="TOP", align="L") #! [2] - je u db 840-31120845-93, ako bude nekih izmena možda treba izmeniti ovaj parametar
+                    self.cell(info_column_width, 5, f'Tek. rač: 840000003112084593', 0, new_x="RIGHT", new_y="TOP", align="L") #! ovo možda treba menjati da bude promenjivo
+                
+                # ===== TREĆA KOLONA: KONTAKT PODACI =====
+                # Početak treće kolone (desno)
+                third_column_x = second_column_x + info_column_width + 10
                 
                 # Kontakt podaci - desna strana
                 self.set_font('DejaVu', '', 10)
-                self.set_xy(105, 8)
-                self.cell(95, 5, f'Tel: {archive_settings.phone_1}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
-                self.set_xy(105, 13)
-                self.cell(95, 5, f'Tel: {archive_settings.phone_2}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
-                self.set_xy(105, 18)
-                self.cell(95, 5, f'e-mail: {archive_settings.email}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
-                self.set_xy(105, 23)
-                self.cell(95, 5, f'www: {archive_settings.web_site}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
-                
-                # Tekući račun - leva strana
-                bank_accounts = BankAccount.query.filter_by(settings_id=archive_settings.id).all()
-                if bank_accounts:
-                    self.set_xy(105, 28)
-                    # self.cell(95, 5, f'Tek. rač: {bank_accounts[2].account_number}', 0, new_x="LMARGIN", new_y="NEXT", align="L") #! [2] - je u db 840-31120845-93, ako bude nekih izmena možda treba izmeniti ovaj parametar
-                    self.cell(95, 5, f'Tek. rač: 840000003112084593', 0, new_x="LMARGIN", new_y="NEXT", align="L") #! ovo možda treba menjati da bude promenjivo
+                self.set_xy(third_column_x, 8)
+                self.cell(contact_column_width, 5, f'Tel: {archive_settings.phone_1}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                self.set_xy(third_column_x, 13)
+                self.cell(contact_column_width, 5, f'Tel: {archive_settings.phone_2}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                self.set_xy(third_column_x, 18)
+                self.cell(contact_column_width, 5, f'e-mail: {archive_settings.email}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                self.set_xy(third_column_x, 23)
+                self.cell(contact_column_width, 5, f'www: {archive_settings.web_site}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 
                 # ===== DRUGI DEO: DATUMI I PODACI O PARTNERU =====
-                self.ln(10)  # Prazan prostor između delova
+                # Nastavak podataka ispod prvog dela, bez praznog prostora
                 
-                # Podaci o partneru (kupcu) - desna strana
+                # Dodavanje praznog reda na mestu gde je bio PRIMALAC
+                self.set_xy(third_column_x, 28)
+                self.cell(contact_column_width, 5, '', 0, new_x="RIGHT", new_y="TOP", align="L")
+                
+                # Podaci o partneru (kupcu) - desna strana (ispod kontakt podataka)
                 self.set_font('DejaVu', 'B', 10)
-                self.set_xy(105, 45)
-                self.cell(95, 5, 'PRIMALAC:', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+                self.set_xy(third_column_x, 33)
+                self.cell(contact_column_width, 5, 'PRIMALAC:', 0, new_x="RIGHT", new_y="TOP", align="L")
                 
                 # Naziv partnera - desna strana
                 self.set_font('DejaVu', '', 10)
-                self.set_xy(105, 50)
-                self.cell(95, 5, partner.name, 0, new_x="LMARGIN", new_y="NEXT", align="L")
+                self.set_xy(third_column_x, 38)
+                self.cell(contact_column_width, 5, partner.name, 0, new_x="RIGHT", new_y="TOP", align="L")
                 
                 # Adresa partnera - desna strana
-                y_position = 55
+                partner_y = 43
                 if partner.address:
-                    self.set_xy(105, y_position)
-                    self.cell(95, 5, partner.address, 0, new_x="LMARGIN", new_y="NEXT", align="L")
-                    y_position += 5
+                    self.set_xy(third_column_x, partner_y)
+                    self.cell(contact_column_width, 5, partner.address, 0, new_x="RIGHT", new_y="TOP", align="L")
+                    partner_y += 5
                 
                 # Grad partnera - desna strana
                 if partner.city:
-                    self.set_xy(105, y_position)
-                    self.cell(95, 5, partner.city, 0, new_x="LMARGIN", new_y="NEXT", align="L")
-                    y_position += 5
+                    self.set_xy(third_column_x, partner_y)
+                    self.cell(contact_column_width, 5, partner.city, 0, new_x="RIGHT", new_y="TOP", align="L")
+                    partner_y += 5
                 
                 # PIB partnera - desna strana
                 if partner.pib:
-                    self.set_xy(105, y_position)
-                    self.cell(95, 5, f'PIB: {partner.pib}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
-                    y_position += 5
+                    self.set_xy(third_column_x, partner_y)
+                    self.cell(contact_column_width, 5, f'PIB: {partner.pib}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                    partner_y += 5
                 
                 # Matični broj partnera - desna strana
                 if partner.mb:
-                    self.set_xy(105, y_position)
-                    self.cell(95, 5, f'MB: {partner.mb}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
-                    y_position += 5
+                    self.set_xy(third_column_x, partner_y)
+                    self.cell(contact_column_width, 5, f'MB: {partner.mb}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                    partner_y += 5
                 
-                # Mesto i datum izdavanja - leva strana
+                # Mesto i datum izdavanja - leva strana (ispod tekućeg računa)
+                # Naslov leve kolone
+                self.set_font('DejaVu', 'B', 10)
+                self.set_xy(second_column_x, 39)
+                self.cell(info_column_width, 5, 'PODACI O IZDAVANJU:', 0, new_x="RIGHT", new_y="TOP", align="L")
+                
+                # Mesto i datum izdavanja
                 self.set_font('DejaVu', '', 10)
-                self.set_xy(10, 45)
-                self.cell(95, 5, f'Mesto izdavanja: {archive_settings.city}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+                self.set_xy(second_column_x, 44)
+                self.cell(info_column_width, 5, f'Mesto izdavanja: {archive_settings.city}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 
-                # Datum izdavanja - leva strana
-                self.set_xy(10, 50)
-                self.cell(95, 5, f'Datum izdavanja: {invoice.issue_date.strftime("%d.%m.%Y.")}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+                # Datum izdavanja
+                self.set_xy(second_column_x, 49)
+                self.cell(info_column_width, 5, f'Datum izdavanja: {invoice.issue_date.strftime("%d.%m.%Y.")}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 
-                # Datum prometa - leva strana
-                self.set_xy(10, 55)
-                self.cell(95, 5, f'Datum prometa: {invoice.service_date.strftime("%d.%m.%Y.")}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+                # Datum prometa
+                self.set_xy(second_column_x, 54)
+                self.cell(info_column_width, 5, f'Datum prometa: {invoice.service_date.strftime("%d.%m.%Y.")}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 
-                # Rok plaćanja - leva strana
+                # Rok plaćanja
                 if invoice.payment_due_date:
-                    self.set_xy(10, 60)
-                    self.cell(95, 5, f'Rok plaćanja: {invoice.payment_due_date.strftime("%d.%m.%Y.")}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+                    self.set_xy(second_column_x, 59)
+                    self.cell(info_column_width, 5, f'Rok plaćanja: {invoice.payment_due_date.strftime("%d.%m.%Y.")}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 
                 # ===== TREĆI DEO: NASLOV FAKTURE =====
-                self.ln(10)  # Prazan prostor između delova
+                # Određivanje maksimalne Y pozicije iz prethodnih delova
+                max_y = max(partner_y, 64)  # 64 je procenjena maksimalna Y pozicija za podatke o izdavanju (59 + 5)
                 
-                # Naslov fakture
+                # Naslov fakture - centriran ispod svih prethodnih podataka
                 self.set_font('DejaVu', 'B', 14)
+                self.set_xy(10, max_y + 5)  # 5mm razmaka od prethodnog dela
                 self.cell(0, 10, f'Račun br.: {invoice.invoice_number}', 0, new_x="LMARGIN", new_y="NEXT", align="C")
             
             def footer(self):
@@ -437,7 +461,7 @@ def generate_invoice_pdf(invoice_id, is_attachment=False):
         # Svrha uplate i poziv na broj
         pdf.ln(10)
         pdf.set_font('DejaVu', '', 10)
-        pdf.cell(0, 6, f'Svrha uplate: 318', 1, new_x="LMARGIN", new_y="NEXT", align="L")
+        pdf.cell(0, 6, f'Svrha uplate: {invoice.invoice_number}', 1, new_x="LMARGIN", new_y="NEXT", align="L")
         pdf.cell(0, 6, f'Poziv na broj: {archive_settings.model} {archive_settings.poziv_na_broj}', 1, new_x="LMARGIN", new_y="NEXT", align="L")
         
         # Napomena

@@ -1,4 +1,4 @@
-from wtforms import StringField, DateField, DecimalField, SelectField, BooleanField, SubmitField, HiddenField
+from wtforms import StringField, DateField, DecimalField, SelectField, BooleanField, SubmitField, HiddenField, TextAreaField
 from wtforms.validators import DataRequired, Optional, NumberRange, ValidationError
 from datetime import date
 from flask_wtf import FlaskForm
@@ -12,6 +12,7 @@ class InvoiceForm(FlaskForm):
     partner_id = SelectField('Partner', validators=[DataRequired()], coerce=int)
     currency = SelectField('Valuta', validators=[DataRequired()], choices=[('RSD', 'RSD'), ('EUR', 'EUR'), ('USD', 'USD')], default='RSD')
     incoming = HiddenField('Ulazna faktura', default=False)
+    note = TextAreaField('Napomena', validators=[Optional()])
     submit = SubmitField('Sačuvaj')
     
     def validate_invoice_number(self, invoice_number):
@@ -24,6 +25,7 @@ class InvoiceForm(FlaskForm):
 class EditInvoiceForm(InvoiceForm):
     """Forma za editovanje fakture"""
     invoice_id = HiddenField('ID fakture')
+    note = TextAreaField('Napomena', validators=[Optional()])     
     
     def validate_invoice_number(self, invoice_number):
         """Validacija da broj fakture nije već registrovan kod druge fakture"""
