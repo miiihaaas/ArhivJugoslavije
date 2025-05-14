@@ -78,12 +78,14 @@ def statement_list():
                         ukupno_potrazuje_element = zbirni.find('IznosPotrazuje').text if zbirni.find('IznosPotrazuje') is not None else None
                         krajnje_stanje_element = zbirni.find('Saldo').text if zbirni.find('Saldo') is not None else None
                         
-                        # proverava da li je racun_izvoda_element u bank_accounts
-                        bank_account = BankAccount.query.filter_by(account_number=racun_izvoda_element).first()
+                        # proverava da li je racun_izvoda_element u account_number ili sub_account_number
+                        bank_account = BankAccount.query.filter_by(account_number=racun_izvoda_element).filter_by(active=True).first()
+                        if bank_account is None:
+                            bank_account = BankAccount.query.filter_by(sub_account_number=racun_izvoda_element).filter_by(active=True).first()
                         print(f'{bank_account=}')
                         if bank_account is None:
-                            app.logger.warning('Račun izvoda nije pronađen u bankovnim računima!')
-                            error_mesage = 'Račun izvoda nije pronađen u bankovnim računima!'
+                            app.logger.warning(f'Račun izvoda {racun_izvoda_element} nije pronađen u bankovnim računima!')
+                            error_mesage = f'Račun izvoda {racun_izvoda_element} nije pronađen u bankovnim računima!'
                             flash(error_mesage, 'danger')
                             return redirect(url_for('statement.statement_list'))
 
