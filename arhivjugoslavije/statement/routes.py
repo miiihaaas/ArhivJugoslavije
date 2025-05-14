@@ -57,10 +57,19 @@ def statement_list():
                 error_mesage = 'Izabrani fajl nije XML fajl!'
             else:
                 try:
-                    # Parsiranje XML fajla sa UTF-8 kodiranjem
-                    xml_content = xml_file.read().decode('utf-8')
-                    root = ET.fromstring(xml_content)
-                    app.logger.info(f'XML fajl uspešno parsiran.')
+                    # Parsiranje XML fajla sa eksplicitnim UTF-8 kodiranjem
+                    try:
+                        xml_content = xml_file.read().decode('utf-8')
+                        app.logger.info(f'XML content uspešno dekodiran sa UTF-8.')
+                        root = ET.fromstring(xml_content)
+                        app.logger.info(f'XML fajl uspešno parsiran.')
+                    except UnicodeDecodeError as ude:
+                        app.logger.error(f'Greška pri dekodiranju XML fajla: {str(ude)}')
+                        # Pokušaj sa drugim enkodiranjem ako UTF-8 nije uspeo
+                        xml_file.seek(0)  # Vraćanje na početak fajla
+                        xml_content = xml_file.read().decode('latin-1')
+                        app.logger.info(f'XML content dekodiran sa latin-1 nakon neuspelog UTF-8.')
+                        root = ET.fromstring(xml_content)
                     
                     # Izvlačenje podataka iz XML-a
                     zaglavlje = root.find('Zaglavlje')
@@ -147,7 +156,7 @@ def statement_list():
                     else:
                         error_mesage = 'XML fajl nema očekivanu strukturu!'
                 except Exception as e:
-                    app.logger.error(f'Greška prilikom obrade XML fajla: {str(e)}')
+                    app.logger.error(f'Greška prilikom obrade XML fajla: {str(e)}, tip greške: {type(e).__name__}')
                     error_mesage = f'Greška prilikom obrade XML fajla: {str(e)}'
                     flash(error_mesage, 'danger')
     
