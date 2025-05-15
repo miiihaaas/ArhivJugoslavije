@@ -94,6 +94,7 @@ def create_customer_invoice(partner_id=None):
                 total_amount=0,  # Početna vrednost, biće ažurirana nakon dodavanja stavki
                 incoming=False,
                 note=form.note.data,
+                document_number=form.document_number.data,
                 status='nacrt'
             )
             db.session.add(new_invoice)
@@ -209,6 +210,7 @@ def edit_customer_invoice(invoice_id):
             invoice.currency = form.currency.data
             invoice.total_amount = 0
             invoice.note = form.note.data
+            invoice.document_number = form.document_number.data
             
             db.session.commit()
             try:

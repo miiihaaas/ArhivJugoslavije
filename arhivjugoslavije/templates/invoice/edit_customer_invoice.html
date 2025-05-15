@@ -183,6 +183,24 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Polje za broj dokumenta -->
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    {{ form.document_number.label(class="form-label fw-semibold") }}
+                                    {% if invoice.status == 'nacrt' %}
+                                        {{ form.document_number(class="form-control") }}
+                                    {% else %}
+                                        {{ form.document_number(class="form-control", readonly=true) }}
+                                    {% endif %}
+                                    {% if form.document_number.errors %}
+                                        {% for error in form.document_number.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
                         
                         {% if invoice.status == 'nacrt' %}
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">

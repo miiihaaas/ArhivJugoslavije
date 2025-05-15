@@ -383,6 +383,15 @@ def generate_invoice_pdf(invoice_id, is_attachment=False):
                     self.cell(0, 10, f'Predračun br.: {invoice.invoice_number}', 0, new_x="LMARGIN", new_y="NEXT", align="C")
                 else:
                     self.cell(0, 10, f'Račun br.: {invoice.invoice_number}', 0, new_x="LMARGIN", new_y="NEXT", align="C")
+                
+                # Broj dokumenta ako ga ima.
+                self.set_font('DejaVu', '', 10)
+                if invoice.document_number:
+                    self.set_xy(10, max_y + 20)
+                    self.cell(info_column_width, 5, f'Broj dokumenta: {invoice.document_number}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                else:
+                    self.set_xy(10, max_y + 20)
+                    self.cell(info_column_width, 5, f'', 0, new_x="RIGHT", new_y="TOP", align="L")
             
             def footer(self):
                 # Postavi Y poziciju za footer (30mm od dna stranice)
@@ -460,18 +469,23 @@ def generate_invoice_pdf(invoice_id, is_attachment=False):
         # Ukupan iznos fakture
         pdf.ln(10)
         pdf.set_font('DejaVu', 'B', 12)
-        pdf.cell(0, 10, f'Ukupno za uplatu: {format_number(invoice.total_amount)} {invoice.currency}', 1, new_x="RIGHT", new_y="LAST", align="R")
+        pdf.cell(0, 10, f'Ukupno za uplatu: {format_number(invoice.total_amount)} {invoice.currency}', 0, new_x="RIGHT", new_y="LAST", align="R")
         
         # Svrha uplate i poziv na broj
         pdf.ln(10)
         pdf.set_font('DejaVu', '', 10)
-        pdf.cell(0, 6, f'Svrha uplate: {invoice.invoice_number}', 1, new_x="LMARGIN", new_y="NEXT", align="L")
-        pdf.cell(0, 6, f'Poziv na broj: {archive_settings.model} {archive_settings.poziv_na_broj}', 1, new_x="LMARGIN", new_y="NEXT", align="L")
+        pdf.cell(0, 6, f'Svrha uplate: {invoice.invoice_number}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+        pdf.cell(0, 6, f'Poziv na broj: {archive_settings.model} {archive_settings.poziv_na_broj}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
         
         # Napomena
         pdf.ln(10)
         pdf.set_font('DejaVu', '', 10)
-        pdf.cell(0, 6, 'Napomena: ARHIV JUGOSLAVIJE nije u sistemu PDV-a u skladu sa Zakonom o PDV-u.', 1, new_x="LMARGIN", new_y="NEXT", align="L")
+        if invoice.note is not None:
+            pdf.cell(0, 6, 'Napomene:', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+            pdf.cell(0, 6, f' - ARHIV JUGOSLAVIJE nije u sistemu PDV-a u skladu sa Zakonom o PDV-u.', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+            pdf.cell(0, 6, f' - {invoice.note}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+        else:
+            pdf.cell(0, 6, 'Napomena: ARHIV JUGOSLAVIJE nije u sistemu PDV-a u skladu sa Zakonom o PDV-u.', 0, new_x="LMARGIN", new_y="NEXT", align="L")
         
         # Generisanje PDF-a
         if is_attachment:

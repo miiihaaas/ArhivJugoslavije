@@ -122,6 +122,17 @@
                                     {% endif %}
                                 </div>
                             </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ form.document_number.label(class="form-label") }}
+                                    {{ form.document_number(class="form-control") }}
+                                    {% if form.document_number.errors %}
+                                        {% for error in form.document_number.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
                         
                         <input type="hidden" name="incoming" value="0">

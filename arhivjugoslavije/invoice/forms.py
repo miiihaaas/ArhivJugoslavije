@@ -13,6 +13,7 @@ class InvoiceForm(FlaskForm):
     currency = SelectField('Valuta', validators=[DataRequired()], choices=[('RSD', 'RSD'), ('EUR', 'EUR'), ('USD', 'USD')], default='RSD')
     incoming = HiddenField('Ulazna faktura', default=False)
     note = TextAreaField('Napomena', validators=[Optional()])
+    document_number = StringField('Broj dokumenta', validators=[Optional()])
     submit = SubmitField('Sačuvaj')
     
     def validate_invoice_number(self, invoice_number):
@@ -26,6 +27,7 @@ class EditInvoiceForm(InvoiceForm):
     """Forma za editovanje fakture"""
     invoice_id = HiddenField('ID fakture')
     note = TextAreaField('Napomena', validators=[Optional()])     
+    document_number = StringField('Broj dokumenta', validators=[Optional()])
     
     def validate_invoice_number(self, invoice_number):
         """Validacija da broj fakture nije već registrovan kod druge fakture"""
