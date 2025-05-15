@@ -157,7 +157,7 @@
                                 <tr class="clickable-row" onclick="navigateToInvoice('{{ url_for('invoices.edit_customer_invoice', invoice_id=invoice.id) }}')">
                                     <td class="ps-3">{{ invoice.invoice_number }}</td>
                                     <td>{{ invoice.issue_date.strftime('%d.%m.%Y') }}</td>
-                                    <td class="text-end pe-3">{{ '{:,.2f}'.format(invoice.total_amount) }} {{ invoice.currency }}</td>
+                                    <td class="text-end pe-3">{{ invoice.total_amount | format_number }} {{ invoice.currency }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

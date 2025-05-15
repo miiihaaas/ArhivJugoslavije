@@ -264,13 +264,13 @@
                             {% for statement in bank_statements %}
                             <tr>
                                 <td class="small">{{ statement.id }}</td>
-                                <td class="small" data-sort="{{ statement.date.strftime('%Y%m%d') }}">{{ statement.date.strftime('%d.%m.%Y') }}</td>
+                                <td class="small" data-sort="{{ statement.date.strftime('%Y%m%d') }}">{{ statement.date.strftime('%d.%m.%Y.') }}</td>
                                 <td class="small">{{ statement.statement_number }}</td>
                                 <td class="small">{{ statement.bank_account.account_number }}</td>
-                                <td class="small text-end">{{ "%.2f"|format(statement.initial_balance|float) }}</td>
-                                <td class="small text-end">{{ "%.2f"|format(statement.total_debit|float) }}</td>
-                                <td class="small text-end">{{ "%.2f"|format(statement.total_credit|float) }}</td>
-                                <td class="small text-end">{{ "%.2f"|format(statement.final_balance|float) }}</td>
+                                <td class="small text-end">{{ statement.initial_balance | format_number }}</td>
+                                <td class="small text-end">{{ statement.total_debit | format_number }}</td>
+                                <td class="small text-end">{{ statement.total_credit | format_number }}</td>
+                                <td class="small text-end">{{ statement.final_balance | format_number }}</td>
                                 <td class="small text-center">![x/{{ statement.statement_items|length }}]!</td>
                                 <td class="text-center" style="white-space: nowrap;">
                                     <a href="{{ url_for('statement.statement_details', statement_id=statement.id) }}" class="btn btn-sm btn-outline-primary" title="Detalji">

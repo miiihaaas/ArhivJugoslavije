@@ -39,7 +39,7 @@
             <tr>
                 <td>{{ project.id }}</td>
                 <td>{{ project.name }}</td>
-                <td class="text-end">{{ "%.2f"|format(project.amount|float) }}</td>
+                <td class="text-end">{{ project.amount | format_number }}</td>
                 <td>{{ project.note }}</td>
                 <td>{{ project.year }}</td>
                 <td>

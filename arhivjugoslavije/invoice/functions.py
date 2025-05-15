@@ -6,6 +6,7 @@ from pathlib import Path
 from flask import make_response, flash, redirect, url_for, current_app
 from arhivjugoslavije.models import Invoice, Partner, InvoiceItem, Service, ArchiveSettings, UnitOfMeasure, BankAccount, User
 from arhivjugoslavije import db, mail
+from arhivjugoslavije import format_number
 from flask_mail import Message
 
 
@@ -453,13 +454,13 @@ def generate_invoice_pdf(invoice_id, is_attachment=False):
             pdf.cell(80, 10, service.name_sr if service.name_sr else '', 1, new_x="RIGHT", new_y="LAST", align="L")
             pdf.cell(25, 10, unit_name, 1, new_x="RIGHT", new_y="LAST", align="C")
             pdf.cell(20, 10, str(item.quantity), 1, new_x="RIGHT", new_y="LAST", align="R")
-            pdf.cell(25, 10, f'{item.price} {item.currency}', 1, new_x="RIGHT", new_y="LAST", align="R")
-            pdf.cell(30, 10, f'{item.total} {item.currency}', 1, new_x="LMARGIN", new_y="NEXT", align="C")
+            pdf.cell(25, 10, f'{format_number(item.price)} {item.currency}', 1, new_x="RIGHT", new_y="LAST", align="R")
+            pdf.cell(30, 10, f'{format_number(item.total)} {item.currency}', 1, new_x="LMARGIN", new_y="NEXT", align="C")
         
         # Ukupan iznos fakture
         pdf.ln(10)
         pdf.set_font('DejaVu', 'B', 12)
-        pdf.cell(0, 10, f'Ukupno za uplatu: {invoice.total_amount} {invoice.currency}', 1, new_x="RIGHT", new_y="LAST", align="R")
+        pdf.cell(0, 10, f'Ukupno za uplatu: {format_number(invoice.total_amount)} {invoice.currency}', 1, new_x="RIGHT", new_y="LAST", align="R")
         
         # Svrha uplate i poziv na broj
         pdf.ln(10)

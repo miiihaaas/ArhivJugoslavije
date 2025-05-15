@@ -140,7 +140,7 @@
                                             <td>{{ invoice.issue_date.strftime('%d.%m.%Y') }}</td>
                                             <td>{{ invoice.service_date.strftime('%d.%m.%Y') }}</td>
                                             <td>{% if invoice.payment_due_date %}{{ invoice.payment_due_date.strftime('%d.%m.%Y') }}{% else %}<span class="text-muted">-</span>{% endif %}</td>
-                                            <td class="text-end">{{ '{:,.2f}'.format(invoice.total_amount)|replace(',', ' ')|replace('.', ',') }} {{ invoice.currency }}</td>
+                                            <td class="text-end">{{ invoice.total_amount | format_number }} {{ invoice.currency }}</td>
                                             <td class="text-center">
                                                 {% if invoice.paid %}
                                                     <span class="badge bg-success">Plaćeno</span>

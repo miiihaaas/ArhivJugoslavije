@@ -69,7 +69,7 @@
                                         {% for account in sum_data.values() %}
                                         <tr>
                                             <td>{{ account['account'] }}</td>
-                                            <td class="text-end">{{ "%.2f"|format(account['amount']|float) }}</td>
+                                            <td class="text-end">{{ account['amount'] | format_number }}</td>
                                         </tr>
                                         {% else %}
                                         <tr>
@@ -80,7 +80,7 @@
                                     <tfoot>
                                         <tr class="table-primary fw-bold">
                                             <th>Ukupno:</th>
-                                            <th class="text-end">{{ "%.2f"|format(sum_data_total|float) }}</th>
+                                            <th class="text-end">{{ sum_data_total | format_number }}</th>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -112,7 +112,7 @@
                                 <tr>
                                     <td>{{ account.id }}</td>
                                     <td>{{ account.account_level_6_number }}</td>
-                                    <td class="text-end">{{ "%.2f"|format(account.amount|float) }}</td>
+                                    <td class="text-end">{{ account.amount | format_number }}</td>
                                     <td>{{ account.note }}</td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-outline-primary edit-account-btn" 

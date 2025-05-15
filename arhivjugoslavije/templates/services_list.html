@@ -55,10 +55,10 @@
                             <td>{{ service.name_en }}</td>
                             <td>{{ service.note }}</td>
                             <td>{% if service.unit_of_measure %}{{ service.unit_of_measure.name_sr }} ({{ service.unit_of_measure.symbol }}){% endif %}</td>
-                            <td>{{ service.price_rsd }}</td>
+                            <td>{{ service.price_rsd | format_number }}</td>
                             <td>
                                 {% if archive_settings and archive_settings.eur_rate and archive_settings.eur_rate > 0 %}
-                                    {{ (service.price_rsd | float / archive_settings.eur_rate | float) | round(2) }}
+                                    {{ (service.price_rsd | float / archive_settings.eur_rate | float) | format_number }}
                                 {% else %}
                                     -
                                 {% endif %}

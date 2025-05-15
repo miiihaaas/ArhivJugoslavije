@@ -54,7 +54,7 @@
                     <td>{{ plan.id }}</td>
                     <td>{{ plan.year }}</td>
                     <td>{{ plan.purchase_plan_accounts|length }}</td>
-                    <td class="text-end">{{ plan.amount }}</td>
+                    <td class="text-end">{{ plan.amount | format_number }}</td>
                     <td>
                         {% set readonly = plan.year < current_year %}
                         {% if readonly %}

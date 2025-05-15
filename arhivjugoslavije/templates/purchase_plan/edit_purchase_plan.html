@@ -49,13 +49,13 @@
                         <div class="col-md-3">
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Iznos za redovnu aktivnost:</label>
-                                <p class="fs-5">{{ '{:,.2f}'.format(amount_for_regular_activity) }} RSD</p>
+                                <p class="fs-5">{{ amount_for_regular_activity | format_number }} RSD</p>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Iznos za programnu aktivnost:</label>
-                                <p class="fs-5">{{ '{:,.2f}'.format(amount_for_program_activity) }} RSD</p>
+                                <p class="fs-5">{{ amount_for_program_activity | format_number }} RSD</p>
                             </div>
                         </div>
                     </div>
@@ -87,8 +87,8 @@
                         <tr>
                             <td>{{ account.account_level_4_number }}</td>
                             <td>{{ account.account_level_4.name }}</td>
-                            <td class="text-end">{{ '{:,.2f}'.format(account.amount_1) if account.amount_1 else '0.00' }}</td>
-                            <td class="text-end">{{ '{:,.2f}'.format(account.amount_2) if account.amount_2 else '0.00' }}</td>
+                            <td class="text-end">{{ account.amount_1 | format_number }}</td>
+                            <td class="text-end">{{ account.amount_2 | format_number }}</td>
                             <td>{{ account.note }}</td>
                             <td>
                                 {% if not readonly %}

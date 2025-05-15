@@ -89,15 +89,31 @@ else:
 print(f'{app.config["MAIL_USERNAME"]=}, {app.config["MAIL_PASSWORD"]=}, {app.config["MAIL_DEFAULT_SENDER"]=}')
 mail = Mail(app)
 
-# Dodavanje filtera za formatiranje valute
-@app.template_filter('format_currency')
-def format_currency(value):
+# Dodavanje filtera za formatiranje brojeva i valute
+def format_number(value):
+    """Formatira broj sa tačkom kao separatorom hiljada i zarezom za decimale, uvek sa dve decimale."""
     if value is None:
         return "-"
     try:
-        # Formatiranje brojeva sa razmakom kao separatorom hiljada i zarezom za decimale
+        # Formatiranje brojeva sa tačkom kao separatorom hiljada i zarezom za decimale
         value = float(value)
-        return f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", " ") + " RSD"
+        return f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except (ValueError, TypeError):
+        return str(value)
+
+@app.template_filter('format_number')
+def format_number_filter(value):
+    """Filter za formatiranje brojeva bez oznake valute."""
+    return format_number(value)
+
+@app.template_filter('format_currency')
+def format_currency(value):
+    """Filter za formatiranje valute sa oznakom RSD."""
+    if value is None:
+        return "-"
+    try:
+        # Koristimo funkciju format_number i dodajemo oznaku valute
+        return format_number(value) + " RSD"
     except (ValueError, TypeError):
         return str(value)
 

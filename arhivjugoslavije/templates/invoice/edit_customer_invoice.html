@@ -160,7 +160,7 @@
                             <div class="col-md-8">
                                 <div class="form-group">
                                     <label class="form-label fw-semibold">Ukupan iznos</label>
-                                    <div class="form-control bg-light fs-5 text-end">{{ invoice.total_amount }} {{ invoice.currency }}</div>
+                                    <div class="form-control bg-light fs-5 text-end">{{ invoice.total_amount | format_number }} {{ invoice.currency }}</div>
                                 </div>
                             </div>
                         </div>
@@ -398,8 +398,8 @@
                                     {% else %}
                                     <td>{{ item.service.unit_of_measure.name_en }}</td>
                                     {% endif %}
-                                    <td>{{ item.price }} {{ item.currency }}</td>
-                                    <td class="fw-bold">{{ item.total }} {{ item.currency }}</td>
+                                    <td>{{ item.price | format_number }} {{ item.currency }}</td>
+                                    <td class="fw-bold">{{ item.total | format_number }} {{ item.currency }}</td>
                                     {% if invoice.status == 'nacrt' %}
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm" role="group">
@@ -425,7 +425,7 @@
                     <tfoot>
                         <tr class="table-primary">
                             <th colspan="5" class="text-end">Ukupno:</th>
-                            <th>{{ invoice.total_amount }} {{ invoice.currency }}</th>
+                            <th>{{ invoice.total_amount | format_number }} {{ invoice.currency }}</th>
                             {% if invoice.status == 'nacrt' %}
                             <th></th>
                             {% endif %}

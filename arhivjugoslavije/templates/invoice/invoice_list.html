@@ -60,7 +60,7 @@
                     <td>{{ invoice.service_date.strftime('%d.%m.%Y') }}</td>
                     <td>{% if invoice.payment_due_date %}{{ invoice.payment_due_date.strftime('%d.%m.%Y') }}{% endif %}</td>
                     <td>{{ invoice.partner.name }}</td>
-                    <td>{{ invoice.total_amount }}</td>
+                    <td>{{ invoice.total_amount | format_number }}</td>
                     <td>{{ invoice.currency }}</td>
                     <td>
                         {% if invoice.status == 'nacrt' %}
