@@ -157,7 +157,10 @@ def statement_list():
             # Konverzija datuma iz stringa u Python date objekat
             datum_izvoda = datetime.strptime(request.form.get('payment_date'), '%d.%m.%Y').date()
             broj_izvoda = request.form.get('statement_number')
-            bank_account = BankAccount.query.filter_by(account_number=request.form.get('bank_account')).first()
+            app.logger.info(f'{datum_izvoda=}, {broj_izvoda=}, {request.form.get('bank_account')=}')
+            account_number_filter = request.form.get('bank_account')
+            bank_account = BankAccount.query.filter_by(account_number=account_number_filter).first() or BankAccount.query.filter_by(sub_account_number=account_number_filter).first()
+            app.logger.info(f'{bank_account=}')
             
             # Provera da li izvod sa istim brojem i datumom već postoji
             existing_statement = BankStatement.query.filter_by(
