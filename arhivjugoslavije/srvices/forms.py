@@ -1,27 +1,27 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SubmitField, BooleanField, SelectField, DecimalField
-from wtforms.validators import DataRequired, Length, Optional, NumberRange, ValidationError
+from wtforms import TextAreaField, SubmitField, BooleanField, SelectField, DecimalField
+from wtforms.validators import DataRequired, Length, Optional, NumberRange
 
 class ServiceRegisterForm(FlaskForm):
-    service_name_rs = StringField(
+    service_name_rs = TextAreaField(
         'Naziv usluge (srpski)',
         validators=[
             DataRequired(), 
-            Length(min=2, max=50, message='Naziv mora biti između 2 i 50 karaktera')
+            Length(min=2, max=100, message='Naziv mora biti između 2 i 100 karaktera')
             ]
         )
-    service_name_en = StringField(
+    service_name_en = TextAreaField(
         'Naziv usluge (engleski)',
         validators=[
             Optional(), 
-            Length(min=2, max=50, message='Naziv mora biti između 2 i 50 karaktera')
+            Length(min=2, max=100, message='Naziv mora biti između 2 i 100 karaktera')
             ]
         )
     service_description = TextAreaField(
         'Napomena',
         validators=[
             Optional(), 
-            Length(max=200, message='Napomena ne može biti duža od 200 karaktera')
+            Length(max=500, message='Napomena ne može biti duža od 500 karaktera')
             ]
         )
     service_unit_of_measure = SelectField(

@@ -1,3 +1,4 @@
+import os
 from flask import Blueprint, render_template, flash, redirect, url_for, request
 from arhivjugoslavije import db, app, bcrypt, mail
 from arhivjugoslavije.users.forms import LoginForm, RequestResetForm, ResetPasswordForm
@@ -119,7 +120,7 @@ def send_reset_email(user, is_create):
         body = f'''Da biste resetovali lozinku, kliknite na sledeći link:
     {url_for('users.reset_token', token=token, _external=True)}
     '''
-    msg = Message(subject, sender='noreply@uplatnice.online', recipients=[user.email])
+    msg = Message(subject, sender=os.getenv('MAIL_USERNAME'), recipients=[user.email])
     msg.body = body
     mail.send(msg)
 

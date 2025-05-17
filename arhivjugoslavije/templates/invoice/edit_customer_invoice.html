@@ -80,7 +80,7 @@
                                 <div class="form-group">
                                     {{ form.partner_id.label(class="form-label fw-semibold") }}
                                     {% if invoice.status == 'nacrt' %}
-                                        {{ form.partner_id(class="form-select") }}
+                                        {{ form.partner_id(class="form-select select2-field") }}
                                     {% else %}
                                         {{ form.partner_id(class="form-select", disabled=true) }}
                                     {% endif %}
@@ -171,7 +171,7 @@
                                 <div class="form-group">
                                     {{ form.note.label(class="form-label fw-semibold") }}
                                     {% if invoice.status == 'nacrt' %}
-                                        {{ form.note(class="form-control", rows=3) }}
+                                        {{ form.note(class="form-control", rows=3, placeholder="Pisati na egleskom napomenu ako je inostrani partner") }}
                                     {% else %}
                                         {{ form.note(class="form-control", rows=3, readonly=true) }}
                                     {% endif %}
@@ -409,7 +409,7 @@
                             {% for item in invoice_items %}
                                 <tr>
                                     <td>{{ loop.index }}</td>
-                                    <td>{{ item.service.name_sr }}</td>
+                                    <td>{{ item.service.name_sr }} {% if item.service.note %}({{ item.service.note }}){% endif %}</td>
                                     <td>{{ item.quantity }}</td>
                                     {% if invoice.currency == 'RSD' %}
                                     <td>{{ item.service.unit_of_measure.name_sr }}</td>

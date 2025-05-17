@@ -107,7 +107,7 @@ def send_email(invoice):
         # Pripremi email poruku
         subject = f'Faktura {invoice.invoice_number}'
         # sender = current_app.config.get('MAIL_DEFAULT_SENDER', archive_settings.email)
-        sender = os.getenv('MAIL_DEFAULT_SENDER')
+        sender = os.getenv('MAIL_USERNAME')
         users = User.query.all()
         cc = []
         for user in users:
@@ -191,6 +191,7 @@ def generate_invoice_pdf(invoice_id, is_attachment=False):
             else:
                 flash('Podaci o partneru nisu pronađeni.', 'danger')
                 return redirect(url_for('invoices.edit_customer_invoice', invoice_id=invoice_id))
+        language = 'en' if partner.international else 'sr'
         
         # Dohvati stavke fakture
         invoice_items = InvoiceItem.query.filter_by(invoice_id=invoice_id).all()
@@ -280,16 +281,16 @@ def generate_invoice_pdf(invoice_id, is_attachment=False):
                 
                 # Matični broj i PIB - srednja kolona
                 self.set_xy(second_column_x, 24)
-                self.cell(info_column_width, 5, f'MB: {archive_settings.mb}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                self.cell(info_column_width, 5, f'{"CRN" if language == "en" else "MB"}: {archive_settings.mb}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 self.set_xy(second_column_x, 29)
-                self.cell(info_column_width, 5, f'PIB: {archive_settings.pib}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                self.cell(info_column_width, 5, f'{"TIN" if language == "en" else "PIB"}: {archive_settings.pib}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 
                 # Tekući račun - srednja kolona
                 bank_accounts = BankAccount.query.filter_by(settings_id=archive_settings.id).all()
                 if bank_accounts:
                     self.set_xy(second_column_x, 34)
                     # self.cell(info_column_width, 5, f'Tek. rač: {bank_accounts[2].account_number}', 0, new_x="RIGHT", new_y="TOP", align="L") #! [2] - je u db 840-31120845-93, ako bude nekih izmena možda treba izmeniti ovaj parametar
-                    self.cell(info_column_width, 5, f'Tek. rač: 840000003112084593', 0, new_x="RIGHT", new_y="TOP", align="L") #! ovo možda treba menjati da bude promenjivo
+                    self.cell(info_column_width, 5, f'{"Bank account" if language == "en" else "Tekući račun"}: 840000003112084593', 0, new_x="RIGHT", new_y="TOP", align="L") #! ovo možda treba menjati da bude promenjivo
                 
                 # ===== TREĆA KOLONA: KONTAKT PODACI =====
                 # Početak treće kolone (desno)
@@ -298,11 +299,11 @@ def generate_invoice_pdf(invoice_id, is_attachment=False):
                 # Kontakt podaci - desna strana
                 self.set_font('DejaVu', '', 10)
                 self.set_xy(third_column_x, 8)
-                self.cell(contact_column_width, 5, f'Tel: {archive_settings.phone_1}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                self.cell(contact_column_width, 5, f'{"Phone" if language == "en" else "Tel"}: {archive_settings.phone_1}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 self.set_xy(third_column_x, 13)
-                self.cell(contact_column_width, 5, f'Tel: {archive_settings.phone_2}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                self.cell(contact_column_width, 5, f'{"Phone" if language == "en" else "Tel"}: {archive_settings.phone_2}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 self.set_xy(third_column_x, 18)
-                self.cell(contact_column_width, 5, f'e-mail: {archive_settings.email}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                self.cell(contact_column_width, 5, f'{"e-mail" if language == "en" else "mejl"}: {archive_settings.email}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 self.set_xy(third_column_x, 23)
                 self.cell(contact_column_width, 5, f'www: {archive_settings.web_site}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 
@@ -316,7 +317,7 @@ def generate_invoice_pdf(invoice_id, is_attachment=False):
                 # Podaci o partneru (kupcu) - desna strana (ispod kontakt podataka)
                 self.set_font('DejaVu', 'B', 10)
                 self.set_xy(third_column_x, 33)
-                self.cell(contact_column_width, 5, 'PRIMALAC:', 0, new_x="RIGHT", new_y="TOP", align="L")
+                self.cell(contact_column_width, 5, 'RECIPIENT' if language == 'en' else 'PRIMALAC:', 0, new_x="RIGHT", new_y="TOP", align="L")
                 
                 # Naziv partnera - desna strana
                 self.set_font('DejaVu', '', 10)
@@ -339,38 +340,38 @@ def generate_invoice_pdf(invoice_id, is_attachment=False):
                 # PIB partnera - desna strana
                 if partner.pib:
                     self.set_xy(third_column_x, partner_y)
-                    self.cell(contact_column_width, 5, f'PIB: {partner.pib}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                    self.cell(contact_column_width, 5, f'{"TIN" if language == "en" else "PIB"}: {partner.pib}', 0, new_x="RIGHT", new_y="TOP", align="L")
                     partner_y += 5
                 
                 # Matični broj partnera - desna strana
                 if partner.mb:
                     self.set_xy(third_column_x, partner_y)
-                    self.cell(contact_column_width, 5, f'MB: {partner.mb}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                    self.cell(contact_column_width, 5, f'{"CRN" if language == "en" else "MB"}: {partner.mb}', 0, new_x="RIGHT", new_y="TOP", align="L")
                     partner_y += 5
                 
                 # Mesto i datum izdavanja - leva strana (ispod tekućeg računa)
                 # Naslov leve kolone
                 self.set_font('DejaVu', 'B', 10)
                 self.set_xy(second_column_x, 39)
-                self.cell(info_column_width, 5, 'PODACI O IZDAVANJU:', 0, new_x="RIGHT", new_y="TOP", align="L")
+                self.cell(info_column_width, 5, f'{"ISSUANCE DETAILS:" if language == "en" else "PODACI O IZDAVANJU:"}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 
                 # Mesto i datum izdavanja
                 self.set_font('DejaVu', '', 10)
                 self.set_xy(second_column_x, 44)
-                self.cell(info_column_width, 5, f'Mesto izdavanja: {archive_settings.city}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                self.cell(info_column_width, 5, f'{"Issue place" if language == "en" else "Mesto izdavanja"}: {archive_settings.city}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 
                 # Datum izdavanja
                 self.set_xy(second_column_x, 49)
-                self.cell(info_column_width, 5, f'Datum izdavanja: {invoice.issue_date.strftime("%d.%m.%Y.")}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                self.cell(info_column_width, 5, f'{"Issue date" if language == "en" else "Datum izdavanja"}: {invoice.issue_date.strftime("%d.%m.%Y.")}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 
                 # Datum prometa
                 self.set_xy(second_column_x, 54)
-                self.cell(info_column_width, 5, f'Datum prometa: {invoice.service_date.strftime("%d.%m.%Y.")}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                self.cell(info_column_width, 5, f'{"Service date" if language == "en" else "Datum prometa"}: {invoice.service_date.strftime("%d.%m.%Y.")}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 
                 # Rok plaćanja
                 if invoice.payment_due_date:
                     self.set_xy(second_column_x, 59)
-                    self.cell(info_column_width, 5, f'Rok plaćanja: {invoice.payment_due_date.strftime("%d.%m.%Y.")}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                    self.cell(info_column_width, 5, f'{"Payment due date" if language == "en" else "Rok plaćanja"}: {invoice.payment_due_date.strftime("%d.%m.%Y.")}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 
                 # ===== TREĆI DEO: NASLOV FAKTURE =====
                 # Određivanje maksimalne Y pozicije iz prethodnih delova
@@ -380,15 +381,15 @@ def generate_invoice_pdf(invoice_id, is_attachment=False):
                 self.set_font('DejaVu', 'B', 14)
                 self.set_xy(10, max_y + 5)  # 5mm razmaka od prethodnog dela
                 if invoice.status == 'nacrt':
-                    self.cell(0, 10, f'Predračun br.: {invoice.invoice_number}', 0, new_x="LMARGIN", new_y="NEXT", align="C")
+                    self.cell(0, 10, f'{"Proforma invoice" if language == "en" else "Predračun broj"}: {invoice.invoice_number}', 0, new_x="LMARGIN", new_y="NEXT", align="C")
                 else:
-                    self.cell(0, 10, f'Račun br.: {invoice.invoice_number}', 0, new_x="LMARGIN", new_y="NEXT", align="C")
+                    self.cell(0, 10, f'{"Invoice" if language == "en" else "Račun broj"}: {invoice.invoice_number}', 0, new_x="LMARGIN", new_y="NEXT", align="C")
                 
                 # Broj dokumenta ako ga ima.
                 self.set_font('DejaVu', '', 10)
                 if invoice.document_number:
                     self.set_xy(10, max_y + 20)
-                    self.cell(info_column_width, 5, f'Broj dokumenta: {invoice.document_number}', 0, new_x="RIGHT", new_y="TOP", align="L")
+                    self.cell(info_column_width, 5, f'{"Document number" if language == "en" else "Broj dokumenta"}: {invoice.document_number}', 0, new_x="RIGHT", new_y="TOP", align="L")
                 else:
                     self.set_xy(10, max_y + 20)
                     self.cell(info_column_width, 5, f'', 0, new_x="RIGHT", new_y="TOP", align="L")
@@ -416,7 +417,7 @@ def generate_invoice_pdf(invoice_id, is_attachment=False):
                 # Tekst potpisa na desnoj strani (iznad faksimila)
                 self.set_y(-25)  # 25mm od dna stranice
                 self.set_font('DejaVu', '', 10)
-                self.cell(0, 6, 'Potpis odgovornog lica', 0, new_x="LMARGIN", new_y="NEXT", align="R")
+                self.cell(0, 6, f'{"Authorized person's signature" if language == "en" else "Potpis odgovornog lica"}', 0, new_x="LMARGIN", new_y="NEXT", align="R")
                 
                 # Dodaj faksimil na desnoj strani footera ako postoji
                 facsimile_path = None
@@ -436,7 +437,7 @@ def generate_invoice_pdf(invoice_id, is_attachment=False):
                 # Broj stranice na dnu
                 self.set_y(-5)  # 5mm od dna stranice
                 self.set_font('DejaVu', 'I', 8)
-                self.cell(0, 5, f'Strana {self.page_no()}', 0, new_x="LMARGIN", new_y="NEXT", align="C")
+                self.cell(0, 5, f'{"Page" if language == "en" else "Strana"} {self.page_no()}', 0, new_x="LMARGIN", new_y="NEXT", align="C")
         
         # Kreiraj PDF dokument
         pdf = InvoicePDF()
@@ -445,47 +446,90 @@ def generate_invoice_pdf(invoice_id, is_attachment=False):
         # Tabela sa stavkama fakture
         pdf.ln(10)  # Pomeri se ispod headera
         pdf.set_font('DejaVu', 'B', 10)
-        pdf.cell(10, 10, 'Rb.', 1, new_x="RIGHT", new_y="LAST", align="C")
-        pdf.cell(80, 10, 'Opis', 1, new_x="RIGHT", new_y="LAST", align="C")
-        pdf.cell(25, 10, 'Jed. mere', 1, new_x="RIGHT", new_y="LAST", align="C")
-        pdf.cell(20, 10, 'Kol.', 1, new_x="RIGHT", new_y="LAST", align="C")
-        pdf.cell(25, 10, 'Cena', 1, new_x="RIGHT", new_y="LAST", align="C")
-        pdf.cell(30, 10, 'Ukupno', 1, new_x="LMARGIN", new_y="NEXT", align="C")
+        pdf.cell(10, 10, f'{"No." if language == "en" else "Broj"}', 1, new_x="RIGHT", new_y="LAST", align="C")
+        pdf.cell(80, 10, f'{"Description" if language == "en" else "Opis"}', 1, new_x="RIGHT", new_y="LAST", align="C")
+        pdf.cell(25, 10, f'{"UOM" if language == "en" else "Jed. mere"}', 1, new_x="RIGHT", new_y="LAST", align="C")
+        pdf.cell(20, 10, f'{"Quantity" if language == "en" else "Kol."}', 1, new_x="RIGHT", new_y="LAST", align="C")
+        pdf.cell(25, 10, f'{"Price" if language == "en" else "Cena"}', 1, new_x="RIGHT", new_y="LAST", align="C")
+        pdf.cell(30, 10, f'{"Total" if language == "en" else "Ukupno"}', 1, new_x="LMARGIN", new_y="NEXT", align="C")
         
         # Stavke fakture
         pdf.set_font('DejaVu', '', 10)
         for i, item in enumerate(invoice_items):
             service = Service.query.get(item.service_id)
             unit = UnitOfMeasure.query.get(service.unit_of_measure_id)
-            unit_name = unit.name_sr if unit else ''
+            unit_name = unit.name_en if language == "en" else unit.name_sr
             
-            pdf.cell(10, 10, str(i + 1), 1, new_x="RIGHT", new_y="LAST", align="C")
-            pdf.cell(80, 10, service.name_sr if service.name_sr else '', 1, new_x="RIGHT", new_y="LAST", align="L")
-            pdf.cell(25, 10, unit_name, 1, new_x="RIGHT", new_y="LAST", align="C")
-            pdf.cell(20, 10, str(item.quantity), 1, new_x="RIGHT", new_y="LAST", align="R")
-            pdf.cell(25, 10, f'{format_number(item.price)} {item.currency}', 1, new_x="RIGHT", new_y="LAST", align="R")
-            pdf.cell(30, 10, f'{format_number(item.total)} {item.currency}', 1, new_x="LMARGIN", new_y="NEXT", align="C")
+            # Pripremimo opis
+            description = service.name_en if language == "en" else service.name_sr
+            if service.note not in [None, '']:
+                description += f' ({service.note})'
+            
+            # Procena broja redova teksta
+            text_lines = []
+            try:
+                text_lines = pdf.multi_cell(80, 5, description, align='L', split_only=True)
+            except:
+                words = description.split()
+                line = ""
+                for word in words:
+                    test_line = f"{line} {word}".strip()
+                    if pdf.get_string_width(test_line) > 75:
+                        text_lines.append(line)
+                        line = word
+                    else:
+                        line = test_line
+                if line:
+                    text_lines.append(line)
+            
+            # Izračunajmo prilagođenu visinu reda
+            line_count = max(1, len(text_lines))
+            line_height = 5  # Smanjeno sa 10 na 5mm za svaki red teksta
+            row_height = line_count * line_height + 2  # Dodajemo 2mm za margine
+            
+            # Početna pozicija reda
+            y_position = pdf.get_y()
+            
+            # Iscrtavanje ćelije sa rednim brojem
+            pdf.cell(10, row_height, str(i + 1), 1, 0, "C")
+            
+            # Pozicija za opis
+            x_after_number = pdf.get_x()
+            
+            # Iscrtavanje pravougaonika za okvir ćelije opisa
+            pdf.rect(x_after_number, y_position, 80, row_height)
+            
+            # Iscrtavanje teksta opisa unutar pravougaonika
+            pdf.set_xy(x_after_number, y_position)
+            pdf.multi_cell(80, line_height, description, 0, "L")  # 0 umesto 1 za border
+            
+            # Iscrtavanje ostalih ćelija
+            pdf.set_xy(x_after_number + 80, y_position)
+            pdf.cell(25, row_height, unit_name, 1, 0, "C")
+            pdf.cell(20, row_height, str(item.quantity), 1, 0, "R")
+            pdf.cell(25, row_height, f'{format_number(item.price)} {item.currency}', 1, 0, "R")
+            pdf.cell(30, row_height, f'{format_number(item.total)} {item.currency}', 1, 1, "C")
         
         # Ukupan iznos fakture
         pdf.ln(10)
         pdf.set_font('DejaVu', 'B', 12)
-        pdf.cell(0, 10, f'Ukupno za uplatu: {format_number(invoice.total_amount)} {invoice.currency}', 0, new_x="RIGHT", new_y="LAST", align="R")
+        pdf.cell(0, 10, f'{"Total amount to pay" if language == "en" else "Ukupno za uplatu"}: {format_number(invoice.total_amount)} {invoice.currency}', 0, new_x="RIGHT", new_y="LAST", align="R")
         
         # Svrha uplate i poziv na broj
         pdf.ln(10)
         pdf.set_font('DejaVu', '', 10)
-        pdf.cell(0, 6, f'Svrha uplate: {invoice.invoice_number}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
-        pdf.cell(0, 6, f'Poziv na broj: {archive_settings.model} {archive_settings.poziv_na_broj}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+        pdf.cell(0, 6, f'{"Purpose of payment" if language == "en" else "Svrha uplate"}: {invoice.invoice_number}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+        pdf.cell(0, 6, f'{"Payment Reference" if language == "en" else "Poziv na broj"}: {archive_settings.model} {archive_settings.poziv_na_broj}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
         
         # Napomena
         pdf.ln(10)
         pdf.set_font('DejaVu', '', 10)
         if invoice.note is not None:
-            pdf.cell(0, 6, 'Napomene:', 0, new_x="LMARGIN", new_y="NEXT", align="L")
-            pdf.cell(0, 6, f' - ARHIV JUGOSLAVIJE nije u sistemu PDV-a u skladu sa Zakonom o PDV-u.', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+            pdf.cell(0, 6, f'{"Notes" if language == "en" else "Napomene"}:', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+            pdf.cell(0, 6, f'{" - ARHIV JUGOSLAVIJE is not registered for VAT in accordance with the VAT Law." if language == "en" else " - ARHIV JUGOSLAVIJE nije u sistemu PDV-a u skladu sa Zakonom o PDV-u."}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
             pdf.cell(0, 6, f' - {invoice.note}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
         else:
-            pdf.cell(0, 6, 'Napomena: ARHIV JUGOSLAVIJE nije u sistemu PDV-a u skladu sa Zakonom o PDV-u.', 0, new_x="LMARGIN", new_y="NEXT", align="L")
+            pdf.cell(0, 6, f'{"Note: ARHIV JUGOSLAVIJE is not registered for VAT in accordance with the VAT Law." if language == "en" else "Napomena: ARHIV JUGOSLAVIJE nije u sistemu PDV-a u skladu sa Zakonom o PDV-u."}', 0, new_x="LMARGIN", new_y="NEXT", align="L")
         
         # Generisanje PDF-a
         if is_attachment:

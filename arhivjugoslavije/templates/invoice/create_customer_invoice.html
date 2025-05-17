@@ -114,7 +114,7 @@
                             <div class="col-md-8">
                                 <div class="form-group">
                                     {{ form.note.label(class="form-label") }}
-                                    {{ form.note(class="form-control", rows=3) }}
+                                    {{ form.note(class="form-control", rows=3, placeholder="Pisati na engleskom napomenu ako je inostrani partner.") }}
                                     {% if form.note.errors %}
                                         {% for error in form.note.errors %}
                                             <div class="invalid-feedback d-block">{{ error }}</div>
