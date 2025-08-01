@@ -218,16 +218,16 @@
                                                     </a>
                                                 {% endif %}
                                             </td>
-                                            <td class="text-end">{% if item.debit %}{{ '{:,.2f}'.format(item.debit)|replace(',', ' ')|replace('.', ',') }} RSD{% else %}<span class="text-muted">-</span>{% endif %}</td>
                                             <td class="text-end">{% if item.credit %}{{ '{:,.2f}'.format(item.credit)|replace(',', ' ')|replace('.', ',') }} RSD{% else %}<span class="text-muted">-</span>{% endif %}</td>
+                                            <td class="text-end">{% if item.debit %}{{ '{:,.2f}'.format(item.debit)|replace(',', ' ')|replace('.', ',') }} RSD{% else %}<span class="text-muted">-</span>{% endif %}</td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
                                 <tfoot class="table-light fw-bold">
                                     <tr>
                                         <td colspan="3" class="text-end">Ukupno:</td>
-                                        <td class="text-end">{{ '{:,.2f}'.format(total_debit)|replace(',', ' ')|replace('.', ',') }} RSD</td>
                                         <td class="text-end">{{ '{:,.2f}'.format(total_credit)|replace(',', ' ')|replace('.', ',') }} RSD</td>
+                                        <td class="text-end">{{ '{:,.2f}'.format(total_debit)|replace(',', ' ')|replace('.', ',') }} RSD</td>
                                     </tr>
                                 </tfoot>
                             </table>
