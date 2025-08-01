@@ -315,7 +315,7 @@ def generate_partner_card_pdf(partner_id, start_date, end_date, combined_data, t
         pdf.cell(col_widths[1], 10, 'Konto', 1, new_x="RIGHT", new_y="LAST", align="C")
         pdf.cell(col_widths[2], 10, 'Dokument', 1, new_x="RIGHT", new_y="LAST", align="C")
         pdf.cell(col_widths[3], 10, 'Duguje', 1, new_x="RIGHT", new_y="LAST", align="C")
-        pdf.cell(col_widths[4], 10, 'Potrau017euje', 1, new_x="LMARGIN", new_y="NEXT", align="C")
+        pdf.cell(col_widths[4], 10, 'Potražuje', 1, new_x="LMARGIN", new_y="NEXT", align="C")
         
         # Podaci u tabeli
         pdf.set_font('DejaVu', '', 9)
@@ -338,19 +338,32 @@ def generate_partner_card_pdf(partner_id, start_date, end_date, combined_data, t
             
             pdf.cell(col_widths[2], 8, doc_text, 1, new_x="RIGHT", new_y="LAST", align="L")
             
-            # Duguje
-            debit_text = f"{item['debit']:.2f} RSD" if item['debit'] else '-'
-            pdf.cell(col_widths[3], 8, debit_text, 1, new_x="RIGHT", new_y="LAST", align="R")
-            
-            # Potrau017euje
-            credit_text = f"{item['credit']:.2f} RSD" if item['credit'] else '-'
-            pdf.cell(col_widths[4], 8, credit_text, 1, new_x="LMARGIN", new_y="NEXT", align="R")
+            if is_customer:
+                # Duguje
+                credit_text = f"{item['credit']:.2f} RSD" if item['credit'] else '-'
+                pdf.cell(col_widths[3], 8, credit_text, 1, new_x="RIGHT", new_y="LAST", align="R")
+                
+                # Potražuje
+                debit_text = f"{item['debit']:.2f} RSD" if item['debit'] else '-'
+                pdf.cell(col_widths[4], 8, debit_text, 1, new_x="LMARGIN", new_y="NEXT", align="R")
+            else:
+                # Duguje
+                debit_text = f"{item['debit']:.2f} RSD" if item['debit'] else '-'
+                pdf.cell(col_widths[3], 8, debit_text, 1, new_x="RIGHT", new_y="LAST", align="R")
+                
+                # Potražuje
+                credit_text = f"{item['credit']:.2f} RSD" if item['credit'] else '-'
+                pdf.cell(col_widths[4], 8, credit_text, 1, new_x="LMARGIN", new_y="NEXT", align="R")
         
         # Ukupno
         pdf.set_font('DejaVu', 'B', 10)
         pdf.cell(col_widths[0] + col_widths[1] + col_widths[2], 10, 'UKUPNO:', 1, new_x="RIGHT", new_y="LAST", align="R")
-        pdf.cell(col_widths[3], 10, f"{total_debit:.2f} RSD", 1, new_x="RIGHT", new_y="LAST", align="R")
-        pdf.cell(col_widths[4], 10, f"{total_credit:.2f} RSD", 1, new_x="LMARGIN", new_y="NEXT", align="R")
+        if is_customer:
+            pdf.cell(col_widths[3], 10, f"{total_credit:.2f} RSD", 1, new_x="RIGHT", new_y="LAST", align="R")
+            pdf.cell(col_widths[4], 10, f"{total_debit:.2f} RSD", 1, new_x="LMARGIN", new_y="NEXT", align="R")
+        else:
+            pdf.cell(col_widths[3], 10, f"{total_debit:.2f} RSD", 1, new_x="RIGHT", new_y="LAST", align="R")
+            pdf.cell(col_widths[4], 10, f"{total_credit:.2f} RSD", 1, new_x="LMARGIN", new_y="NEXT", align="R")
         
         # Saldo
         saldo = total_debit - total_credit
