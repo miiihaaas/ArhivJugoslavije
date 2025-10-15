@@ -170,7 +170,7 @@ class ProjectAccount(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
     account_level_6_number = db.Column(db.String(6), db.ForeignKey('account_level_6.number'), nullable=False)
-    amount = db.Column(db.Numeric(10, 2), nullable=True)
+    amount = db.Column(db.Numeric(12, 2), nullable=True)
     note = db.Column(db.Text, nullable=True)
     
     def __repr__(self):
@@ -206,8 +206,8 @@ class PurchasePlanAccount(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     purchase_plan_id = db.Column(db.Integer, db.ForeignKey('purchase_plan.id'), nullable=False)
     account_level_4_number = db.Column(db.String(4), nullable=False)
-    amount_1 = db.Column(db.Numeric(10, 2), nullable=True)
-    amount_2 = db.Column(db.Numeric(10, 2), nullable=True)
+    amount_1 = db.Column(db.Numeric(12, 2), nullable=True)
+    amount_2 = db.Column(db.Numeric(12, 2), nullable=True)
     note = db.Column(db.Text, nullable=True)
     
     # Kreiramo indeks umesto stranog ključa
@@ -241,8 +241,8 @@ class Service(db.Model):
     name_en = db.Column(db.String(100), nullable=True)
     note = db.Column(db.Text, nullable=True)
     unit_of_measure_id = db.Column(db.Integer, db.ForeignKey('unit_of_measure.id'), nullable=False)
-    price_rsd = db.Column(db.Numeric(10, 2), nullable=True)
-    price_eur = db.Column(db.Numeric(10, 2), nullable=True)
+    price_rsd = db.Column(db.Numeric(12, 2), nullable=True)
+    price_eur = db.Column(db.Numeric(12, 2), nullable=True)
     archived = db.Column(db.Boolean, default=False, nullable=False)
     
     # Definišemo vezu sa invoice_item
@@ -260,7 +260,7 @@ class Invoice(db.Model):
     service_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     payment_due_date = db.Column(db.Date, nullable=True)
     partner_id = db.Column(db.Integer, db.ForeignKey('partner.id'), nullable=False)
-    total_amount = db.Column(db.Numeric(10, 2), nullable=False)
+    total_amount = db.Column(db.Numeric(12, 2), nullable=False)
     paid = db.Column(db.Boolean, default=False, nullable=False)
     currency = db.Column(db.String(3), nullable=False, default='RSD')
     incoming = db.Column(db.Boolean, default=False, nullable=False)
@@ -281,10 +281,10 @@ class InvoiceItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     invoice_id = db.Column(db.Integer, db.ForeignKey('invoice.id'), nullable=False)
     service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False)
-    quantity = db.Column(db.Numeric(10, 2), nullable=False)
-    price = db.Column(db.Numeric(10, 2), nullable=False)
+    quantity = db.Column(db.Numeric(12, 2), nullable=False)
+    price = db.Column(db.Numeric(12, 2), nullable=False)
     currency = db.Column(db.String(3), nullable=False, default='RSD')
-    total = db.Column(db.Numeric(10, 2), nullable=False)
+    total = db.Column(db.Numeric(12, 2), nullable=False)
     
     def __repr__(self):
         return f"InvoiceItem(invoice_id: '{self.invoice_id}', service_id: '{self.service_id}', quantity: '{self.quantity}', total: '{self.total} {self.currency}')"
@@ -295,10 +295,10 @@ class BankStatement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.Date, nullable=False, default=datetime.now())
     statement_number = db.Column(db.String(20), nullable=False)
-    initial_balance = db.Column(db.Numeric(10, 2), nullable=False)
-    total_credit = db.Column(db.Numeric(10, 2), nullable=False)
-    total_debit = db.Column(db.Numeric(10, 2), nullable=False)
-    final_balance = db.Column(db.Numeric(10, 2), nullable=False)
+    initial_balance = db.Column(db.Numeric(12, 2), nullable=False)
+    total_credit = db.Column(db.Numeric(12, 2), nullable=False)
+    total_debit = db.Column(db.Numeric(12, 2), nullable=False)
+    final_balance = db.Column(db.Numeric(12, 2), nullable=False)
     bank_account_id = db.Column(db.Integer, db.ForeignKey('bank_account.id'), nullable=False)
     
     # Definišemo vezu sa statement_item
@@ -334,7 +334,7 @@ class StatementItem(db.Model):
     # Polja koja se ne mogu editovati (iz XML fajla)
     payer = db.Column(db.String(200), nullable=True)  # Uplatilac
     recipient = db.Column(db.String(200), nullable=True)  # Primalac
-    amount = db.Column(db.Numeric(10, 2), nullable=False)  # Iznos uplate/isplate
+    amount = db.Column(db.Numeric(12, 2), nullable=False)  # Iznos uplate/isplate
     description = db.Column(db.Text, nullable=True) #? Tekstualni opis transakcije/svrha uplate, može biti prazan. Najčešće sadrži opis sa bankovnog izvoda.
     reference_number = db.Column(db.String(50), nullable=True)  # Poziv na broj
     is_debit = db.Column(db.Boolean, default=True, nullable=False) #! True = isplata, False = uplata
