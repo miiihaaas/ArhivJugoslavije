@@ -95,10 +95,11 @@ def statement_list():
                             # Konverzija datuma iz stringa u Python date objekat
                             datum_izvoda = datetime.strptime(datum_izvoda_element, '%d.%m.%Y').date()
                             
-                            # Provera da li izvod sa istim brojem i datumom već postoji
+                            # Provera da li izvod sa istim brojem, datumom i računom već postoji
                             existing_statement = BankStatement.query.filter_by(
                                 date=datum_izvoda,
-                                statement_number=broj_izvoda_element
+                                statement_number=broj_izvoda_element,
+                                bank_account_id=bank_account.id
                             ).first()
                             
                             if existing_statement:
@@ -162,10 +163,11 @@ def statement_list():
             bank_account = BankAccount.query.filter_by(account_number=account_number_filter).first() or BankAccount.query.filter_by(sub_account_number=account_number_filter).first()
             app.logger.info(f'{bank_account=}')
             
-            # Provera da li izvod sa istim brojem i datumom već postoji
+            # Provera da li izvod sa istim brojem, datumom i računom već postoji
             existing_statement = BankStatement.query.filter_by(
                 date=datum_izvoda,
-                statement_number=broj_izvoda
+                statement_number=broj_izvoda,
+                bank_account_id=bank_account.id
             ).first()
             
             if existing_statement:
