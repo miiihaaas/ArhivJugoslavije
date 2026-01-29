@@ -79,10 +79,14 @@ def statement_list():
                         krajnje_stanje_element = zbirni.find('Saldo').text if zbirni.find('Saldo') is not None else None
                         
                         # proverava da li je racun_izvoda_element u account_number ili sub_account_number
+                        app.logger.info(f'Tražim bank_account za racun_izvoda_element={racun_izvoda_element}')
                         bank_account = BankAccount.query.filter_by(account_number=racun_izvoda_element).filter_by(active=True).first()
+                        app.logger.info(f'Rezultat pretrage po account_number: {bank_account}')
                         if bank_account is None:
                             bank_account = BankAccount.query.filter_by(sub_account_number=racun_izvoda_element).filter_by(active=True).first()
+                            app.logger.info(f'Rezultat pretrage po sub_account_number: {bank_account}')
                         print(f'{bank_account=}')
+                        app.logger.info(f'KONAČNO Pronađen bank_account: ID={bank_account.id if bank_account else None}, account_number={bank_account.account_number if bank_account else None}, sub_account_number={bank_account.sub_account_number if bank_account else None}')
                         if bank_account is None:
                             app.logger.warning(f'Račun izvoda {racun_izvoda_element} nije pronađen u bankovnim računima!')
                             error_mesage = f'Račun izvoda {racun_izvoda_element} nije pronađen u bankovnim računima!'
@@ -101,6 +105,7 @@ def statement_list():
                                 statement_number=broj_izvoda_element,
                                 bank_account_id=bank_account.id
                             ).first()
+                            app.logger.info(f'Provera duplikata: date={datum_izvoda}, statement_number={broj_izvoda_element}, bank_account_id={bank_account.id}, existing_statement={existing_statement}')
                             
                             if existing_statement:
                                 # Ako izvod već postoji, omogući pregled podataka ali onemogući učitavanje
