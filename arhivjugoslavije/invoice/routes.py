@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal, ROUND_HALF_UP
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from flask_login import login_required
 from arhivjugoslavije import db, app
@@ -222,7 +223,7 @@ def edit_customer_invoice(invoice_id):
                             item.price = service.price_rsd
                         else:
                             if service.price_rsd and archive and archive.eur_rate and archive.eur_rate > 0:
-                                item.price = round(float(service.price_rsd) / float(archive.eur_rate), 2)
+                                item.price = (Decimal(str(service.price_rsd)) / Decimal(str(archive.eur_rate))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
                             else:
                                 item.price = service.price_eur
                         item.currency = invoice.currency
