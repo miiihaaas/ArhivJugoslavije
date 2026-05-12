@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from flask_login import login_required
 from arhivjugoslavije import db, app
-from arhivjugoslavije.models import Partner, Invoice, InvoiceItem, Service
+from arhivjugoslavije.models import Partner, Invoice, InvoiceItem, Service, ArchiveSettings
 from arhivjugoslavije.invoice.forms import InvoiceForm, InvoiceItemForm, EditInvoiceForm
 from arhivjugoslavije.invoice.functions import generate_invoice_pdf, save_invoice_to_db, send_invoice_to_partner, notify_partner_about_canceled_invoice
 import os
@@ -214,14 +214,25 @@ def edit_customer_invoice(invoice_id):
             
             db.session.commit()
             try:
-                print(f'{invoice_items=}')
-                for item in invoice_items:
-                    service = Service.query.get_or_404(item.service_id)
-                    item.price = service.price_rsd if invoice.currency == 'RSD' else service.price_eur
-                    item.currency = invoice.currency
-                    item.total = item.price * item.quantity
-                    invoice.total_amount += item.total
-                db.session.commit()
+                if invoice.status == 'nacrt':
+                    archive = ArchiveSettings.query.first()
+                    for item in invoice_items:
+                        service = Service.query.get_or_404(item.service_id)
+                        if invoice.currency == 'RSD':
+                            item.price = service.price_rsd
+                        else:
+                            if service.price_rsd and archive and archive.eur_rate and archive.eur_rate > 0:
+                                item.price = round(float(service.price_rsd) / float(archive.eur_rate), 2)
+                            else:
+                                item.price = service.price_eur
+                        item.currency = invoice.currency
+                        item.total = item.price * item.quantity
+                        invoice.total_amount += item.total
+                    db.session.commit()
+                else:
+                    for item in invoice_items:
+                        invoice.total_amount += item.total
+                    db.session.commit()
             except Exception as e:
                 db.session.rollback()
                 flash(f'Došlo je do greške prilikom ažuriranja stavki fakture: {str(e)}.', 'danger')
@@ -340,9 +351,13 @@ def remove_invoice_item(item_id):
 @login_required
 def get_service_price(service_id):
     service = Service.query.get_or_404(service_id)
+    archive = ArchiveSettings.query.first()
+    price_eur = 0
+    if service.price_rsd and archive and archive.eur_rate and archive.eur_rate > 0:
+        price_eur = round(float(service.price_rsd) / float(archive.eur_rate), 2)
     return jsonify({
         'price_rsd': float(service.price_rsd) if service.price_rsd else 0,
-        'price_eur': float(service.price_eur) if service.price_eur else 0,
+        'price_eur': price_eur,
         'unit_of_measure': service.unit_of_measure.symbol if service.unit_of_measure else ''
     })
 

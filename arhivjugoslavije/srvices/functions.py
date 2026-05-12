@@ -164,10 +164,10 @@ def generate_services_pdf(language='sr'):
             # Dohvati jedinicu mere
             unit_of_measure = UnitOfMeasure.query.get(service.unit_of_measure_id)
             
-            # Izračunaj cenu u EUR ako nije postavljena
-            price_eur = service.price_eur
-            if not price_eur and archive_settings.eur_rate and archive_settings.eur_rate > 0:
-                price_eur = round(float(service.price_rsd) / archive_settings.eur_rate, 2)
+            # Cena u EUR uvek po trenutnom kursu (konzistentno sa cenovnikom u UI)
+            price_eur = None
+            if service.price_rsd and archive_settings.eur_rate and archive_settings.eur_rate > 0:
+                price_eur = round(float(service.price_rsd) / float(archive_settings.eur_rate), 2)
             
             # Postavi vrednosti u zavisnosti od jezika
             if language == 'en':
