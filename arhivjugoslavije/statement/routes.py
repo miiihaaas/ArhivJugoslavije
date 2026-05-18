@@ -269,8 +269,10 @@ def statement_list():
     
     if request.method == 'GET':
         bank_statements = BankStatement.query.all()
-    
-    return render_template('statement/statement_list.html', 
+
+    bank_accounts_filter = BankAccount.query.order_by(BankAccount.account_number).all()
+
+    return render_template('statement/statement_list.html',
                             endpoint=endpoint,
                             legend='Učitavanje izvoda',
                             title='Učitavanje izvoda',
@@ -290,6 +292,7 @@ def statement_list():
                             projects=projects,
                             error_message=error_mesage,
                             bank_statements=bank_statements,
+                            bank_accounts_filter=bank_accounts_filter,
                             izvod_vec_postoji=izvod_vec_postoji)
 
 

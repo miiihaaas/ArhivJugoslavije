@@ -239,6 +239,17 @@
     </div>
     {% elif bank_statements %}
     <div class="mt-4">
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label for="bankAccountFilter" class="form-label small mb-1">Filter po računu</label>
+                <select id="bankAccountFilter" class="form-select form-select-sm">
+                    <option value="">Svi računi</option>
+                    {% for ba in bank_accounts_filter %}
+                    <option value="{{ ba.account_number }}">{{ ba.account_number }} — {{ ba.purpose }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
         <div class="card">
             <div class="card-header bg-secondary text-white py-2">
                 <h5 class="mb-0 small text-white"><i class="fas fa-history me-2"></i>Prethodno učitani izvodi</h5>
@@ -346,8 +357,9 @@
 {% if bank_statements %}
 <script>
     $(document).ready(function() {
-        $('#statementsTable').DataTable({
+        var table = $('#statementsTable').DataTable({
             "order": [[1, "desc"]], // Sortiranje po drugoj koloni (Datum) od većeg ka manjem
+            "stateSave": true,
             "language": {
                 "lengthMenu": "Prikaz _MENU_ zapisa po stranici",
                 "zeroRecords": "Nema pronađenih zapisa",
@@ -373,6 +385,25 @@
                     "searchable": false
                 }
             ]
+        });
+
+        // Vraćanje vrednosti filtera iz sačuvanog state-a u select pri page load-u
+        var state = table.state.loaded();
+        if (state && state.columns && state.columns[3] && state.columns[3].search) {
+            var savedSearch = state.columns[3].search.search || '';
+            var match = savedSearch.match(/^\^(.*)\$$/);
+            var value = match ? match[1].replace(/\\(.)/g, '$1') : '';
+            $('#bankAccountFilter').val(value);
+        }
+
+        $('#bankAccountFilter').on('change', function() {
+            var val = $(this).val();
+            if (val) {
+                var escaped = $.fn.dataTable.util.escapeRegex(val);
+                table.column(3).search('^' + escaped + '$', true, false).draw();
+            } else {
+                table.column(3).search('').draw();
+            }
         });
     });
 </script>
