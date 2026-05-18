@@ -810,6 +810,69 @@ main.container:not(.login-screen),
     font-weight: var(--fw-medium);
 }
 
+/* Compact dense table — for list pages with many columns; fits without scroll */
+.table.table-compact {
+    table-layout: auto;
+    font-size: 0.82rem;
+}
+
+.table.table-compact thead th {
+    padding: 0.5rem 0.45rem;
+    font-size: 0.7rem;
+    text-transform: none;
+    letter-spacing: 0;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.3;
+}
+
+.table.table-compact tbody td {
+    padding: 0.5rem 0.45rem;
+    word-break: break-word;
+    vertical-align: middle;
+}
+
+.table.table-compact .btn-sm {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.78rem;
+}
+
+/* Status pill — small circular badge with single letter + color (full text on hover via tooltip) */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 0.7rem;
+    font-weight: var(--fw-bold);
+    color: #fff;
+    line-height: 1;
+    margin-right: 2px;
+    cursor: help;
+    flex-shrink: 0;
+    user-select: none;
+    box-shadow: 0 1px 2px rgba(12, 52, 98, 0.15);
+    transition: transform var(--transition-fast);
+}
+
+.status-pill:hover {
+    transform: scale(1.1);
+}
+
+.status-pill--draft   { background: var(--color-text-light); }   /* Nacrt — neutralno sivo */
+.status-pill--saved   { background: var(--color-warning); }      /* Sačuvano — amber, čeka akciju */
+.status-pill--sent    { background: var(--color-primary); }      /* Poslato — navy, u toku */
+.status-pill--paid    { background: var(--color-success); }      /* Plaćeno — zeleno */
+.status-pill--unpaid  { background: var(--color-danger); }       /* Neplaćeno — crveno */
+
+.status-pill-group {
+    display: inline-flex;
+    gap: 3px;
+    align-items: center;
+}
+
 /* DataTables wrapper */
 .dataTables_wrapper {
     padding: 0.75rem;
@@ -1062,6 +1125,18 @@ main.container:not(.login-screen),
 /* ----------------------------------------------------------------------------
    15. Utilities
 ---------------------------------------------------------------------------- */
+/* Section title — divider label for form sections inside modals */
+.section-title {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.6rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
 /* Stat strip — scannable horizontal metrics row (preview panels, summaries) */
 .stat-strip {
     display: flex;

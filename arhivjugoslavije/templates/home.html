@@ -2,20 +2,6 @@
 {% block content %}
 <div class="container py-4">
 
-    <!-- Dashboard greeting -->
-    <section class="dashboard-greeting">
-        <span class="dashboard-greeting__eyebrow">Dobrodošli</span>
-        <h1 class="dashboard-greeting__title">
-            {% if current_user.is_authenticated and current_user.name %}
-                {{ current_user.name }}
-            {% else %}
-                Arhiv Jugoslavije
-            {% endif %}
-        </h1>
-        <hr class="dashboard-greeting__accent">
-        <p class="dashboard-greeting__date" id="greeting-date"></p>
-    </section>
-
     <!-- Shortcuts -->
     <div class="eyebrow-row">
         <span class="eyebrow eyebrow--accent">Prečice</span>
@@ -126,21 +112,7 @@ function updateDateTime() {
     document.getElementById('current-date').textContent = dateStr;
 }
 
-function updateGreetingDate() {
-    const now = new Date();
-    const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-    const parts = now.toLocaleDateString('sr-Latn-RS', opts).split(', ');
-    // "sreda, 18. maj 2026." → "Sreda · 18. maj 2026."
-    if (parts.length === 2) {
-        const day = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
-        document.getElementById('greeting-date').textContent = day + ' · ' + parts[1];
-    } else {
-        document.getElementById('greeting-date').textContent = now.toLocaleDateString('sr-Latn-RS', opts);
-    }
-}
-
 updateDateTime();
-updateGreetingDate();
 setInterval(updateDateTime, 1000);
 </script>
 {% endblock %}
