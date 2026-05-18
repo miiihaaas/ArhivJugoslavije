@@ -1,96 +1,108 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="container py-5">
-    <h1 class="text-center mb-5">Dobrodošli u Arhiv Jugoslavije</h1>
-    
-    <div class="row g-4">
+<div class="container py-4">
+
+    <!-- Dashboard greeting -->
+    <section class="dashboard-greeting">
+        <span class="dashboard-greeting__eyebrow">Dobrodošli</span>
+        <h1 class="dashboard-greeting__title">
+            {% if current_user.is_authenticated and current_user.name %}
+                {{ current_user.name }}
+            {% else %}
+                Arhiv Jugoslavije
+            {% endif %}
+        </h1>
+        <hr class="dashboard-greeting__accent">
+        <p class="dashboard-greeting__date" id="greeting-date"></p>
+    </section>
+
+    <!-- Shortcuts -->
+    <div class="eyebrow-row">
+        <span class="eyebrow eyebrow--accent">Prečice</span>
+    </div>
+
+    <div class="row g-3">
         <!-- Nova faktura -->
-        <div class="col-md-4">
-            <a href="{{ url_for('invoices.create_customer_invoice') }}" class="text-decoration-none">
-                <div class="card shortcut-card h-100">
-                    <div class="card-body text-center">
-                        <i class="fas fa-file-invoice fa-3x mb-3 text-primary"></i>
-                        <h5 class="card-title">Nova faktura</h5>
-                        <p class="card-text text-muted">Kreirajte novu izlaznu fakturu</p>
-                    </div>
-                </div>
+        <div class="col-md-6 col-lg-4">
+            <a href="{{ url_for('invoices.create_customer_invoice') }}" class="shortcut-card">
+                <span class="shortcut-card__icon is-primary">
+                    <i class="fas fa-file-invoice"></i>
+                </span>
+                <h3 class="shortcut-card__title">Nova faktura</h3>
+                <p class="shortcut-card__desc">Kreirajte novu izlaznu fakturu</p>
+                <span class="shortcut-card__arrow"><i class="fas fa-arrow-right"></i></span>
             </a>
         </div>
-        
+
         <!-- Učitavanje izvoda -->
-        <div class="col-md-4">
-            <a href="{{ url_for('statement.statement_list') }}" class="text-decoration-none">
-                <div class="card shortcut-card h-100">
-                    <div class="card-body text-center">
-                        <i class="fas fa-upload fa-3x mb-3 text-success"></i>
-                        <h5 class="card-title">Učitavanje izvoda</h5>
-                        <p class="card-text text-muted">Učitajte novi bankovni izvod</p>
-                    </div>
-                </div>
+        <div class="col-md-6 col-lg-4">
+            <a href="{{ url_for('statement.statement_list') }}" class="shortcut-card">
+                <span class="shortcut-card__icon is-success">
+                    <i class="fas fa-upload"></i>
+                </span>
+                <h3 class="shortcut-card__title">Učitavanje izvoda</h3>
+                <p class="shortcut-card__desc">Učitajte novi bankovni izvod</p>
+                <span class="shortcut-card__arrow"><i class="fas fa-arrow-right"></i></span>
             </a>
         </div>
-        
+
         <!-- Pregled faktura -->
-        <div class="col-md-4">
-            <a href="{{ url_for('invoices.invoice_list') }}" class="text-decoration-none">
-                <div class="card shortcut-card h-100">
-                    <div class="card-body text-center">
-                        <i class="fas fa-list-ul fa-3x mb-3 text-info"></i>
-                        <h5 class="card-title">Pregled faktura</h5>
-                        <p class="card-text text-muted">Pregledajte sve fakture</p>
-                    </div>
-                </div>
+        <div class="col-md-6 col-lg-4">
+            <a href="{{ url_for('invoices.invoice_list') }}" class="shortcut-card">
+                <span class="shortcut-card__icon is-info">
+                    <i class="fas fa-list-ul"></i>
+                </span>
+                <h3 class="shortcut-card__title">Pregled faktura</h3>
+                <p class="shortcut-card__desc">Pregledajte sve fakture</p>
+                <span class="shortcut-card__arrow"><i class="fas fa-arrow-right"></i></span>
             </a>
         </div>
-        
+
         <!-- Poslovni partneri -->
-        <div class="col-md-4">
-            <a href="{{ url_for('partner.partners') }}" class="text-decoration-none">
-                <div class="card shortcut-card h-100">
-                    <div class="card-body text-center">
-                        <i class="fas fa-handshake fa-3x mb-3 text-warning"></i>
-                        <h5 class="card-title">Poslovni partneri</h5>
-                        <p class="card-text text-muted">Upravljajte poslovnim partnerima</p>
-                    </div>
-                </div>
+        <div class="col-md-6 col-lg-4">
+            <a href="{{ url_for('partner.partners') }}" class="shortcut-card">
+                <span class="shortcut-card__icon is-warning">
+                    <i class="fas fa-handshake"></i>
+                </span>
+                <h3 class="shortcut-card__title">Poslovni partneri</h3>
+                <p class="shortcut-card__desc">Upravljajte poslovnim partnerima</p>
+                <span class="shortcut-card__arrow"><i class="fas fa-arrow-right"></i></span>
             </a>
         </div>
-        
+
         <!-- Izveštaji -->
-        <div class="col-md-4">
-            <a href="{{ url_for('reports.report_list') }}" class="text-decoration-none">
-                <div class="card shortcut-card h-100">
-                    <div class="card-body text-center">
-                        <i class="fas fa-chart-bar fa-3x mb-3 text-danger"></i>
-                        <h5 class="card-title">Izveštaji</h5>
-                        <p class="card-text text-muted">Pregledajte finansijske izveštaje</p>
-                    </div>
-                </div>
+        <div class="col-md-6 col-lg-4">
+            <a href="{{ url_for('reports.report_list') }}" class="shortcut-card">
+                <span class="shortcut-card__icon is-accent">
+                    <i class="fas fa-chart-bar"></i>
+                </span>
+                <h3 class="shortcut-card__title">Izveštaji</h3>
+                <p class="shortcut-card__desc">Pregledajte finansijske izveštaje</p>
+                <span class="shortcut-card__arrow"><i class="fas fa-arrow-right"></i></span>
             </a>
         </div>
-        
+
         <!-- Podešavanja -->
-        <div class="col-md-4">
-            <a href="{{ url_for('main.settings', id=1) }}" class="text-decoration-none">
-                <div class="card shortcut-card h-100">
-                    <div class="card-body text-center">
-                        <i class="fas fa-cog fa-3x mb-3 text-secondary"></i>
-                        <h5 class="card-title">Podešavanja</h5>
-                        <p class="card-text text-muted">Upravljajte podešavanjima sistema</p>
-                    </div>
-                </div>
+        <div class="col-md-6 col-lg-4">
+            <a href="{{ url_for('main.settings', id=1) }}" class="shortcut-card">
+                <span class="shortcut-card__icon is-neutral">
+                    <i class="fas fa-cog"></i>
+                </span>
+                <h3 class="shortcut-card__title">Podešavanja</h3>
+                <p class="shortcut-card__desc">Upravljajte podešavanjima sistema</p>
+                <span class="shortcut-card__arrow"><i class="fas fa-arrow-right"></i></span>
             </a>
         </div>
     </div>
 
-    <!-- Vreme i datum -->
+    <!-- Time / date display -->
     <div class="text-center mt-5">
         <div class="time-display">
             <div class="time-section">
                 <i class="fas fa-clock me-2"></i>
                 <span id="current-time" class="time-text"></span>
             </div>
-            <div class="date-section mt-2">
+            <div class="date-section">
                 <i class="fas fa-calendar-alt me-2"></i>
                 <span id="current-date" class="date-text"></span>
             </div>
@@ -103,32 +115,32 @@
 <script>
 function updateDateTime() {
     const now = new Date();
-    
-    // Formatiranje vremena
-    const timeOptions = { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit', 
-        hour12: false 
-    };
+
+    const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
     const timeStr = now.toLocaleTimeString('sr-Latn-RS', timeOptions);
-    
-    // Formatiranje datuma
-    const dateOptions = { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric'
-    };
+
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     const dateStr = now.toLocaleDateString('sr-Latn-RS', dateOptions);
-    
-    // Ažuriranje DOM-a
+
     document.getElementById('current-time').textContent = timeStr;
     document.getElementById('current-date').textContent = dateStr;
 }
 
-// Inicijalno postavljanje i ažuriranje svakog sekunda
+function updateGreetingDate() {
+    const now = new Date();
+    const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+    const parts = now.toLocaleDateString('sr-Latn-RS', opts).split(', ');
+    // "sreda, 18. maj 2026." → "Sreda · 18. maj 2026."
+    if (parts.length === 2) {
+        const day = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+        document.getElementById('greeting-date').textContent = day + ' · ' + parts[1];
+    } else {
+        document.getElementById('greeting-date').textContent = now.toLocaleDateString('sr-Latn-RS', opts);
+    }
+}
+
 updateDateTime();
+updateGreetingDate();
 setInterval(updateDateTime, 1000);
 </script>
 {% endblock %}

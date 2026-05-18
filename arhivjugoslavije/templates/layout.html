@@ -1,21 +1,28 @@
 <!DOCTYPE html>
 <html class="h-100">
 <head>
-    <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
 
-    <!-- Bootstrap CSS -->
+    <!-- Fonts: Montserrat (UI) — replace declared font that was never actually loaded -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Vendor CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+
+    <!-- Project CSS — loaded last so it can override vendor styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='mikicustom.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <title>Arhiv Jugoslavije</title>
 </head>
-<body class="{{ route_name }} d-flex flex-column h-100">
+<body class="{{ route_name }} {% if not current_user.is_authenticated %}auth-screen{% endif %} d-flex flex-column h-100">
     <header class="site-header">
         <div class="navbar navbar-expand-md">
             <div class="container">
@@ -25,7 +32,6 @@
                     <p class="navbar-brand mb-0">Arhiv Jugoslavije</p>
                 {% endif %}
             </div>
-            <!-- Dodati hamburger dugme za mobilni prikaz -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -67,7 +73,7 @@
             </div>
         </div>
     </header>
-    
+
     <main role="main" class="flex-shrink-0">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -97,50 +103,37 @@
         </div>
     </footer>
 
-    <!-- Bootstrap Bundle with Popper -->
+    <!-- Vendor JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    
-    <!-- Select2 CSS i JS -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    
-    <!-- Automatsko zatvaranje flash poruka nakon 7 sekundi -->
+
+    <!-- Global UI bootstrap: flash auto-close + Select2 defaults -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Pronađi sve flash poruke
+            // Automatsko zatvaranje flash poruka nakon 7 sekundi
             const flashMessages = document.querySelectorAll('.alert-dismissible');
-            
-            // Postavi tajmer za svaku poruku da se zatvori nakon 7 sekundi
             flashMessages.forEach(function(alert) {
                 setTimeout(function() {
-                    // Kreiraj bootstrap alert objekat i pozovi close metoda
                     const bsAlert = new bootstrap.Alert(alert);
                     bsAlert.close();
-                }, 7000); // 7 sekundi = 7000 milisekundi
+                }, 7000);
             });
-            
-            // Globalne postavke za Select2
+
+            // Globalne postavke za Select2 (srpski prevod)
             if ($.fn.select2 !== undefined) {
                 $.fn.select2.defaults.set('language', {
-                    noResults: function() {
-                        return 'Nema rezultata.';
-                    },
-                    searching: function() {
-                        return 'Pretraga...';
-                    },
-                    loadingMore: function() {
-                        return 'Učitavanje više rezultata...';
-                    },
+                    noResults: function() { return 'Nema rezultata.'; },
+                    searching: function() { return 'Pretraga...'; },
+                    loadingMore: function() { return 'Učitavanje više rezultata...'; },
                     inputTooShort: function(args) {
                         var remainingChars = args.minimum - args.input.length;
                         return 'Unesite još ' + remainingChars + ' karakter' + (remainingChars > 1 ? 'a' : '');
                     }
                 });
-                
+
                 // Inicijalizacija Select2 za sve elemente sa klasom 'select2-field'
                 $('.select2-field').select2({
                     width: '100%',
@@ -150,7 +143,7 @@
             }
         });
     </script>
-    
+
     {% block scripts %}{% endblock %}
 </body>
 </html>

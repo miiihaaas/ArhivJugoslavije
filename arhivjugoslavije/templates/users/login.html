@@ -4,12 +4,17 @@
     <div class="login-card">
         <form method="POST" action="">
             {{ form.hidden_tag() }}
-            
+
             <!-- Logo & Title -->
             <div class="text-center mb-4">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" 
+                <img src="{{ url_for('static', filename='img/logo.png') }}"
                      class="login-logo" alt="Logo">
-                <h4 class="login-title mt-4">{{legend}}</h4>
+                <div class="mt-4">
+                    <span class="auth-eyebrow">Prijava</span>
+                </div>
+                <h4 class="login-title">{{ legend }}</h4>
+                <hr class="auth-accent">
+                <p class="login-subtitle">Pristup internom sistemu Arhiva Jugoslavije</p>
             </div>
 
             <!-- Login Form -->
@@ -48,11 +53,11 @@
                 </div>
 
                 <div class="d-grid gap-2">
-                    {{ form.submit(class="btn btn-primary btn-lg") }}
+                    {{ form.submit(class="btn btn-primary btn-cta") }}
                 </div>
 
                 <div class="text-center mt-3">
-                    <a href="{{url_for('users.reset_request')}}" class="text-decoration-none">
+                    <a href="{{ url_for('users.reset_request') }}" class="text-decoration-none">
                         Zaboravili ste lozinku?
                     </a>
                 </div>
@@ -60,4 +65,4 @@
         </form>
     </div>
 </div>
-{% endblock content%}
+{% endblock content %}
