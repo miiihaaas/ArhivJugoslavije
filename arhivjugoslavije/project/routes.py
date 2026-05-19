@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from arhivjugoslavije import db, app
-from arhivjugoslavije.models import Project, ProjectAccount, AccountLevel6
+from arhivjugoslavije.models import Project, ProjectAccount, AccountLevel6, StatementItem, BankStatement
+from decimal import Decimal
 from arhivjugoslavije.project.forms import ProjectRegisterForm, ProjectEditForm
 from flask_login import login_required, current_user
 
@@ -106,24 +107,84 @@ def sum_account_data(project_accounts):
             sum_data[account_level_4_number]['amount'] += account.amount
     return sum_data
 
+def compute_account_summary(project_id):
+    summary = {}
+
+    def ensure(l4):
+        if l4 not in summary:
+            summary[l4] = {
+                'account': l4,
+                'planned': Decimal('0'),
+                'paid_in': Decimal('0'),
+                'spent': Decimal('0'),
+            }
+        return summary[l4]
+
+    project_accounts = ProjectAccount.query.filter_by(project_id=project_id).all()
+    for pa in project_accounts:
+        l4 = pa.account_level_6.account_level_4_number
+        row = ensure(l4)
+        if pa.amount:
+            row['planned'] += pa.amount
+
+    items = StatementItem.query.filter_by(project_id=project_id, account_in_project=True).all()
+    for it in items:
+        if not it.account_level_6_number:
+            continue
+        l4 = it.account_level_6.account_level_4_number
+        row = ensure(l4)
+        if it.is_debit:
+            row['spent'] += it.amount
+        else:
+            row['paid_in'] += it.amount
+
+    for row in summary.values():
+        row['unspent'] = row['planned'] + row['paid_in'] - row['spent']
+
+    return dict(sorted(summary.items()))
+
+
 @project.route('/project_accounts/<int:project_id>')
 @login_required
 def project_accounts(project_id):
     project = Project.query.get_or_404(project_id)
     project_accounts = ProjectAccount.query.filter_by(project_id=project_id).order_by(ProjectAccount.id.asc())
-    sum_data = sum_account_data(project_accounts)
-    sum_data_total = sum(account['amount'] for account in sum_data.values())
+    sum_data = compute_account_summary(project_id)
+    sum_totals = {
+        'planned': sum((row['planned'] for row in sum_data.values()), Decimal('0')),
+        'paid_in': sum((row['paid_in'] for row in sum_data.values()), Decimal('0')),
+        'spent': sum((row['spent'] for row in sum_data.values()), Decimal('0')),
+        'unspent': sum((row['unspent'] for row in sum_data.values()), Decimal('0')),
+    }
     accounts = AccountLevel6.query.order_by(AccountLevel6.number).all()
     accounts_list = [{
         'number': account.number,
         'name': account.name,
     } for account in accounts]
-    return render_template('project/project_accounts.html', 
+
+    project_statement_items = (
+        StatementItem.query
+        .join(BankStatement, StatementItem.bank_statement_id == BankStatement.id)
+        .filter(
+            StatementItem.project_id == project_id,
+            StatementItem.account_in_project == True,
+        )
+        .order_by(BankStatement.date.asc(), StatementItem.id.asc())
+        .all()
+    )
+    statement_items_totals = {
+        'debit':  sum((it.amount for it in project_statement_items if it.is_debit),     Decimal('0')),
+        'credit': sum((it.amount for it in project_statement_items if not it.is_debit), Decimal('0')),
+    }
+
+    return render_template('project/project_accounts.html',
                             project=project,
                             project_accounts=project_accounts,
                             sum_data=sum_data,
-                            sum_data_total=sum_data_total,
+                            sum_totals=sum_totals,
                             accounts_list=accounts_list,
+                            project_statement_items=project_statement_items,
+                            statement_items_totals=statement_items_totals,
                             legend='Detalji projekta',
                             title='Detalji projekta')
 

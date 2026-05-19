@@ -62,25 +62,34 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th>Konto</th>
-                                            <th class="text-end">Iznos</th>
+                                            <th class="text-end">Planirani iznos</th>
+                                            <th class="text-end">Uplaćeno</th>
+                                            <th class="text-end">Potrošeno</th>
+                                            <th class="text-end">Nepotrošeno</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% for account in sum_data.values() %}
                                         <tr>
                                             <td>{{ account['account'] }}</td>
-                                            <td class="text-end">{{ account['amount'] | format_number }}</td>
+                                            <td class="text-end">{{ account['planned'] | format_number }}</td>
+                                            <td class="text-end">{{ account['paid_in'] | format_number }}</td>
+                                            <td class="text-end">{{ account['spent'] | format_number }}</td>
+                                            <td class="text-end">{{ account['unspent'] | format_number }}</td>
                                         </tr>
                                         {% else %}
                                         <tr>
-                                            <td colspan="2" class="text-center">Nema podataka za prikaz</td>
+                                            <td colspan="5" class="text-center">Nema podataka za prikaz</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
                                     <tfoot>
                                         <tr class="table-primary fw-bold">
                                             <th>Ukupno:</th>
-                                            <th class="text-end">{{ sum_data_total | format_number }}</th>
+                                            <th class="text-end">{{ sum_totals['planned'] | format_number }}</th>
+                                            <th class="text-end">{{ sum_totals['paid_in'] | format_number }}</th>
+                                            <th class="text-end">{{ sum_totals['spent'] | format_number }}</th>
+                                            <th class="text-end">{{ sum_totals['unspent'] | format_number }}</th>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -90,44 +99,111 @@
                 </div>
             </div>
             
-            <!-- Tabela konta projekta -->
-            <div class="card border-secondary shadow-sm">
-                <div class="card-header bg-secondary text-white">
-                    <h6 class="mb-0"><i class="fas fa-list me-2"></i>Konta projekta</h6>
+            <!-- Tabovi: Stavke izvoda / Konta projekta -->
+            <div class="card shadow-sm project-tabs-card">
+                <div class="card-header project-tabs-header">
+                    <ul class="nav project-tabs" id="projectTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="statement-items-tab" data-bs-toggle="tab"
+                                    data-bs-target="#statement-items-pane" type="button" role="tab"
+                                    aria-controls="statement-items-pane" aria-selected="true">
+                                <i class="fas fa-exchange-alt"></i><span>Stavke izvoda</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="project-accounts-tab" data-bs-toggle="tab"
+                                    data-bs-target="#project-accounts-pane" type="button" role="tab"
+                                    aria-controls="project-accounts-pane" aria-selected="false">
+                                <i class="fas fa-list"></i><span>Konta projekta</span>
+                            </button>
+                        </li>
+                    </ul>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table report-table table-striped table-hover" id="projectAccountsTable">
-                            <thead class="table-light">
-                                <tr>
-                                    <th><i class="fas fa-hashtag me-1"></i>ID</th>
-                                    <th><i class="fas fa-list-ol me-1"></i>Konto</th>
-                                    <th class="text-end"><i class="fas fa-money-bill-wave me-1"></i>Iznos</th>
-                                    <th><i class="fas fa-comment me-1"></i>Napomena</th>
-                                    <th class="text-center"><i class="fas fa-cogs me-1"></i>Akcije</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for account in project_accounts %}
-                                <tr>
-                                    <td>{{ account.id }}</td>
-                                    <td>{{ account.account_level_6_number }}</td>
-                                    <td class="text-end">{{ account.amount | format_number }}</td>
-                                    <td>{{ account.note }}</td>
-                                    <td class="text-center">
-                                        <button type="button" class="btn btn-sm btn-outline-primary edit-account-btn" 
-                                                data-id="{{ account.id }}" title="Izmeni konto">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                {% else %}
-                                <tr>
-                                    <td colspan="5" class="text-center">Nema unetih konta za ovaj projekat</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <div class="tab-content" id="projectTabsContent">
+                        <!-- Tab 1: Stavke izvoda dodeljene projektu -->
+                        <div class="tab-pane fade show active" id="statement-items-pane" role="tabpanel"
+                             aria-labelledby="statement-items-tab">
+                            <div class="table-responsive">
+                                <table class="table report-table table-striped table-hover" id="statementItemsTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th><i class="fas fa-university me-1"></i>Račun</th>
+                                            <th><i class="fas fa-handshake me-1"></i>Partner</th>
+                                            <th><i class="fas fa-comment-dots me-1"></i>Svrha doznake</th>
+                                            <th><i class="fas fa-list-ol me-1"></i>Konto</th>
+                                            <th class="text-end"><i class="fas fa-arrow-up me-1"></i>Duguje</th>
+                                            <th class="text-end"><i class="fas fa-arrow-down me-1"></i>Potražuje</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in project_statement_items %}
+                                        <tr>
+                                            <td>
+                                                {{ item.bank_statement.bank_account.account_number }}{% if item.bank_statement.bank_account.sub_account_number %} / {{ item.bank_statement.bank_account.sub_account_number }}{% endif %}
+                                            </td>
+                                            <td>{{ item.partner.name if item.partner else '' }}</td>
+                                            <td>{{ item.description or '' }}</td>
+                                            <td>{{ item.account_level_6_number or '' }}</td>
+                                            <td class="text-end">{{ (item.amount | format_number) if item.is_debit else '' }}</td>
+                                            <td class="text-end">{{ (item.amount | format_number) if not item.is_debit else '' }}</td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="6" class="text-center">Nema stavki izvoda dodeljenih ovom projektu</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    {% if project_statement_items %}
+                                    <tfoot>
+                                        <tr class="table-primary fw-bold">
+                                            <th colspan="4">Ukupno:</th>
+                                            <th class="text-end">{{ statement_items_totals['debit'] | format_number }}</th>
+                                            <th class="text-end">{{ statement_items_totals['credit'] | format_number }}</th>
+                                        </tr>
+                                    </tfoot>
+                                    {% endif %}
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Tab 2: Konta projekta (postojeća tabela) -->
+                        <div class="tab-pane fade" id="project-accounts-pane" role="tabpanel"
+                             aria-labelledby="project-accounts-tab">
+                            <div class="table-responsive">
+                                <table class="table report-table table-striped table-hover" id="projectAccountsTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th><i class="fas fa-hashtag me-1"></i>ID</th>
+                                            <th><i class="fas fa-list-ol me-1"></i>Konto</th>
+                                            <th class="text-end"><i class="fas fa-money-bill-wave me-1"></i>Iznos</th>
+                                            <th><i class="fas fa-comment me-1"></i>Napomena</th>
+                                            <th class="text-center"><i class="fas fa-cogs me-1"></i>Akcije</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for account in project_accounts %}
+                                        <tr>
+                                            <td>{{ account.id }}</td>
+                                            <td>{{ account.account_level_6_number }}</td>
+                                            <td class="text-end">{{ account.amount | format_number }}</td>
+                                            <td>{{ account.note }}</td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-sm btn-outline-primary edit-account-btn"
+                                                        data-id="{{ account.id }}" title="Izmeni konto">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center">Nema unetih konta za ovaj projekat</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -227,12 +303,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if ($.fn.DataTable.isDataTable('#projectAccountsTable')) {
         $('#projectAccountsTable').DataTable().destroy();
     }
-    
+
     // Provera da li tabela ima podatke (više od jednog reda i da prvi red nema colspan)
-    var hasData = $('#projectAccountsTable tbody tr').length > 0 && 
+    var hasAccountsData = $('#projectAccountsTable tbody tr').length > 0 &&
                  !$('#projectAccountsTable tbody tr:first td[colspan]').length;
-                 
-    if (hasData) {
+
+    if (hasAccountsData) {
         $('#projectAccountsTable').DataTable({
             language: {
                 url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/sr-SP.json'
@@ -245,6 +321,32 @@ document.addEventListener('DOMContentLoaded', function() {
             dom: '<"top"lf>rt<"bottom"ip><"clear">'
         });
     }
+
+    // Inicijalizacija DataTables za stavke izvoda dodeljene projektu
+    if ($.fn.DataTable.isDataTable('#statementItemsTable')) {
+        $('#statementItemsTable').DataTable().destroy();
+    }
+
+    var hasStatementItemsData = $('#statementItemsTable tbody tr').length > 0 &&
+                 !$('#statementItemsTable tbody tr:first td[colspan]').length;
+
+    if (hasStatementItemsData) {
+        $('#statementItemsTable').DataTable({
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/sr-SP.json'
+            },
+            pageLength: 25,
+            order: [],
+            dom: '<"top"lf>rt<"bottom"ip><"clear">'
+        });
+    }
+
+    // DataTables u skrivenom tabu pogrešno meri širine kolona — popravljamo kad se tab pokaže
+    document.querySelectorAll('#projectTabs button[data-bs-toggle="tab"]').forEach(function(btn) {
+        btn.addEventListener('shown.bs.tab', function() {
+            $.fn.DataTable.tables({visible: true, api: true}).columns.adjust();
+        });
+    });
     
     // Obrada forme za dodavanje konta projektu
     document.getElementById('addAccountForm').addEventListener('submit', function(e) {

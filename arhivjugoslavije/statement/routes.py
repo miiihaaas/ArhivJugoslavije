@@ -314,28 +314,35 @@ def statement_details(statement_id):
             # Iteracija kroz sve stavke izvoda i ažuriranje podataka
             for item in statement.statement_items:
                 item_id = str(item.id)
-                
+
                 # Ažuriranje editabilnih polja
                 if f'partner_id_{item_id}' in request.form:
                     partner_id = request.form.get(f'partner_id_{item_id}')
                     item.partner_id = int(partner_id) if partner_id else None
-                
+
                 if f'account_level_6_number_{item_id}' in request.form:
                     account_number = request.form.get(f'account_level_6_number_{item_id}')
                     item.account_level_6_number = account_number if account_number else None
-                
+
+                previous_project_id = item.project_id
                 if f'project_id_{item_id}' in request.form:
                     project_id = request.form.get(f'project_id_{item_id}')
                     item.project_id = int(project_id) if project_id else None
-                
+
                 if f'public_procurement_{item_id}' in request.form:
                     item.public_procurement = request.form.get(f'public_procurement_{item_id}')
-                
+
                 if f'note_{item_id}' in request.form:
                     item.note = request.form.get(f'note_{item_id}')
-                
-                # Checkbox za knjiženje u projekat
-                item.account_in_project = f'account_in_project_{item_id}' in request.form
+
+                # Checkbox za knjiženje u projekat. Kad se projekat tek sad dodeljuje
+                # (prelaz None -> non-None), automatski uključi flag bez obzira na switch,
+                # da se stavka odmah uračuna u finansije projekta.
+                newly_assigned_project = previous_project_id is None and item.project_id is not None
+                if newly_assigned_project:
+                    item.account_in_project = True
+                else:
+                    item.account_in_project = f'account_in_project_{item_id}' in request.form
             
             db.session.commit()
             flash('Stavke izvoda su uspešno ažurirane.', 'success')

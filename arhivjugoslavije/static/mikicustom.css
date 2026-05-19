@@ -606,6 +606,87 @@ main.container:not(.login-screen),
     border-top: 1px solid var(--color-border);
 }
 
+/* Project content tabs — refined underline-accent style
+   Used inside .project-tabs-card. Active tab marked by 2px secondary-color
+   underline that visually fuses with the card body, matching the navbar
+   active-state convention. */
+.project-tabs-card .project-tabs-header {
+    background-color: var(--color-surface);
+    padding: 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.project-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    list-style: none;
+    margin: 0;
+    padding: 0 var(--spacing-sm);
+    gap: 0;
+    border-bottom: 0;
+}
+
+.project-tabs .nav-item {
+    margin: 0;
+    position: relative;
+}
+
+.project-tabs .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-text-light) !important;
+    background-color: transparent !important;
+    font-family: var(--font-display);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    letter-spacing: 0.01em;
+    padding: 0.75rem 1.1rem !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: inset 0 -2px 0 transparent !important;
+    transition:
+        color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        background-color var(--transition-fast);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.project-tabs .nav-link i {
+    color: var(--color-text-lighter);
+    font-size: 0.95em;
+    transition: color var(--transition-fast);
+}
+
+.project-tabs .nav-link:hover,
+.project-tabs .nav-link:focus-visible {
+    color: var(--color-primary) !important;
+    background-color: var(--color-surface-alt) !important;
+    box-shadow: inset 0 -2px 0 var(--color-border-strong) !important;
+    outline: none;
+}
+
+.project-tabs .nav-link:hover i,
+.project-tabs .nav-link:focus-visible i {
+    color: var(--color-primary);
+}
+
+.project-tabs .nav-link.active {
+    color: var(--color-primary) !important;
+    background-color: transparent !important;
+    box-shadow: inset 0 -2px 0 var(--color-secondary) !important;
+}
+
+.project-tabs .nav-link.active i {
+    color: var(--color-secondary);
+}
+
+.project-tabs-card .tab-content {
+    padding-top: 0.25rem;
+}
+
 /* Shortcut cards (home page) — editorial layout: icon top-left, title, arrow bottom-right */
 .shortcut-card {
     position: relative;
