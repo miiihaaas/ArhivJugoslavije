@@ -156,6 +156,7 @@ def supplier_card(partner_id):
                            combined_data=data['combined_data'],
                            total_debit=data['total_debit'],
                            total_credit=data['total_credit'],
+                           saldo=data['saldo'],
                            current_date=data['current_date'],
                            start_date=data['start_date'],
                            end_date=data['end_date'])
@@ -189,6 +190,7 @@ def customer_card(partner_id):
                            combined_data=data['combined_data'],
                            total_debit=data['total_debit'],
                            total_credit=data['total_credit'],
+                           saldo=data['saldo'],
                            current_date=data['current_date'],
                            start_date=data['start_date'],
                            end_date=data['end_date'])
@@ -218,9 +220,10 @@ def customer_card_pdf(partner_id):
         partner_id, 
         data['start_date'], 
         data['end_date'], 
-        data['combined_data'], 
-        data['total_debit'], 
-        data['total_credit'], 
+        data['combined_data'],
+        data['total_debit'],
+        data['total_credit'],
+        data['saldo'],
         is_customer=True
     )
 
@@ -250,8 +253,9 @@ def supplier_card_pdf(partner_id):
         partner_id, 
         data['start_date'], 
         data['end_date'], 
-        data['combined_data'], 
-        data['total_debit'], 
-        data['total_credit'], 
+        data['combined_data'],
+        data['total_debit'],
+        data['total_credit'],
+        data['saldo'],
         is_customer=False
     )

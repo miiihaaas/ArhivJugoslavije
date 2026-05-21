@@ -74,7 +74,7 @@
                             <div class="mb-2">
                                 <small class="text-muted"><i class="fas fa-money-bill me-1"></i>SALDO:</small>
                                 <div class="small">
-                                    {{ (total_debit - total_credit) }}
+                                    {{ '{:,.2f}'.format(saldo)|replace(',', ' ')|replace('.', ',') }} RSD
                                 </div>
                             </div>
                         </div>
@@ -200,6 +200,7 @@
                                         <th>Dokument</th>
                                         <th class="text-end">Duguje</th>
                                         <th class="text-end">Potražuje</th>
+                                        <th class="text-end">Saldo</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -218,16 +219,18 @@
                                                     </a>
                                                 {% endif %}
                                             </td>
-                                            <td class="text-end">{% if item.credit %}{{ '{:,.2f}'.format(item.credit)|replace(',', ' ')|replace('.', ',') }} RSD{% else %}<span class="text-muted">-</span>{% endif %}</td>
                                             <td class="text-end">{% if item.debit %}{{ '{:,.2f}'.format(item.debit)|replace(',', ' ')|replace('.', ',') }} RSD{% else %}<span class="text-muted">-</span>{% endif %}</td>
+                                            <td class="text-end">{% if item.credit %}{{ '{:,.2f}'.format(item.credit)|replace(',', ' ')|replace('.', ',') }} RSD{% else %}<span class="text-muted">-</span>{% endif %}</td>
+                                            <td class="text-end">{{ '{:,.2f}'.format(item.saldo)|replace(',', ' ')|replace('.', ',') }} RSD</td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
                                 <tfoot class="table-light fw-bold">
                                     <tr>
                                         <td colspan="3" class="text-end">Ukupno:</td>
-                                        <td class="text-end">{{ '{:,.2f}'.format(total_credit)|replace(',', ' ')|replace('.', ',') }} RSD</td>
                                         <td class="text-end">{{ '{:,.2f}'.format(total_debit)|replace(',', ' ')|replace('.', ',') }} RSD</td>
+                                        <td class="text-end">{{ '{:,.2f}'.format(total_credit)|replace(',', ' ')|replace('.', ',') }} RSD</td>
+                                        <td class="text-end">{{ '{:,.2f}'.format(saldo)|replace(',', ' ')|replace('.', ',') }} RSD</td>
                                     </tr>
                                 </tfoot>
                             </table>

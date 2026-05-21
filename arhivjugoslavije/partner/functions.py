@@ -76,66 +76,53 @@ def get_partner_card_data(partner_id, start_date=None, end_date=None, is_custome
     
     statement_items = statement_items_query.all()
     
-    # Kreiranje kombinovane liste podataka za tabelu
+    # Kreiranje kombinovane liste podataka za knjigovodstvenu karticu.
+    # Kupac (potraživanje/aktiva):  izlazna faktura -> duguje, uplata -> potražuje
+    # Dobavljač (obaveza/pasiva):   ulazna faktura -> potražuje, isplata -> duguje
     combined_data = []
-    
+
     # Dodavanje faktura u kombinovane podatke
     for invoice in invoices:
-        if is_customer:
-            # Izlazne fakture idu na potražuje
-            combined_data.append({
-                'date': invoice.service_date,
-                'account': None,  # Fakture nemaju konto
-                'document_type': 'invoice',
-                'document_id': invoice.id,
-                'document_number': invoice.invoice_number,
-                'debit': None,
-                'credit': invoice.total_amount
-            })
-        else:
-            # Ulazne fakture idu na duguje
-            combined_data.append({
-                'date': invoice.service_date,
-                'account': None,  # Fakture nemaju konto
-                'document_type': 'invoice',
-                'document_id': invoice.id,
-                'document_number': invoice.invoice_number,
-                'debit': invoice.total_amount,
-                'credit': None
-            })
-    
+        combined_data.append({
+            'date': invoice.service_date,
+            'account': None,  # Fakture nemaju konto
+            'document_type': 'invoice',
+            'document_id': invoice.id,
+            'document_number': invoice.invoice_number,
+            'debit': invoice.total_amount if is_customer else None,
+            'credit': None if is_customer else invoice.total_amount
+        })
+
     # Dodavanje stavki izvoda u kombinovane podatke
     for item in statement_items:
-        if is_customer:
-            # Uplate idu na duguje
-            combined_data.append({
-                'date': item.bank_statement.date,
-                'account': item.account_level_6_number,
-                'document_type': 'statement',
-                'document_id': item.bank_statement.id,
-                'document_number': f'{item.bank_statement.bank_account.account_number} ({item.bank_statement.date.year}/{item.bank_statement.statement_number})',
-                'debit': item.amount,
-                'credit': None
-            })
-        else:
-            # Isplate idu na potražuje
-            combined_data.append({
-                'date': item.bank_statement.date,
-                'account': item.account_level_6_number,
-                'document_type': 'statement',
-                'document_id': item.bank_statement.id,
-                'document_number': f'{item.bank_statement.bank_account.account_number} ({item.bank_statement.date.year}/{item.bank_statement.statement_number})',
-                'debit': None,
-                'credit': item.amount
-            })
-    
-    # Sortiranje po datumu, od najnovijeg ka najstarijem
-    combined_data.sort(key=lambda x: x['date'], reverse=True)
-    
+        combined_data.append({
+            'date': item.bank_statement.date,
+            'account': item.account_level_6_number,
+            'document_type': 'statement',
+            'document_id': item.bank_statement.id,
+            'document_number': f'{item.bank_statement.bank_account.account_number} ({item.bank_statement.date.year}/{item.bank_statement.statement_number})',
+            'debit': None if is_customer else item.amount,
+            'credit': item.amount if is_customer else None
+        })
+
+    # Sortiranje hronološki rastuće (najstarije prvo) radi ispravnog tekućeg salda
+    combined_data.sort(key=lambda x: x['date'])
+
+    # Računanje tekućeg (running) salda po redu.
+    # Kupac:     saldo = duguje - potražuje (pozitivno = kupac nam duguje)
+    # Dobavljač: saldo = potražuje - duguje (pozitivno = mi dugujemo dobavljaču)
+    running_saldo = 0
+    for entry in combined_data:
+        debit = entry['debit'] or 0
+        credit = entry['credit'] or 0
+        running_saldo += (debit - credit) if is_customer else (credit - debit)
+        entry['saldo'] = running_saldo
+
     # Računanje ukupnih vrednosti za duguje i potražuje
-    total_debit = sum(item['debit'] or 0 for item in combined_data)
-    total_credit = sum(item['credit'] or 0 for item in combined_data)
-    
+    total_debit = sum(entry['debit'] or 0 for entry in combined_data)
+    total_credit = sum(entry['credit'] or 0 for entry in combined_data)
+    saldo = running_saldo
+
     # Vraćanje rezultata
     return {
         'partner': partner,
@@ -144,13 +131,14 @@ def get_partner_card_data(partner_id, start_date=None, end_date=None, is_custome
         'combined_data': combined_data,
         'total_debit': total_debit,
         'total_credit': total_credit,
+        'saldo': saldo,
         'start_date': start_date,
         'end_date': end_date,
         'current_date': today
     }
 
 
-def generate_partner_card_pdf(partner_id, start_date, end_date, combined_data, total_debit, total_credit, is_customer=True):
+def generate_partner_card_pdf(partner_id, start_date, end_date, combined_data, total_debit, total_credit, saldo, is_customer=True):
     """
     Funkcija za generisanje PDF kartice partnera (kupca ili dobavljača).
     
@@ -161,6 +149,7 @@ def generate_partner_card_pdf(partner_id, start_date, end_date, combined_data, t
         combined_data (list): Lista kombinovanih podataka (fakture i stavke izvoda)
         total_debit (Decimal): Ukupan iznos na dugovnoj strani
         total_credit (Decimal): Ukupan iznos na potražuju strani
+        saldo (Decimal): Završni saldo kartice (pozitivno = duguje nam kupac / dugujemo dobavljaču)
         is_customer (bool): True ako je kupac, False ako je dobavljač
     
     Returns:
@@ -310,23 +299,24 @@ def generate_partner_card_pdf(partner_id, start_date, end_date, combined_data, t
         pdf.set_font('DejaVu', 'B', 10)
         
         # Zaglavlje tabele
-        col_widths = [25, 20, 70, 35, 35]  # u0160irine kolona u mm
+        col_widths = [22, 16, 56, 32, 32, 32]  # širine kolona u mm
         pdf.cell(col_widths[0], 10, 'Datum', 1, new_x="RIGHT", new_y="LAST", align="C")
         pdf.cell(col_widths[1], 10, 'Konto', 1, new_x="RIGHT", new_y="LAST", align="C")
         pdf.cell(col_widths[2], 10, 'Dokument', 1, new_x="RIGHT", new_y="LAST", align="C")
         pdf.cell(col_widths[3], 10, 'Duguje', 1, new_x="RIGHT", new_y="LAST", align="C")
-        pdf.cell(col_widths[4], 10, 'Potražuje', 1, new_x="LMARGIN", new_y="NEXT", align="C")
-        
+        pdf.cell(col_widths[4], 10, 'Potražuje', 1, new_x="RIGHT", new_y="LAST", align="C")
+        pdf.cell(col_widths[5], 10, 'Saldo', 1, new_x="LMARGIN", new_y="NEXT", align="C")
+
         # Podaci u tabeli
         pdf.set_font('DejaVu', '', 9)
         for item in combined_data:
             # Datum
             pdf.cell(col_widths[0], 8, item['date'].strftime('%d.%m.%Y.'), 1, new_x="RIGHT", new_y="LAST", align="C")
-            
+
             # Konto
             konto_text = item['account'] if item['account'] else '-'
             pdf.cell(col_widths[1], 8, konto_text, 1, new_x="RIGHT", new_y="LAST", align="C")
-            
+
             # Dokument
             if item['document_type'] == 'invoice':
                 if is_customer:
@@ -335,40 +325,30 @@ def generate_partner_card_pdf(partner_id, start_date, end_date, combined_data, t
                     doc_text = f"Ulazna faktura: {item['document_number']}"
             else:
                 doc_text = f"Izvod: {item['document_number']}"
-            
+
             pdf.cell(col_widths[2], 8, doc_text, 1, new_x="RIGHT", new_y="LAST", align="L")
-            
-            if is_customer:
-                # Duguje
-                credit_text = f"{item['credit']:.2f} RSD" if item['credit'] else '-'
-                pdf.cell(col_widths[3], 8, credit_text, 1, new_x="RIGHT", new_y="LAST", align="R")
-                
-                # Potražuje
-                debit_text = f"{item['debit']:.2f} RSD" if item['debit'] else '-'
-                pdf.cell(col_widths[4], 8, debit_text, 1, new_x="LMARGIN", new_y="NEXT", align="R")
-            else:
-                # Duguje
-                debit_text = f"{item['debit']:.2f} RSD" if item['debit'] else '-'
-                pdf.cell(col_widths[3], 8, debit_text, 1, new_x="RIGHT", new_y="LAST", align="R")
-                
-                # Potražuje
-                credit_text = f"{item['credit']:.2f} RSD" if item['credit'] else '-'
-                pdf.cell(col_widths[4], 8, credit_text, 1, new_x="LMARGIN", new_y="NEXT", align="R")
-        
+
+            # Duguje
+            debit_text = f"{item['debit']:.2f} RSD" if item['debit'] else '-'
+            pdf.cell(col_widths[3], 8, debit_text, 1, new_x="RIGHT", new_y="LAST", align="R")
+
+            # Potražuje
+            credit_text = f"{item['credit']:.2f} RSD" if item['credit'] else '-'
+            pdf.cell(col_widths[4], 8, credit_text, 1, new_x="RIGHT", new_y="LAST", align="R")
+
+            # Saldo (tekući)
+            pdf.cell(col_widths[5], 8, f"{item['saldo']:.2f}", 1, new_x="LMARGIN", new_y="NEXT", align="R")
+
         # Ukupno
         pdf.set_font('DejaVu', 'B', 10)
         pdf.cell(col_widths[0] + col_widths[1] + col_widths[2], 10, 'UKUPNO:', 1, new_x="RIGHT", new_y="LAST", align="R")
-        if is_customer:
-            pdf.cell(col_widths[3], 10, f"{total_credit:.2f} RSD", 1, new_x="RIGHT", new_y="LAST", align="R")
-            pdf.cell(col_widths[4], 10, f"{total_debit:.2f} RSD", 1, new_x="LMARGIN", new_y="NEXT", align="R")
-        else:
-            pdf.cell(col_widths[3], 10, f"{total_debit:.2f} RSD", 1, new_x="RIGHT", new_y="LAST", align="R")
-            pdf.cell(col_widths[4], 10, f"{total_credit:.2f} RSD", 1, new_x="LMARGIN", new_y="NEXT", align="R")
-        
-        # Saldo
-        saldo = total_debit - total_credit
-        pdf.cell(col_widths[0] + col_widths[1] + col_widths[2], 10, 'SALDO:', 1, new_x="RIGHT", new_y="LAST", align="R")
-        pdf.cell(col_widths[3] + col_widths[4], 10, f"{saldo:.2f} RSD", 1, new_x="LMARGIN", new_y="NEXT", align="R")
+        pdf.cell(col_widths[3], 10, f"{total_debit:.2f} RSD", 1, new_x="RIGHT", new_y="LAST", align="R")
+        pdf.cell(col_widths[4], 10, f"{total_credit:.2f} RSD", 1, new_x="RIGHT", new_y="LAST", align="R")
+        pdf.cell(col_widths[5], 10, f"{saldo:.2f}", 1, new_x="LMARGIN", new_y="NEXT", align="R")
+
+        # Završni saldo
+        pdf.cell(col_widths[0] + col_widths[1] + col_widths[2] + col_widths[3], 10, 'SALDO:', 1, new_x="RIGHT", new_y="LAST", align="R")
+        pdf.cell(col_widths[4] + col_widths[5], 10, f"{saldo:.2f} RSD", 1, new_x="LMARGIN", new_y="NEXT", align="R")
         
         # Generisanje PDF-a
         pdf_bytes = io.BytesIO()
