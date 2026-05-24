@@ -1,0 +1,220 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+    <!-- Zaglavlje stranice sa naslovom i dugmadima za akcije -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0"><i class="fas fa-scale-balanced me-2 text-primary"></i>{{ legend }}</h2>
+                        <div>
+                            <a href="{{ url_for('partner.partners') }}" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-arrow-left me-1"></i> Nazad na listu partnera
+                            </a>
+                            <a href="{{ url_for('partner.edit_partner', partner_id=partner.id) }}" class="btn btn-primary">
+                                <i class="fas fa-edit me-1"></i> Izmeni podatke
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <!-- Informacije o partneru -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0"><i class="fas fa-info-circle me-2"></i>Informacije o partneru</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="bg-light rounded-circle p-2 me-2">
+                            <i class="fas fa-building text-primary"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">{{ partner.name }}</h6>
+                            <div>
+                                <span class="badge bg-success">Kupac</span>
+                                <span class="badge bg-danger ms-1">Dobavljač</span>
+                                {% if partner.international %}
+                                    <span class="badge bg-info ms-1">Inostrani partner</span>
+                                {% endif %}
+                                <span class="badge {% if partner.active %}bg-success{% else %}bg-secondary{% endif %} ms-1">
+                                    {{ 'Aktivan' if partner.active else 'Neaktivan' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-2">
+
+                    <div class="row g-0">
+                        <div class="col-md-6 pe-md-2">
+                            <div class="mb-2">
+                                <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>Adresa:</small>
+                                <div class="small">
+                                    {% if partner.address %}{{ partner.address }}{% else %}<span class="text-muted">Nije uneto</span>{% endif %}
+                                    {% if partner.city %}, {{ partner.city }}{% endif %}
+                                    {% if partner.country %}, {{ partner.country }}{% endif %}
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <small class="text-muted"><i class="fas fa-phone-alt me-1"></i>Telefon:</small>
+                                <div class="small">
+                                    {% if partner.phone_1 %}{{ partner.phone_1 }}{% endif %}
+                                    {% if partner.phone_2 %}, {{ partner.phone_2 }}{% endif %}
+                                    {% if not partner.phone_1 and not partner.phone_2 %}<span class="text-muted">Nije uneto</span>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 ps-md-2">
+                            <div class="mb-2">
+                                <small class="text-muted"><i class="fas fa-id-card me-1"></i>PIB/MB:</small>
+                                <div class="small">
+                                    {% if partner.pib %}PIB: {{ partner.pib }}{% else %}<span class="text-muted">PIB: Nije uneto</span>{% endif %}
+                                    {% if partner.mb %}<br>MB: {{ partner.mb }}{% else %}<br><span class="text-muted">MB: Nije uneto</span>{% endif %}
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <small class="text-muted"><i class="fas fa-university me-1"></i>Račun:</small>
+                                <div class="small">
+                                    {% if partner.account_number %}{{ partner.account_number }}{% else %}<span class="text-muted">Nije uneto</span>{% endif %}
+                                </div>
+                            </div>
+                            {% if partner.email %}
+                            <div class="mb-2">
+                                <small class="text-muted"><i class="fas fa-envelope me-1"></i>Mejl:</small>
+                                <div class="small">{{ partner.email }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sažetak salda -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0"><i class="fas fa-calculator me-2"></i>Stanje (saldo)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span><i class="fas fa-file-export me-1 text-success"></i> Saldo kao kupac <small class="text-muted">(potraživanje)</small></span>
+                        <span class="fw-bold">{{ '{:,.2f}'.format(saldo_customer)|replace(',', ' ')|replace('.', ',') }} RSD</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span><i class="fas fa-file-import me-1 text-danger"></i> Saldo kao dobavljač <small class="text-muted">(obaveza)</small></span>
+                        <span class="fw-bold">{{ '{:,.2f}'.format(saldo_supplier)|replace(',', ' ')|replace('.', ',') }} RSD</span>
+                    </div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold"><i class="fas fa-scale-balanced me-1 text-primary"></i> NETO (pravo stanje)</span>
+                        <span class="fs-5 fw-bold {% if neto_saldo > 0 %}text-success{% elif neto_saldo < 0 %}text-danger{% endif %}">
+                            {{ '{:,.2f}'.format(neto_saldo)|replace(',', ' ')|replace('.', ',') }} RSD
+                        </span>
+                    </div>
+                    <div class="mt-2 text-end">
+                        {% if neto_saldo > 0 %}
+                            <span class="badge bg-success">Partner duguje nama (dugovni saldo)</span>
+                        {% elif neto_saldo < 0 %}
+                            <span class="badge bg-danger">Mi dugujemo partneru (potražni saldo)</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Poravnato</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Objedinjeni promet -->
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0"><i class="fas fa-credit-card me-2"></i>Objedinjeni promet (kupac + dobavljač)</h5>
+                    <div class="d-flex align-items-center">
+                        <form method="POST" class="d-flex me-2">
+                            <div class="input-group input-group-sm me-2" style="width: 170px;">
+                                <span class="input-group-text">Od</span>
+                                <input type="date" class="form-control form-control-sm" name="start_date" value="{{ start_date.strftime('%Y-%m-%d') }}">
+                            </div>
+                            <div class="input-group input-group-sm me-2" style="width: 170px;">
+                                <span class="input-group-text">Do</span>
+                                <input type="date" class="form-control form-control-sm" name="end_date" value="{{ end_date.strftime('%Y-%m-%d') }}">
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="fas fa-filter me-1"></i> Filtriraj
+                            </button>
+                        </form>
+                        <a href="{{ url_for('partner.partner_card_pdf', partner_id=partner.id, start_date=start_date.strftime('%Y-%m-%d'), end_date=end_date.strftime('%Y-%m-%d')) }}" class="btn btn-primary btn-sm" target="_blank">
+                            <i class="fas fa-print me-1"></i> Štampa objedinjene kartice
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if combined_data %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Datum</th>
+                                        <th>Konto</th>
+                                        <th>Dokument</th>
+                                        <th class="text-end">Duguje</th>
+                                        <th class="text-end">Potražuje</th>
+                                        <th class="text-end">Saldo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in combined_data %}
+                                        <tr>
+                                            <td>{{ item.date.strftime('%d.%m.%Y') }}</td>
+                                            <td>{% if item.account %}{{ item.account }}{% else %}<span class="text-muted">-</span>{% endif %}</td>
+                                            <td>
+                                                {% if item.document_type == 'invoice' %}
+                                                    {% if item.role == 'customer' %}
+                                                        <a href="{{ url_for('invoices.edit_customer_invoice', invoice_id=item.document_id) }}" class="text-decoration-none">
+                                                            <i class="fas fa-file-export me-1 text-success"></i> Izlazna: {{ item.document_number }}
+                                                        </a>
+                                                    {% else %}
+                                                        <a href="{{ url_for('invoices.edit_supplier_invoice', invoice_id=item.document_id) }}" class="text-decoration-none">
+                                                            <i class="fas fa-file-import me-1 text-danger"></i> Ulazna: {{ item.document_number }}
+                                                        </a>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <a href="{{ url_for('statement.statement_details', statement_id=item.document_id) }}" class="text-decoration-none">
+                                                        <i class="fas fa-file-invoice-dollar me-1 text-primary"></i> {{ 'Uplata' if item.role == 'customer' else 'Isplata' }}: {{ item.document_number }}
+                                                    </a>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">{% if item.debit %}{{ '{:,.2f}'.format(item.debit)|replace(',', ' ')|replace('.', ',') }} RSD{% else %}<span class="text-muted">-</span>{% endif %}</td>
+                                            <td class="text-end">{% if item.credit %}{{ '{:,.2f}'.format(item.credit)|replace(',', ' ')|replace('.', ',') }} RSD{% else %}<span class="text-muted">-</span>{% endif %}</td>
+                                            <td class="text-end">{{ '{:,.2f}'.format(item.saldo)|replace(',', ' ')|replace('.', ',') }} RSD</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot class="table-light fw-bold">
+                                    <tr>
+                                        <td colspan="3" class="text-end">Ukupno:</td>
+                                        <td class="text-end">{{ '{:,.2f}'.format(total_debit)|replace(',', ' ')|replace('.', ',') }} RSD</td>
+                                        <td class="text-end">{{ '{:,.2f}'.format(total_credit)|replace(',', ' ')|replace('.', ',') }} RSD</td>
+                                        <td class="text-end">{{ '{:,.2f}'.format(neto_saldo)|replace(',', ' ')|replace('.', ',') }} RSD</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted my-3">Nema podataka za prikaz u objedinjenoj kartici.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

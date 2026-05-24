@@ -111,6 +111,13 @@
                                 <i class="fas fa-file-export"></i>
                             </a>
                             {% endif %}
+                            {% if partner.customer and partner.supplier %}
+                            <a href="{{ url_for('partner.partner_card', partner_id=partner.id) }}"
+                                class="btn btn-outline-dark btn-sm action-btn"
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="Objedinjena kartica (kupac + dobavljač)">
+                                <i class="fas fa-scale-balanced"></i>
+                            </a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

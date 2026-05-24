@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from arhivjugoslavije import db, app
 from arhivjugoslavije.models import Partner, Invoice, StatementItem, BankStatement
 from arhivjugoslavije.partner.forms import PartnerForm, EditPartnerForm
-from arhivjugoslavije.partner.functions import generate_partner_card_pdf, get_partner_card_data
+from arhivjugoslavije.partner.functions import generate_partner_card_pdf, get_partner_card_data, get_combined_partner_card_data, generate_combined_partner_card_pdf
 from datetime import datetime
 
 
@@ -258,4 +258,72 @@ def supplier_card_pdf(partner_id):
         data['total_credit'],
         data['saldo'],
         is_customer=False
+    )
+
+
+@partner.route('/partner_card/<int:partner_id>', methods=['GET', 'POST'])
+@login_required
+def partner_card(partner_id):
+    # Dobijanje datuma iz forme ili korišćenje podrazumevanih vrednosti
+    if request.method == 'POST':
+        start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d').date() if request.form.get('start_date') else None
+        end_date = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d').date() if request.form.get('end_date') else None
+    else:
+        start_date = None
+        end_date = None
+
+    # Dobijanje objedinjenih podataka (kupac + dobavljač)
+    data = get_combined_partner_card_data(partner_id, start_date, end_date)
+
+    # Provera da li je došlo do greške
+    if 'error' in data:
+        flash(data['message'], 'warning')
+        return redirect(url_for('partner.partners'))
+
+    return render_template('partner/partner_card.html',
+                           partner=data['partner'],
+                           legend=f'Objedinjena kartica: {data["partner"].name}',
+                           title=f'Objedinjena kartica: {data["partner"].name}',
+                           combined_data=data['combined_data'],
+                           total_debit=data['total_debit'],
+                           total_credit=data['total_credit'],
+                           saldo_customer=data['saldo_customer'],
+                           saldo_supplier=data['saldo_supplier'],
+                           neto_saldo=data['neto_saldo'],
+                           current_date=data['current_date'],
+                           start_date=data['start_date'],
+                           end_date=data['end_date'])
+
+
+@partner.route('/partner_card/<int:partner_id>/pdf', methods=['GET'])
+@login_required
+def partner_card_pdf(partner_id):
+    # Dobijanje datuma iz URL parametara ili korišćenje podrazumevanih vrednosti
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    if start_date:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+    if end_date:
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+
+    # Dobijanje objedinjenih podataka (kupac + dobavljač)
+    data = get_combined_partner_card_data(partner_id, start_date, end_date)
+
+    # Provera da li je došlo do greške
+    if 'error' in data:
+        flash(data['message'], 'warning')
+        return redirect(url_for('partner.partners'))
+
+    # Generisanje PDF-a
+    return generate_combined_partner_card_pdf(
+        partner_id,
+        data['start_date'],
+        data['end_date'],
+        data['combined_data'],
+        data['total_debit'],
+        data['total_credit'],
+        data['saldo_customer'],
+        data['saldo_supplier'],
+        data['neto_saldo']
     )
