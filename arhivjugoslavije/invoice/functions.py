@@ -10,6 +10,15 @@ from arhivjugoslavije import format_number
 from flask_mail import Message
 
 
+def cc_adrese_korisnika():
+    """
+    Adrese korisnika aplikacije koji dobijaju kopiju (CC) mejlova partnerima.
+    Adrese navedene u MAIL_CC_ISKLJUCI (.env, odvojene zarezom) se preskaču.
+    """
+    iskljuceni = {a.strip().lower() for a in os.getenv('MAIL_CC_ISKLJUCI', '').split(',') if a.strip()}
+    return [user.email for user in User.query.all() if user.email and user.email.strip().lower() not in iskljuceni]
+
+
 def save_invoice_to_db(invoice_id):
     """
     Funkcija za sačuvanje fakture u data bazi.
@@ -32,13 +41,12 @@ def notify_partner_about_canceled_invoice(invoice_number, partner_id):
     Vraća poruku sa statusom slanja.
     """
     partner = Partner.query.get_or_404(partner_id)
-    cc = User.query.all()
     message = {}
     if partner.email:
         msg = Message(
             subject=f'Faktura {invoice_number} stornirana',
             recipients=[partner.email],
-            cc=[user.email for user in cc],
+            cc=cc_adrese_korisnika(),
             body=f'Faktura {invoice_number} je stornirana.'
         )
         try:
@@ -108,10 +116,7 @@ def send_email(invoice):
         subject = f'Faktura {invoice.invoice_number}'
         # sender = current_app.config.get('MAIL_DEFAULT_SENDER', archive_settings.email)
         sender = os.getenv('MAIL_USERNAME')
-        users = User.query.all()
-        cc = []
-        for user in users:
-            cc.append(user.email)
+        cc = cc_adrese_korisnika()
         
         # Kreiraj HTML sadržaj emaila
         html_body = f'''
