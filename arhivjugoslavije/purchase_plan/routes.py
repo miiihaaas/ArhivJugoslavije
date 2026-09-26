@@ -6,8 +6,8 @@ from datetime import datetime
 
 purchase_plan = Blueprint('purchase_plan', __name__)
 
-@login_required
 @purchase_plan.route("/purchase_plan_list", methods=["GET"])
+@login_required
 def purchase_plan_list():
     current_year = datetime.now().year
     purchase_plans = PurchasePlan.query.all()
@@ -19,8 +19,8 @@ def purchase_plan_list():
 
 
 
-@login_required
 @purchase_plan.route("/create_purchase_plan", methods=["GET", "POST"])
+@login_required
 def create_purchase_plan():
     if request.method == "POST":
         year = request.form["year"]
@@ -32,8 +32,8 @@ def create_purchase_plan():
     return render_template("purchase_plan/create_purchase_plan.html")
 
 
-@login_required
 @purchase_plan.route("/edit_purchase_plan/<int:purchase_plan_id>", methods=["GET", "POST"])
+@login_required
 def edit_purchase_plan(purchase_plan_id):
     purchase_plan = PurchasePlan.query.get_or_404(purchase_plan_id)
     accounts_level_4 = AccountLevel4.query.all()
@@ -53,8 +53,8 @@ def edit_purchase_plan(purchase_plan_id):
                             readonly=readonly)
 
 
-@login_required
 @purchase_plan.route("/delete_purchase_plan/<int:purchase_plan_id>", methods=["POST"])
+@login_required
 def delete_purchase_plan(purchase_plan_id):
     purchase_plan = PurchasePlan.query.get_or_404(purchase_plan_id)
     purchase_plan_accounts = PurchasePlanAccount.query.filter_by(purchase_plan_id=purchase_plan_id).all()
@@ -66,8 +66,8 @@ def delete_purchase_plan(purchase_plan_id):
     return redirect(url_for("purchase_plan.purchase_plan_list"))
 
 
-@login_required
 @purchase_plan.route("/add_account/<int:purchase_plan_id>", methods=["POST"])
+@login_required
 def add_account(purchase_plan_id):
     purchase_plan = PurchasePlan.query.get_or_404(purchase_plan_id)
     
@@ -106,8 +106,8 @@ def add_account(purchase_plan_id):
     return redirect(url_for("purchase_plan.edit_purchase_plan", purchase_plan_id=purchase_plan_id))
 
 
-@login_required
 @purchase_plan.route("/edit_account/<int:purchase_plan_id>/<int:account_id>", methods=["POST"])
+@login_required
 def edit_account(purchase_plan_id, account_id):
     account = PurchasePlanAccount.query.get_or_404(account_id)
     
@@ -124,8 +124,8 @@ def edit_account(purchase_plan_id, account_id):
     return redirect(url_for("purchase_plan.edit_purchase_plan", purchase_plan_id=purchase_plan_id))
 
 
-@login_required
 @purchase_plan.route("/delete_account/<int:purchase_plan_id>/<int:account_id>", methods=["POST"])
+@login_required
 def delete_account(purchase_plan_id, account_id):
     account = PurchasePlanAccount.query.get_or_404(account_id)
     db.session.delete(account)

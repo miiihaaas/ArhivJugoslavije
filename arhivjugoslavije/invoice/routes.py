@@ -254,6 +254,7 @@ def edit_customer_invoice(invoice_id):
 
 
 @invoices.route('/edit_supplier_invoice/<int:invoice_id>', methods=['GET', 'POST'])
+@login_required
 def edit_supplier_invoice(invoice_id):
     endpoint = request.endpoint
     invoice = Invoice.query.get_or_404(invoice_id)
