@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
-from flask_login import login_required
+from flask_login import login_required, current_user
 import os
 import xml.etree.ElementTree as ET
 from datetime import datetime
@@ -448,3 +448,26 @@ def statement_details(statement_id):
                             accounts_level_6=accounts_level_6,
                             projects=projects,
                             kontrola=kontrola)
+
+
+@statement.route('/delete_statement_item/<int:item_id>', methods=['POST'])
+@login_required
+def delete_statement_item(item_id):
+    item = StatementItem.query.get_or_404(item_id)
+    statement_id = item.bank_statement_id
+    try:
+        # Kompletni podaci stavke se beleže u log pre brisanja, da bi brisanje moglo da se rekonstruiše
+        podaci = {kolona.name: getattr(item, kolona.name) for kolona in StatementItem.__table__.columns}
+        app.logger.warning(f'Brisanje stavke izvoda (korisnik: {current_user.id}): {podaci}')
+
+        from arhivjugoslavije import format_number
+        opis = item.description or item.payer or item.recipient or f'#{item.id}'
+        iznos = format_number(item.amount)
+
+        db.session.delete(item)
+        db.session.commit()
+        flash(f'Stavka izvoda "{opis}" ({iznos} RSD) je uspešno obrisana.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Došlo je do greške prilikom brisanja stavke izvoda: {str(e)}.', 'danger')
+    return redirect(url_for('statement.statement_details', statement_id=statement_id))

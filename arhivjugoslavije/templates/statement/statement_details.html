@@ -192,6 +192,17 @@
                                         <div class="form-check form-switch d-flex justify-content-center">
                                             <input type="checkbox" class="form-check-input" id="account_in_project_{{ item.id }}" name="account_in_project_{{ item.id }}" {% if item.account_in_project %}checked{% endif %} {% if not current_user.is_authenticated %}disabled{% endif %}>
                                         </div>
+                                        {% if current_user.is_authenticated %}
+                                        <!-- Brisanje stavke (npr. odbijeni/vraćeni nalog koji nije u zaglavlju izvoda) -->
+                                        <button type="button" class="btn btn-link btn-sm text-danger p-0 mt-2 btn-obrisi-stavku" title="Obriši stavku"
+                                                data-item-id="{{ item.id }}"
+                                                data-iznos="{{ item.amount|format_number }}"
+                                                data-uplatilac="{{ item.payer or '' }}"
+                                                data-primalac="{{ item.recipient or '' }}"
+                                                data-svrha="{{ item.description or '' }}">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                        {% endif %}
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -226,6 +237,59 @@
         </form>
     </div>
 </div>
+
+{% if current_user.is_authenticated %}
+<!-- Modal za brisanje stavke izvoda (van glavne forme, sa sopstvenom formom) -->
+<div class="modal fade" id="deleteStatementItemModal" tabindex="-1" aria-labelledby="deleteStatementItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteStatementItemModalLabel">Brisanje stavke izvoda</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Da li ste sigurni da želite da obrišete ovu stavku izvoda?</p>
+                <div class="alert alert-info">
+                    <div class="row mb-2">
+                        <div class="col-4 fw-bold">Iznos:</div>
+                        <div class="col-8"><span id="deleteItemIznos"></span> RSD</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4 fw-bold">Strana:</div>
+                        <div class="col-8" id="deleteItemStrana"></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4 fw-bold">Uplatilac:</div>
+                        <div class="col-8" id="deleteItemUplatilac"></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4 fw-bold">Primalac:</div>
+                        <div class="col-8" id="deleteItemPrimalac"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-4 fw-bold">Svrha:</div>
+                        <div class="col-8" id="deleteItemSvrha"></div>
+                    </div>
+                </div>
+                <div class="alert alert-danger small mb-2">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    Brisanje je trajno. Brišite samo stavke koje ne postoje na izvodu (nisu u zaglavlju).
+                </div>
+                <div class="alert alert-warning small mb-0 d-none" id="deleteItemNesacuvano">
+                    <i class="fas fa-exclamation-circle me-1"></i>
+                    Na stranici postoje nesačuvane izmene strane stavki (označeni redovi). Brisanjem će te izmene biti izgubljene - prvo sačuvajte izmene ako želite da ih zadržite.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Odustani</button>
+                <form id="deleteStatementItemForm" method="POST" action="">
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-trash-alt me-1"></i> Obriši</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 {% endblock %}
 
@@ -334,6 +398,30 @@ $(document).ready(function() {
         var $red = $(this).closest('tr');
         var trenutna = $red.find('.is-debit-input').val();
         postaviStranu($red, trenutna === 'true' ? 'false' : 'true');
+    });
+
+    // Brisanje stavke — popunjavanje i otvaranje modala za potvrdu
+    $(document).on('click', '.btn-obrisi-stavku', function(e) {
+        e.preventDefault();
+        var $dugme = $(this);
+        var $red = $dugme.closest('tr');
+        // Prikazuje se sačuvana strana stavke (ona koja se briše iz baze)
+        var sacuvanaStrana = String($red.data('original-debit'));
+        var nazivStrane = sacuvanaStrana === 'true' ? 'Duguje (isplata)'
+            : (sacuvanaStrana === 'false' ? 'Potražuje (uplata)' : 'Nepoznato');
+
+        $('#deleteItemIznos').text($dugme.attr('data-iznos'));
+        $('#deleteItemStrana').text(nazivStrane);
+        $('#deleteItemUplatilac').text($dugme.attr('data-uplatilac') || '-');
+        $('#deleteItemPrimalac').text($dugme.attr('data-primalac') || '-');
+        $('#deleteItemSvrha').text($dugme.attr('data-svrha') || '-');
+
+        // Upozorenje ako postoje nesačuvane izmene strane u glavnoj formi
+        $('#deleteItemNesacuvano').toggleClass('d-none', $('tr.stavka-red.table-warning').length === 0);
+
+        $('#deleteStatementItemForm').attr('action',
+            '{{ url_for("statement.delete_statement_item", item_id=0) }}'.replace(/0$/, $dugme.attr('data-item-id')));
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteStatementItemModal')).show();
     });
     {% endif %}
 });
