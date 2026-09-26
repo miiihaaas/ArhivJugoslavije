@@ -89,6 +89,11 @@
     <!-- Stavke izvoda -->
     <div class="mt-4">
         <form id="statementForm" method="POST" action="{{ url_for('statement.statement_details', statement_id=statement.id) }}">
+            <!-- Kontrola slaganja stavki sa zaglavljem izvoda (ažurira se i u JS pri promeni strane) -->
+            <div id="kontrolaAlert" class="alert {% if kontrola.ok %}alert-success{% else %}alert-danger{% endif %} py-2 small mb-2">
+                <i class="fas {% if kontrola.ok %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %} me-1"></i>
+                <span class="poruka">{% if kontrola.ok %}Stavke se slažu sa zaglavljem izvoda.{% else %}Stavke se NE slažu sa zaglavljem izvoda - proverite stranu (Duguje/Potražuje) stavki.{% endif %}</span>
+            </div>
             <div class="card">
                 <div class="card-header bg-success text-white py-2">
                     <h5 class="mb-0 small"><i class="fas fa-table me-2"></i>Stavke izvoda</h5>
@@ -101,8 +106,8 @@
                                     <!-- Needitabilna polja (iz XML fajla) - smanjene širine i objedinjene kolone -->
                                     <th style="width: 8%" class="small">Uplatilac</th>
                                     <th style="width: 8%" class="small">Primalac</th>
-                                    <th style="width: 5%" class="small text-end">Iznos</th>
-                                    <th style="width: 4%" class="small text-center">Tip</th>
+                                    <th style="width: 6%" class="small text-end">Duguje<div class="text-muted fw-normal" style="font-size: 0.75em;">isplata</div></th>
+                                    <th style="width: 6%" class="small text-end">Potražuje<div class="text-muted fw-normal" style="font-size: 0.75em;">uplata</div></th>
                                     <th style="width: 15%" class="small">Dokument i svrha</th>
                                     <!-- Editabilna polja - spojena kolona za kontiranje -->
                                     <th style="width: 25%" class="bg-light"><strong>Partner / Konto / Projekat</strong></th>
@@ -113,19 +118,28 @@
                             </thead>
                             <tbody>
                                 {% for item in statement.statement_items %}
-                                <tr>
+                                {% set strana = 'true' if item.is_debit is sameas true else ('false' if item.is_debit is sameas false else '') %}
+                                <tr class="stavka-red{% if not strana %} table-danger{% endif %}" data-item-id="{{ item.id }}" data-original-debit="{{ strana }}" data-cents="{{ ((item.amount or 0) * 100)|round|int }}">
                                     <!-- Needitabilna polja (iz XML fajla) - smanjen font -->
                                     <td class="small">{{ item.payer }}</td>
                                     <td class="small">{{ item.recipient }}</td>
-                                    <td class="small text-end">{{ item.amount }} RSD</td>
-                                    <td class="text-center">
-                                        {% if item.is_debit %}
-                                            <span class="badge bg-success">Isplata</span>
-                                        {% elif not item.is_debit %}
-                                            <span class="badge bg-primary">Uplata</span>
-                                        {% else %}
-                                            <span class="badge bg-danger">Nepoznato!</span>
+                                    <!-- Iznos se prikazuje u koloni za svoju stranu; klik na ćeliju prebacuje stavku na tu stranu -->
+                                    <td class="small text-end text-nowrap strana-celija" data-strana="true"
+                                        {% if current_user.is_authenticated %}style="cursor: pointer;" title="Klikni da stavka bude na strani Duguje (isplata)"{% endif %}>
+                                        <span class="iznos-vrednost">{% if strana == 'true' %}{{ item.amount|format_number }}{% endif %}</span>
+                                    </td>
+                                    <td class="small text-end text-nowrap strana-celija" data-strana="false"
+                                        {% if current_user.is_authenticated %}style="cursor: pointer;" title="Klikni da stavka bude na strani Potražuje (uplata)"{% endif %}>
+                                        <span class="iznos-vrednost">{% if strana == 'false' %}{{ item.amount|format_number }}{% endif %}</span>
+                                        {% if not strana %}<span class="badge bg-danger">Nepoznato!</span>{% endif %}
+                                        {% if current_user.is_authenticated %}
+                                        <div>
+                                            <button type="button" class="btn btn-link btn-sm p-0 btn-prebaci-stranu" title="Prebaci na drugu stranu">
+                                                <i class="fas fa-exchange-alt"></i>
+                                            </button>
+                                        </div>
                                         {% endif %}
+                                        <input type="hidden" name="is_debit_{{ item.id }}" class="is-debit-input" value="{{ strana }}">
                                     </td>
                                     <td class="small">
                                         <div><strong>Broj:</strong> {{ item.document_number }}</div>
@@ -182,6 +196,29 @@
                                 </tr>
                                 {% endfor %}
                             </tbody>
+                            <!-- Kontrola: zbir stavki po stranama naspram zaglavlja izvoda -->
+                            <tfoot class="small" id="kontrolaTfoot"
+                                   data-zaglavlje-duguje="{{ (kontrola.duguje_zaglavlje * 100)|round|int }}"
+                                   data-zaglavlje-potrazuje="{{ (kontrola.potrazuje_zaglavlje * 100)|round|int }}">
+                                {% set klasa_duguje = 'text-success' if kontrola.duguje_stavke == kontrola.duguje_zaglavlje else 'text-danger fw-bold' %}
+                                {% set klasa_potrazuje = 'text-success' if kontrola.potrazuje_stavke == kontrola.potrazuje_zaglavlje else 'text-danger fw-bold' %}
+                                <tr>
+                                    <th colspan="2" class="text-end">Ukupno stavke</th>
+                                    <td class="text-end text-nowrap {{ klasa_duguje }}" id="ukupnoStavkeDuguje">
+                                        <span class="suma">{{ kontrola.duguje_stavke|format_number }}</span> <span class="fw-normal">(<span class="broj">{{ kontrola.broj_duguje_stavke }}</span>)</span>
+                                    </td>
+                                    <td class="text-end text-nowrap {{ klasa_potrazuje }}" id="ukupnoStavkePotrazuje">
+                                        <span class="suma">{{ kontrola.potrazuje_stavke|format_number }}</span> <span class="fw-normal">(<span class="broj">{{ kontrola.broj_potrazuje_stavke }}</span>)</span>
+                                    </td>
+                                    <td colspan="5"></td>
+                                </tr>
+                                <tr>
+                                    <th colspan="2" class="text-end">Zaglavlje izvoda</th>
+                                    <td class="text-end text-nowrap {{ klasa_duguje }}" id="zaglavljeDuguje">{{ statement.total_debit|format_number }}</td>
+                                    <td class="text-end text-nowrap {{ klasa_potrazuje }}" id="zaglavljePotrazuje">{{ statement.total_credit|format_number }}</td>
+                                    <td colspan="5"></td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
@@ -226,6 +263,79 @@ $(document).ready(function() {
             $(this).css('width', '100%');
         });
     }, 100);
+
+    // ===== Strana stavke (Duguje = isplata / Potražuje = uplata) i kontrola sa zaglavljem =====
+    // Iznosi se računaju u celim parama (cents) da bi se izbegle greške zaokruživanja
+    function formatIznos(pare) {
+        return (pare / 100).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Postavlja stranu stavke i osvežava prikaz reda
+    function postaviStranu($red, strana) {
+        var pare = parseInt($red.data('cents'), 10) || 0;
+        $red.find('.is-debit-input').val(strana);
+        $red.find('.strana-celija').each(function() {
+            var $celija = $(this);
+            $celija.find('.iznos-vrednost').text(String($celija.data('strana')) === strana ? formatIznos(pare) : '');
+        });
+        $red.find('.badge.bg-danger').remove();
+        $red.removeClass('table-danger');
+        // Označavanje reda čija je strana izmenjena u odnosu na sačuvanu (nesačuvana izmena)
+        $red.toggleClass('table-warning', String($red.data('original-debit')) !== strana);
+        osveziKontrolu();
+    }
+
+    // Ponovni obračun zbirova u podnožju tabele i poruke o slaganju
+    function osveziKontrolu() {
+        var dugujePare = 0, potrazujePare = 0, brojDuguje = 0, brojPotrazuje = 0, nepoznate = 0;
+        $('tr.stavka-red').each(function() {
+            var pare = parseInt($(this).data('cents'), 10) || 0;
+            var strana = $(this).find('.is-debit-input').val();
+            if (strana === 'true') { dugujePare += pare; brojDuguje++; }
+            else if (strana === 'false') { potrazujePare += pare; brojPotrazuje++; }
+            else { nepoznate++; }
+        });
+
+        var $tfoot = $('#kontrolaTfoot');
+        var zaglavljeDuguje = parseInt($tfoot.data('zaglavlje-duguje'), 10) || 0;
+        var zaglavljePotrazuje = parseInt($tfoot.data('zaglavlje-potrazuje'), 10) || 0;
+        var dugujeOk = dugujePare === zaglavljeDuguje;
+        var potrazujeOk = potrazujePare === zaglavljePotrazuje;
+
+        $('#ukupnoStavkeDuguje .suma').text(formatIznos(dugujePare));
+        $('#ukupnoStavkeDuguje .broj').text(brojDuguje);
+        $('#ukupnoStavkePotrazuje .suma').text(formatIznos(potrazujePare));
+        $('#ukupnoStavkePotrazuje .broj').text(brojPotrazuje);
+
+        $('#ukupnoStavkeDuguje, #zaglavljeDuguje')
+            .toggleClass('text-success', dugujeOk).toggleClass('text-danger fw-bold', !dugujeOk);
+        $('#ukupnoStavkePotrazuje, #zaglavljePotrazuje')
+            .toggleClass('text-success', potrazujeOk).toggleClass('text-danger fw-bold', !potrazujeOk);
+
+        var ok = dugujeOk && potrazujeOk && nepoznate === 0;
+        var $alert = $('#kontrolaAlert');
+        $alert.toggleClass('alert-success', ok).toggleClass('alert-danger', !ok);
+        $alert.find('i').toggleClass('fa-check-circle', ok).toggleClass('fa-exclamation-triangle', !ok);
+        $alert.find('.poruka').text(ok
+            ? 'Stavke se slažu sa zaglavljem izvoda.'
+            : 'Stavke se NE slažu sa zaglavljem izvoda - proverite stranu (Duguje/Potražuje) stavki.');
+    }
+
+    {% if current_user.is_authenticated %}
+    // Klik na ćeliju Duguje/Potražuje prebacuje iznos na tu stranu
+    $(document).on('click', '.strana-celija', function() {
+        postaviStranu($(this).closest('tr'), String($(this).data('strana')));
+    });
+
+    // Dugme za prebacivanje na drugu stranu
+    $(document).on('click', '.btn-prebaci-stranu', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var $red = $(this).closest('tr');
+        var trenutna = $red.find('.is-debit-input').val();
+        postaviStranu($red, trenutna === 'true' ? 'false' : 'true');
+    });
+    {% endif %}
 });
 </script>
 {% endblock %}

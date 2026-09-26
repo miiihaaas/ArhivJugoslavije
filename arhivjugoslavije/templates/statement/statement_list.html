@@ -94,6 +94,8 @@
         <input type="hidden" name="final_balance" value="{{ krajnje_stanje_element }}">
         <input type="hidden" name="number_of_items" value="{{ broj_pojavljivanja }}">
         <input type="hidden" name="bank_account" value="{{ racun_izvoda_element }}">
+        <input type="hidden" name="broj_naloga_duguje" value="{{ kontrola.broj_duguje_zaglavlje if kontrola else '' }}">
+        <input type="hidden" name="broj_naloga_potrazuje" value="{{ kontrola.broj_potrazuje_zaglavlje if kontrola else '' }}">
 
         <div class="card">
             <div class="card-header bg-success">
@@ -106,8 +108,9 @@
                             <tr>
                                 <th class="th-w-8 small">Uplatilac</th>
                                 <th class="th-w-8 small">Primalac</th>
-                                <th class="th-w-5 small text-end">Iznos</th>
-                                <th class="th-w-4 small text-center">Tip</th>
+                                <th class="th-w-5 small text-end">Duguje<div class="fw-normal text-muted">isplata</div></th>
+                                <th class="th-w-1 px-0"></th>
+                                <th class="th-w-5 small text-end">Potražuje<div class="fw-normal text-muted">uplata</div></th>
                                 <th class="th-w-15 small">Dokument i svrha</th>
                                 <th class="th-w-15 bg-light"><strong>Partner</strong></th>
                                 <th class="th-w-15 bg-light"><strong>Konto</strong></th>
@@ -118,7 +121,7 @@
                         </thead>
                         <tbody>
                             {% for stavka in stavke %}
-                            <tr {% if not stavka.Validnost %}class="table-danger"{% endif %}>
+                            <tr {% if stavka.Izlazna is none %}class="table-danger"{% endif %}>
                                 <td class="small">
                                     <input type="hidden" name="payer[]" value="{{ stavka.NazivZaduzenja }}">
                                     {{ stavka.NazivZaduzenja }}
@@ -127,19 +130,20 @@
                                     <input type="hidden" name="recipient[]" value="{{ stavka.NazivOdobrenja }}">
                                     {{ stavka.NazivOdobrenja }}
                                 </td>
-                                <td class="small text-end">
-                                    <input type="hidden" name="amount[]" value="{{ stavka.Iznos }}">
-                                    {{ stavka.Iznos }}
+                                {# Smer stavke: iznos je u koloni Duguje (isplata) ili Potražuje (uplata); klik na ćeliju menja stranu #}
+                                {% set smer = '' if stavka.Izlazna is none else ('true' if stavka.Izlazna else 'false') %}
+                                <td class="small text-end text-nowrap js-strana" data-smer="true" role="button" title="Klikni da stavka bude isplata">
+                                    <input type="hidden" name="amount[]" class="js-iznos" value="{{ stavka.Iznos }}">
+                                    <input type="hidden" name="is_debit[]" class="js-smer" value="{{ smer }}">
+                                    <span class="js-prikaz">{% if smer == 'true' %}{{ stavka.Iznos }}{% elif not smer %}<span class="text-danger opacity-75">? {{ stavka.Iznos }}</span>{% endif %}</span>
                                 </td>
-                                <td class="text-center">
-                                    <input type="hidden" name="is_debit[]" value="{% if stavka.Izlazna %}true{% else %}false{% endif %}">
-                                    {% if stavka.Izlazna %}
-                                        <span class="badge bg-success">Isplata</span>
-                                    {% elif not stavka.Izlazna %}
-                                        <span class="badge bg-primary">Uplata</span>
-                                    {% elif stavka.Izlazna is None %}
-                                        <span class="badge bg-danger">Nepoznato!</span>
-                                    {% endif %}
+                                <td class="text-center px-0">
+                                    <button type="button" class="btn btn-link btn-sm p-0 js-zameni{% if not smer %} invisible{% endif %}" title="Prebaci na drugu stranu">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </button>
+                                </td>
+                                <td class="small text-end text-nowrap js-strana" data-smer="false" role="button" title="Klikni da stavka bude uplata">
+                                    <span class="js-prikaz">{% if smer == 'false' %}{{ stavka.Iznos }}{% elif not smer %}<span class="text-danger opacity-75">? {{ stavka.Iznos }}</span>{% endif %}</span>
                                 </td>
                                 <td class="small">
                                     <input type="hidden" name="document_number[]" value="{{ stavka.BrojDokumenta }}">
@@ -150,7 +154,14 @@
                                     <div><strong>Svrha:</strong> {{ stavka.SvrhaDoznake }}</div>
                                 </td>
                                 <td class="bg-light">
-                                    {% if stavka.Izlazna %}
+                                    {% if stavka.Izlazna is none %}
+                                        <select name="partner_id[]" class="form-select form-select-sm select2-partner">
+                                            <option value=""></option>
+                                            {% for partner in partners %}
+                                            <option value="{{ partner.id }}">{{ partner.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    {% elif stavka.Izlazna %}
                                         <select name="partner_id[]" class="form-select form-select-sm select2-partner">
                                             <option value=""></option>
                                             {% for supplier in suppliers %}
@@ -193,6 +204,27 @@
                             </tr>
                             {% endfor %}
                         </tbody>
+                        <tfoot class="small">
+                            <tr>
+                                <th colspan="2" class="text-end">Ukupno stavke</th>
+                                <th class="text-end text-nowrap js-suma-duguje"></th>
+                                <th></th>
+                                <th class="text-end text-nowrap js-suma-potrazuje"></th>
+                                <th colspan="6"></th>
+                            </tr>
+                            {% if kontrola %}
+                            <tr id="zaglavljeIzvoda"
+                                data-duguje="{{ kontrola.duguje_zaglavlje }}" data-potrazuje="{{ kontrola.potrazuje_zaglavlje }}"
+                                data-broj-duguje="{{ kontrola.broj_duguje_zaglavlje if kontrola.broj_duguje_zaglavlje is not none else '' }}"
+                                data-broj-potrazuje="{{ kontrola.broj_potrazuje_zaglavlje if kontrola.broj_potrazuje_zaglavlje is not none else '' }}">
+                                <th colspan="2" class="text-end">Zaglavlje izvoda</th>
+                                <th class="text-end text-nowrap js-zaglavlje-duguje"></th>
+                                <th></th>
+                                <th class="text-end text-nowrap js-zaglavlje-potrazuje"></th>
+                                <th colspan="6"></th>
+                            </tr>
+                            {% endif %}
+                        </tfoot>
                     </table>
                 </div>
             </div>
@@ -202,7 +234,17 @@
                     <i class="fas fa-exclamation-triangle me-2"></i> Ovaj izvod već postoji u bazi podataka. Možete pregledati podatke, ali ne možete ponovo sačuvati stavke.
                 </div>
                 {% else %}
-                <button type="submit" name="submitBtnSaveData" class="btn btn-primary">
+                {% if kontrola %}
+                {# Poređenje sa zaglavljem je u podnožju tabele stavki; ovde je samo status i potvrda razlike #}
+                <div id="kontrolaIzvoda" class="alert mb-3">
+                    <div class="fw-bold js-kontrola-naslov"></div>
+                    <div class="form-check mt-2 js-potvrda d-none">
+                        <input class="form-check-input" type="checkbox" name="potvrda_razlike" id="potvrdaRazlike">
+                        <label class="form-check-label" for="potvrdaRazlike">Proverio sam stavke i želim da sačuvam izvod uprkos razlici sa zaglavljem.</label>
+                    </div>
+                </div>
+                {% endif %}
+                <button type="submit" name="submitBtnSaveData" id="btnSacuvajIzvod" class="btn btn-primary">
                     <i class="fas fa-save me-2"></i> Sačuvaj izvod u bazu podataka
                 </button>
                 {% endif %}
@@ -340,6 +382,75 @@
             dropdownCssClass: 'select2--small',
             closeOnSelect: false
         });
+
+        // Smer stavke (Duguje/Potražuje) i kontrola prema zaglavlju izvoda
+        if ($('input.js-smer').length) {
+            var fmt = function(n) { return n.toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+            var centi = function(v) { return Math.round(parseFloat(String(v || '0').replace(',', '.')) * 100); };
+            var $kontrola = $('#kontrolaIzvoda'), $zaglavlje = $('#zaglavljeIzvoda');
+
+            // Postavlja smer stavke ('true' isplata / 'false' uplata) i prikazuje iznos u odgovarajućoj koloni
+            var postaviSmer = function($tr, smer) {
+                var iznos = $tr.find('.js-iznos').val();
+                $tr.find('input.js-smer').val(smer);
+                $tr.find('.js-strana').each(function() {
+                    $(this).find('.js-prikaz').text($(this).data('smer') === (smer === 'true') ? iznos : '');
+                });
+                $tr.find('.js-zameni').removeClass('invisible');
+            };
+
+            var proveri = function() {
+                var duguje = 0, potrazuje = 0, brDuguje = 0, brPotrazuje = 0, nepoznate = 0;
+                $('input.js-smer').each(function() {
+                    var smer = $(this).val(), iznos = centi($(this).closest('tr').find('.js-iznos').val());
+                    if (smer === 'true') { duguje += iznos; brDuguje++; }
+                    else if (smer === 'false') { potrazuje += iznos; brPotrazuje++; }
+                    else { nepoznate++; }
+                    $(this).closest('tr').toggleClass('table-danger', !smer);
+                });
+                $('.js-suma-duguje').text(fmt(duguje / 100) + ' (' + brDuguje + ')');
+                $('.js-suma-potrazuje').text(fmt(potrazuje / 100) + ' (' + brPotrazuje + ')');
+                if (!$zaglavlje.length) { return; }
+
+                var zDuguje = centi($zaglavlje.data('duguje')), zPotrazuje = centi($zaglavlje.data('potrazuje'));
+                var zBrDuguje = $zaglavlje.data('broj-duguje'), zBrPotrazuje = $zaglavlje.data('broj-potrazuje');
+                var dugujeOk = duguje === zDuguje && (zBrDuguje === '' || brDuguje === zBrDuguje);
+                var potrazujeOk = potrazuje === zPotrazuje && (zBrPotrazuje === '' || brPotrazuje === zBrPotrazuje);
+                var ok = nepoznate === 0 && dugujeOk && potrazujeOk;
+
+                $zaglavlje.find('.js-zaglavlje-duguje').text(fmt(zDuguje / 100) + (zBrDuguje === '' ? '' : ' (' + zBrDuguje + ')'));
+                $zaglavlje.find('.js-zaglavlje-potrazuje').text(fmt(zPotrazuje / 100) + (zBrPotrazuje === '' ? '' : ' (' + zBrPotrazuje + ')'));
+                $('.js-suma-duguje').toggleClass('text-success', dugujeOk).toggleClass('text-danger fw-bold', !dugujeOk);
+                $('.js-suma-potrazuje').toggleClass('text-success', potrazujeOk).toggleClass('text-danger fw-bold', !potrazujeOk);
+
+                if (!$kontrola.length) { return; }
+                $kontrola.toggleClass('alert-success', ok).toggleClass('alert-danger', !ok);
+                $kontrola.find('.js-kontrola-naslov').text(
+                    ok ? 'Stavke se slažu sa zaglavljem izvoda.'
+                       : nepoznate ? 'Za ' + nepoznate + ' stavki izaberite da li je isplata ili uplata (klik na kolonu Duguje ili Potražuje).'
+                       : 'Stavke se NE slažu sa zaglavljem izvoda - proverite kolone Duguje/Potražuje.'
+                );
+                var $potvrda = $kontrola.find('.js-potvrda');
+                $potvrda.toggleClass('d-none', ok || nepoznate > 0);
+                if (ok) { $potvrda.find('input').prop('checked', false); }
+                $('#btnSacuvajIzvod').prop('disabled', nepoznate > 0 || (!ok && !$('#potvrdaRazlike').is(':checked')));
+            };
+
+            // Klik na ćeliju stavlja iznos na tu stranu; dugme ⇄ prebacuje na drugu stranu
+            // (hidden input ne okida 'change', pa se proveri() poziva direktno)
+            $(document).on('click', '.js-strana', function() {
+                postaviSmer($(this).closest('tr'), $(this).data('smer') ? 'true' : 'false');
+                proveri();
+            });
+            $(document).on('click', '.js-zameni', function() {
+                var $tr = $(this).closest('tr'), smer = $tr.find('input.js-smer').val();
+                if (!smer) { return; }
+                postaviSmer($tr, smer === 'true' ? 'false' : 'true');
+                proveri();
+            });
+            $(document).on('change', '#potvrdaRazlike', proveri);
+            proveri();
+        }
     });
 </script>
 {% if bank_statements %}

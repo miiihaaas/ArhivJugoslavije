@@ -3,6 +3,7 @@ from flask_login import login_required
 import os
 import xml.etree.ElementTree as ET
 from datetime import datetime
+from decimal import Decimal
 from arhivjugoslavije.models import Partner, AccountLevel6, Project, BankAccount, BankStatement, StatementItem
 from arhivjugoslavije import db, app
 import sys
@@ -12,6 +13,37 @@ import sys
 #     sys.stdout.reconfigure(encoding='utf-8')
 
 statement = Blueprint('statement', __name__)
+
+
+def _iznos(vrednost):
+    return Decimal(str(vrednost or '0').replace(',', '.')).quantize(Decimal('0.01'))
+
+
+def kontrola_izvoda(stavke, ukupno_duguje, ukupno_potrazuje, broj_duguje=None, broj_potrazuje=None):
+    """Poredi stavke [(iznos, is_debit)] sa zaglavljem izvoda. is_debit=None znači nepoznat smer."""
+    isplate = [_iznos(iznos) for iznos, is_debit in stavke if is_debit is True]
+    uplate = [_iznos(iznos) for iznos, is_debit in stavke if is_debit is False]
+    nepoznate = sum(1 for _, is_debit in stavke if is_debit is None)
+    rezultat = {
+        'duguje_zaglavlje': _iznos(ukupno_duguje),
+        'potrazuje_zaglavlje': _iznos(ukupno_potrazuje),
+        'duguje_stavke': sum(isplate, Decimal('0.00')),
+        'potrazuje_stavke': sum(uplate, Decimal('0.00')),
+        'broj_duguje_zaglavlje': broj_duguje,
+        'broj_potrazuje_zaglavlje': broj_potrazuje,
+        'broj_duguje_stavke': len(isplate),
+        'broj_potrazuje_stavke': len(uplate),
+        'nepoznate': nepoznate,
+    }
+    rezultat['ok'] = (
+        nepoznate == 0
+        and rezultat['duguje_stavke'] == rezultat['duguje_zaglavlje']
+        and rezultat['potrazuje_stavke'] == rezultat['potrazuje_zaglavlje']
+        and (broj_duguje is None or broj_duguje == len(isplate))
+        and (broj_potrazuje is None or broj_potrazuje == len(uplate))
+    )
+    return rezultat
+
 
 @statement.route('/statement_list', methods=['GET', 'POST'])
 @login_required
@@ -33,6 +65,7 @@ def statement_list():
     krajnje_stanje_element = None
     broj_pojavljivanja = None
     izvod_vec_postoji = False
+    kontrola = None
     
     # Učitavanje podataka za padajuće menije
     partners = Partner.query.all()
@@ -121,6 +154,13 @@ def statement_list():
                             return redirect(url_for('statement.statement_list'))
                         
                         # Pretvaranje stavki u listu rečnika za lakše korišćenje u šablonu
+                        # Broj naloga po strani iz zaglavlja - ako je jedna strana prazna, smer svih stavki je poznat
+                        broj_naloga_duguje = int(zbirni.findtext('BrNalogaDuguje') or 0)
+                        broj_naloga_potrazuje = int(zbirni.findtext('BrNalogaPotrazuje') or 0)
+                        
+                        bank_accounts = BankAccount.query.filter_by(active=True).all()
+                        nasi_racuni = {acc.account_number for acc in bank_accounts} | {acc.sub_account_number for acc in bank_accounts if acc.sub_account_number}
+                        
                         stavke = []
                         for stavka_xml in stavke_xml:
                             stavka = {}
@@ -135,19 +175,27 @@ def statement_list():
                             stavka['PozivNaBrojApp'] = stavka.get('PozivOdobrenja', '')
                             
                             # Određivanje da li je stavka izlazna ili ulazna
-                            bank_accounts = BankAccount.query.filter_by(active=True).all()
-                            # print(f'{bank_accounts=}')
-                            # print(f'{stavka.get('RacunOdobrenja', '')=}')
-                            if racun_izvoda_element in stavka.get('PozivOdobrenja', ''):
+                            if broj_naloga_potrazuje == 0 and broj_naloga_duguje > 0:
+                                stavka['Izlazna'] = True
+                            elif broj_naloga_duguje == 0 and broj_naloga_potrazuje > 0:
                                 stavka['Izlazna'] = False
-                            elif stavka.get('RacunZaduzenja', '') in [bank_account.account_number for bank_account in bank_accounts]:
+                            elif racun_izvoda_element in stavka.get('PozivOdobrenja', ''):
+                                stavka['Izlazna'] = False
+                            elif stavka.get('RacunZaduzenja', '') in nasi_racuni:
                                 stavka['Izlazna'] = True
                             else:
                                 stavka['Izlazna'] = None
                             
                             # Dodajemo stavku u listu
                             stavke.append(stavka)
-                            # print(f'{stavka=}')
+                        
+                        kontrola = kontrola_izvoda(
+                            [(stavka.get('Iznos'), stavka['Izlazna']) for stavka in stavke],
+                            ukupno_duguje_element, ukupno_potrazuje_element,
+                            broj_naloga_duguje, broj_naloga_potrazuje
+                        )
+                        if not kontrola['ok']:
+                            flash('Stavke izvoda se ne slažu sa zaglavljem izvoda (broj ili iznos isplata/uplata). Proverite kolonu Tip pre čuvanja.', 'warning')
                         
                         broj_pojavljivanja = len(stavke)
                     else:
@@ -178,7 +226,23 @@ def statement_list():
             if existing_statement:
                 flash(f'Izvod broj {broj_izvoda} od {request.form.get("payment_date")} već postoji u bazi podataka. Ne možete ponovo sačuvati stavke.', 'warning')
                 return redirect(url_for('statement.statement_list'))
-            
+
+            # Kontrola smera stavki prema zaglavlju izvoda - pre bilo kakvog upisa u bazu
+            smerovi = {'true': True, 'false': False}
+            kontrola = kontrola_izvoda(
+                [(iznos, smerovi.get(is_debit)) for iznos, is_debit in zip(request.form.getlist('amount[]'), request.form.getlist('is_debit[]'))],
+                request.form.get('total_debit'), request.form.get('total_credit'),
+                request.form.get('broj_naloga_duguje', type=int), request.form.get('broj_naloga_potrazuje', type=int)
+            )
+            if kontrola['nepoznate']:
+                flash(f'Izvod nije sačuvan: za {kontrola["nepoznate"]} stavki nije izabrano da li je isplata ili uplata.', 'danger')
+                return redirect(url_for('statement.statement_list'))
+            if not kontrola['ok'] and 'potvrda_razlike' not in request.form:
+                flash('Izvod nije sačuvan: stavke se ne slažu sa zaglavljem izvoda, a razlika nije potvrđena.', 'danger')
+                return redirect(url_for('statement.statement_list'))
+            if not kontrola['ok']:
+                app.logger.warning(f'Izvod {broj_izvoda} od {datum_izvoda} sačuvan uz potvrđenu razliku sa zaglavljem: {kontrola}')
+
             # Kreiranje novog BankStatement objekta
             bank_statement = BankStatement(
                 date=datum_izvoda,
@@ -220,7 +284,7 @@ def statement_list():
                     # Konverzija vrednosti
                     try:
                         amount = float(amounts[i].replace(',', '.'))
-                        is_debit = True if is_debits[i] == 'true' else False
+                        is_debit = is_debits[i] == 'true'
                         partner_id = int(partner_ids[i]) if partner_ids[i] else None
                         project_id = int(project_ids[i]) if i < len(project_ids) and project_ids[i] != '' else None
                         
@@ -293,7 +357,8 @@ def statement_list():
                             error_message=error_mesage,
                             bank_statements=bank_statements,
                             bank_accounts_filter=bank_accounts_filter,
-                            izvod_vec_postoji=izvod_vec_postoji)
+                            izvod_vec_postoji=izvod_vec_postoji,
+                            kontrola=kontrola)
 
 
 @statement.route('/statement_details/<int:statement_id>', methods=['GET', 'POST'])
@@ -314,6 +379,10 @@ def statement_details(statement_id):
             # Iteracija kroz sve stavke izvoda i ažuriranje podataka
             for item in statement.statement_items:
                 item_id = str(item.id)
+
+                # Strana stavke (Duguje = isplata / Potražuje = uplata)
+                if request.form.get(f'is_debit_{item_id}') in ('true', 'false'):
+                    item.is_debit = request.form.get(f'is_debit_{item_id}') == 'true'
 
                 # Ažuriranje editabilnih polja
                 if f'partner_id_{item_id}' in request.form:
@@ -346,12 +415,29 @@ def statement_details(statement_id):
             
             db.session.commit()
             flash('Stavke izvoda su uspešno ažurirane.', 'success')
+
+            # Snimanje se ne blokira, ali se korisnik upozorava ako se stavke ne slažu sa zaglavljem
+            kontrola_posle = kontrola_izvoda(
+                [(item.amount, item.is_debit) for item in statement.statement_items],
+                statement.total_debit, statement.total_credit)
+            if not kontrola_posle['ok']:
+                from arhivjugoslavije import format_number
+                k = {kljuc: format_number(vrednost) for kljuc, vrednost in kontrola_posle.items()}
+                flash('Upozorenje: stavke se NE slažu sa zaglavljem izvoda '
+                      f'(Duguje: stavke {k["duguje_stavke"]} / zaglavlje {k["duguje_zaglavlje"]}, '
+                      f'Potražuje: stavke {k["potrazuje_stavke"]} / zaglavlje {k["potrazuje_zaglavlje"]}). '
+                      'Proverite stranu (Duguje/Potražuje) stavki.', 'warning')
             return redirect(url_for('statement.statement_details', statement_id=statement_id))
-        
+
         except Exception as e:
             db.session.rollback()
             flash(f'Došlo je do greške prilikom ažuriranja stavki: {str(e)}.', 'danger')
-    
+
+    # Kontrola slaganja stavki sa zaglavljem izvoda
+    kontrola = kontrola_izvoda(
+        [(item.amount, item.is_debit) for item in statement.statement_items],
+        statement.total_debit, statement.total_credit)
+
     return render_template('statement/statement_details.html',
                             endpoint=endpoint,
                             legend='Detalji izvoda',
@@ -360,4 +446,5 @@ def statement_details(statement_id):
                             customers=customers,
                             suppliers=suppliers,
                             accounts_level_6=accounts_level_6,
-                            projects=projects)
+                            projects=projects,
+                            kontrola=kontrola)
