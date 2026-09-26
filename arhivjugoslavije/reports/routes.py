@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request
 from flask_login import login_required
 from sqlalchemy import func, and_, or_
 from decimal import Decimal
+from datetime import date
 from arhivjugoslavije import db
 from arhivjugoslavije.models import PurchasePlan, PurchasePlanAccount, AccountLevel4, StatementItem, BankAccount, BankStatement
 
@@ -20,7 +21,7 @@ def report_1():
     purchase_plans = PurchasePlan.query.order_by(PurchasePlan.year.desc()).all()
     
     # Ako je odabrana godina, filtriraj po njoj, inače uzmi najnoviju godinu
-    selected_year = request.args.get('year', None)
+    selected_year = request.args.get('year', type=int)
     if not selected_year and purchase_plans:
         selected_year = purchase_plans[0].year
     
@@ -41,6 +42,10 @@ def report_1():
         purchase_plan = PurchasePlan.query.filter_by(year=selected_year).first()
         
         if purchase_plan:
+            # Promet se računa samo iz izvoda odabrane godine
+            year_start = date(selected_year, 1, 1)
+            year_end = date(selected_year, 12, 31)
+            
             # Dobavi sva konta iz plana nabavke
             plan_accounts = db.session.query(
                 PurchasePlanAccount.account_level_4_number,
@@ -77,13 +82,13 @@ def report_1():
                     ).join(
                         BankStatement, BankStatement.id == StatementItem.bank_statement_id
                     ).filter(
+                        BankStatement.date.between(year_start, year_end),
                         BankStatement.bank_account_id == budget_account.id,
                         StatementItem.is_debit == False,  # Uplate (prihodi)
                         StatementItem.account_level_6_number.like(f'{account_number}%')  # Konta koja počinju sa account_number
                     ).scalar() or Decimal('0.00')
                     
                     budget_received = budget_received_items
-                    print(f'{budget_received=}')
                 
                 # Izračunaj iznose koji su potrošeni sa budžetskog računa
                 budget_spent = Decimal('0.00')
@@ -94,6 +99,7 @@ def report_1():
                     ).join(
                         BankStatement, BankStatement.id == StatementItem.bank_statement_id
                     ).filter(
+                        BankStatement.date.between(year_start, year_end),
                         BankStatement.bank_account_id == budget_account.id,
                         StatementItem.is_debit == True,  # Isplate (rashodi)
                         StatementItem.account_level_6_number.like(f'{account_number}%')  # Konta koja počinju sa account_number
@@ -110,6 +116,7 @@ def report_1():
                     ).join(
                         BankStatement, BankStatement.id == StatementItem.bank_statement_id
                     ).filter(
+                        BankStatement.date.between(year_start, year_end),
                         BankStatement.bank_account_id.in_(own_account_ids),
                         StatementItem.is_debit == True,  # Isplate (rashodi)
                         StatementItem.account_level_6_number.like(f'{account_number}%')  # Konta koja počinju sa account_number
@@ -117,8 +124,8 @@ def report_1():
                     
                     own_spent = own_spent_items
                 
-                # Izračunaj saldo budžeta i ukupan trošak
-                budget_balance = budget_received - budget_spent
+                # Saldo budžeta = koliko je od plana ostalo nepotrošeno; ukupan trošak
+                budget_balance = planned_amount - budget_spent
                 total_expense = budget_spent + own_spent
                 
                 # Dodaj podatke u listu

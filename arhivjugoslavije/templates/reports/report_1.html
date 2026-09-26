@@ -25,9 +25,8 @@
             <div class="input-group" style="width: 200px;">
                 <span class="input-group-text"><i class="fas fa-filter"></i></span>
                 <select id="yearFilter" class="form-select">
-                    <option value="">Sve godine</option>
                     {% for plan in purchase_plans %}
-                    <option value="{{ plan.year }}">{{ plan.year }}</option>
+                    <option value="{{ plan.year }}" {% if plan.year == selected_year %}selected{% endif %}>{{ plan.year }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -90,10 +89,9 @@
             "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Prikau017ei sve"]]
         });
         
-        // Filter po godini
+        // Promena godine ponovo učitava izveštaj za odabranu godinu
         $('#yearFilter').on('change', function() {
-            var year = $(this).val();
-            table.column(0).search(year).draw();
+            window.location.search = '?year=' + encodeURIComponent($(this).val());
         });
     });
 </script>
