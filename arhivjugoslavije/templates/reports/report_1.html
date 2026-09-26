@@ -1,5 +1,16 @@
 {% extends 'layout.html' %}
 {% block content %}
+<style>
+    /* Red konta nivoa 4 - klikom se otvaraju/zatvaraju konta nivoa 6 */
+    #reportTable tr.account-row { cursor: pointer; }
+    #reportTable tr.account-row > td { font-weight: 600; }
+    #reportTable tr.account-row .toggle-icon { width: 1rem; transition: transform 0.15s ease; }
+    #reportTable tr.account-row.expanded .toggle-icon { transform: rotate(90deg); }
+    /* Red konta nivoa 6 - uvučen, sitniji i prigušen */
+    #reportTable tr.child-row > td { font-size: 0.76rem; color: var(--color-text-light); padding-top: 0.3rem; padding-bottom: 0.3rem; }
+    #reportTable tr.child-row > td:first-child { padding-left: 2.25rem; }
+    #reportTable td.text-end, #reportTable th.text-end { white-space: nowrap; }
+</style>
 <div class="container mt-4">
     <!-- Zaglavlje stranice sa naslovom i dugmadima za akcije -->
     <div class="row mb-4">
@@ -19,9 +30,12 @@
         </div>
     </div>
 
-    <!-- Filter po godinama -->
+    <!-- Filter po godinama i proširivanje svih konta -->
     <div class="row mb-3">
-        <div class="col-12 d-flex justify-content-end">
+        <div class="col-12 d-flex justify-content-end gap-2">
+            <button type="button" id="toggleAll" class="btn btn-outline-secondary" {% if not accounts %}disabled{% endif %}>
+                <i class="fas fa-angle-double-down me-1"></i> <span>Proširi sve</span>
+            </button>
             <div class="input-group" style="width: 200px;">
                 <span class="input-group-text"><i class="fas fa-filter"></i></span>
                 <select id="yearFilter" class="form-select">
@@ -33,62 +47,118 @@
         </div>
     </div>
 
-    <!-- Tabela sa podacima -->
-    <div class="table-responsive">
-        <table id="reportTable" class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Konto</th>
-                    <th>Planirano</th>
-                    <th>Budžet doznačeno</th>
-                    <th>Budžet potrošeno</th>
-                    <th>Saldo Budžeta</th>
-                    <th>Sopstveni potrošeno</th>
-                    <th>Ukupan trošak</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for account in accounts %}
-                <tr class="account-row" data-year="{{ account.year }}">
-                    <td>{{ account.account_number }} - {{ account.account_name }}</td>
-                    <td class="text-end">{{ account.planned | format_currency }}</td>
-                    <td class="text-end">{{ account.budget_received | format_currency }}</td>
-                    <td class="text-end">{{ account.budget_spent | format_currency }}</td>
-                    <td class="text-end">{{ account.budget_balance | format_currency }}</td>
-                    <td class="text-end">{{ account.own_spent | format_currency }}</td>
-                    <td class="text-end">{{ account.total_expense | format_currency }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr class="table-secondary fw-bold">
-                    <td>UKUPNO</td>
-                    <td class="text-end">{{ totals.planned | format_currency }}</td>
-                    <td class="text-end">{{ totals.budget_received | format_currency }}</td>
-                    <td class="text-end">{{ totals.budget_spent | format_currency }}</td>
-                    <td class="text-end">{{ totals.budget_balance | format_currency }}</td>
-                    <td class="text-end">{{ totals.own_spent | format_currency }}</td>
-                    <td class="text-end">{{ totals.total_expense | format_currency }}</td>
-                </tr>
-            </tfoot>
-        </table>
+    <!-- Tabela sa podacima: konta nivoa 4 sa kontima nivoa 6 ispod (sklopivo) -->
+    <div class="list-card">
+        <div class="table-responsive">
+            <table id="reportTable" class="table table-compact table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Konto</th>
+                        <th class="text-end">Planirano</th>
+                        <th class="text-end">Budžet doznačeno</th>
+                        <th class="text-end">Budžet potrošeno</th>
+                        <th class="text-end">Saldo Budžeta</th>
+                        <th class="text-end">Sopstveni potrošeno</th>
+                        <th class="text-end">Ukupan trošak</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for account in accounts %}
+                    <tr class="account-row" data-account="{{ account.account_number }}" data-year="{{ account.year }}">
+                        <td>
+                            {% if account.children %}
+                            <i class="fas fa-chevron-right toggle-icon text-muted me-1"></i>
+                            {% else %}
+                            <i class="fas fa-fw toggle-icon me-1"></i>
+                            {% endif %}
+                            {{ account.account_number }}{% if account.account_name %} - {{ account.account_name }}{% endif %}
+                            {% if not account.in_plan %}
+                            <span class="badge bg-warning text-dark ms-1" title="Konto nije u planu nabavke za {{ account.year }}. godinu">van plana</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">{{ account.planned | format_currency }}</td>
+                        <td class="text-end">{{ account.budget_received | format_currency }}</td>
+                        <td class="text-end">{{ account.budget_spent | format_currency }}</td>
+                        <td class="text-end{% if account.budget_balance < 0 %} text-danger{% endif %}">{{ account.budget_balance | format_currency }}</td>
+                        <td class="text-end">{{ account.own_spent | format_currency }}</td>
+                        <td class="text-end">{{ account.total_expense | format_currency }}</td>
+                    </tr>
+                    {% for child in account.children %}
+                    <tr class="child-row d-none" data-parent="{{ account.account_number }}">
+                        <td>{{ child.account_number }}{% if child.account_name %} - {{ child.account_name }}{% endif %}</td>
+                        <td></td>
+                        <td class="text-end">{{ child.budget_received | format_currency }}</td>
+                        <td class="text-end">{{ child.budget_spent | format_currency }}</td>
+                        <td></td>
+                        <td class="text-end">{{ child.own_spent | format_currency }}</td>
+                        <td class="text-end">{{ child.total_expense | format_currency }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-3">Nema podataka za odabranu godinu.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="table-secondary fw-bold">
+                        <td>UKUPNO</td>
+                        <td class="text-end">{{ totals.planned | format_currency }}</td>
+                        <td class="text-end">{{ totals.budget_received | format_currency }}</td>
+                        <td class="text-end">{{ totals.budget_spent | format_currency }}</td>
+                        <td class="text-end">{{ totals.budget_balance | format_currency }}</td>
+                        <td class="text-end">{{ totals.own_spent | format_currency }}</td>
+                        <td class="text-end">{{ totals.total_expense | format_currency }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
     </div>
+
+    <!-- Napomena o isplatama bez konta, koje nisu obuhvaćene izveštajem -->
+    {% if unassigned %}
+    <div class="small text-muted mt-2">
+        <i class="fas fa-info-circle me-1"></i>Isplate bez konta (nisu u izveštaju):
+        {% for entry in unassigned %}
+        {{ entry.label }} {{ entry.count }} kom., ukupno {{ entry.amount | format_currency }}{% if not loop.last %}; {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Inicijalizacija DataTables
-        var table = $('#reportTable').DataTable({
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Serbian.json"
-            },
-            "order": [[0, "asc"]], // Sortiranje po kontu (rastuu0107e)
-            "pageLength": 10,
-            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Prikau017ei sve"]]
+        // Otvaranje/zatvaranje konta nivoa 6 ispod jednog konta nivoa 4
+        function setExpanded($row, expanded) {
+            $row.toggleClass('expanded', expanded);
+            $('#reportTable tr.child-row[data-parent="' + $row.data('account') + '"]').toggleClass('d-none', !expanded);
+        }
+
+        // Ažuriranje natpisa dugmeta u zavisnosti od toga da li su sva konta otvorena
+        function updateToggleAllButton() {
+            var $rows = $('#reportTable tr.account-row');
+            var allExpanded = $rows.length > 0 && $rows.filter('.expanded').length === $rows.length;
+            $('#toggleAll span').text(allExpanded ? 'Skupi sve' : 'Proširi sve');
+            $('#toggleAll i').toggleClass('fa-angle-double-down', !allExpanded).toggleClass('fa-angle-double-up', allExpanded);
+            return allExpanded;
+        }
+
+        $('#reportTable').on('click', 'tr.account-row', function() {
+            var $row = $(this);
+            setExpanded($row, !$row.hasClass('expanded'));
+            updateToggleAllButton();
         });
-        
+
+        $('#toggleAll').on('click', function() {
+            var expand = !updateToggleAllButton();
+            $('#reportTable tr.account-row').each(function() {
+                setExpanded($(this), expand);
+            });
+            updateToggleAllButton();
+        });
+
         // Promena godine ponovo učitava izveštaj za odabranu godinu
         $('#yearFilter').on('change', function() {
             window.location.search = '?year=' + encodeURIComponent($(this).val());
