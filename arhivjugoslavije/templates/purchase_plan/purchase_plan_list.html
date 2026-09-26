@@ -23,7 +23,7 @@
 
     <div class="list-card">
     <div class="table-responsive">
-        <table id="planTable" class="table table-hover mb-0">
+        <table id="planTable" class="dt-ceka table table-hover mb-0">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -116,9 +116,6 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Inicijalizacija DataTables
         var table = $('#planTable').DataTable({
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Serbian.json"
-            },
             "order": [[1, "desc"]], // Sortiranje po godini (opadajuće)
             "pageLength": 10,
             "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Prikaži sve"]]

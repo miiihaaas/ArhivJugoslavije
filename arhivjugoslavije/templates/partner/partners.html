@@ -34,7 +34,7 @@
     <div class="list-card">
         <div class="list-card__header">Svi partneri</div>
         <div class="table-responsive">
-            <table id="partnersTable" class="table table-compact table-hover mb-0">
+            <table id="partnersTable" class="dt-ceka table table-compact table-hover mb-0">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -47,77 +47,9 @@
                         <th class="actions-column th-w-1"></th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for partner in partners %}
-                    <tr class="partner-row"
-                        data-customer="{{ partner.customer|lower }}"
-                        data-supplier="{{ partner.supplier|lower }}"
-                        data-international="{{ partner.international|lower }}">
-                        <td>{{ partner.id }}</td>
-                        <td>{{ partner.name }}</td>
-                        <td>
-                            {% if partner.address %}{{ partner.address }}{% endif %}
-                            {% if partner.city %},<br>{{ partner.city }}{% endif %}
-                            {% if partner.country %},<br>{{ partner.country }}{% endif %}
-                        </td>
-                        <td>{{ partner.account_number }}</td>
-                        <td>
-                            {% if partner.phone_1 %}{{ partner.phone_1 }}{% endif %}
-                            {% if partner.phone_2 %}<br>{{ partner.phone_2 }}{% endif %}
-                            {% if partner.email %}<br>{{ partner.email }}{% endif %}
-                        </td>
-                        <td>
-                            {% if partner.pib %}PIB: {{ partner.pib }}{% endif %}
-                            {% if partner.pib and partner.mb %}<br>{% endif %}
-                            {% if partner.mb %}MB: {{ partner.mb }}{% endif %}
-                        </td>
-                        <td class="partner-type-cell">
-                            {% if partner.customer %}
-                            <i class="fas fa-shopping-cart partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Kupac" role="img" aria-label="Kupac"></i>
-                            {% endif %}
-                            {% if partner.supplier %}
-                            <i class="fas fa-truck partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Dobavljač" role="img" aria-label="Dobavljač"></i>
-                            {% endif %}
-                            {% if partner.international %}
-                            <i class="fas fa-globe partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Strani partner" role="img" aria-label="Strani partner"></i>
-                            {% endif %}
-                            {% if partner.active %}
-                            <i class="fas fa-check-circle partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Aktivan" role="img" aria-label="Aktivan"></i>
-                            {% else %}
-                            <i class="fas fa-circle-minus partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Neaktivan" role="img" aria-label="Neaktivan"></i>
-                            {% endif %}
-                        </td>
-                        <td class="actions-column text-nowrap">
-                            <a href="{{ url_for('partner.edit_partner', partner_id=partner.id) }}"
-                                class="btn btn-outline-secondary btn-sm action-btn"
-                                data-bs-toggle="tooltip" data-bs-placement="top" title="Izmeni partnera" aria-label="Izmeni partnera">
-                                <i class="fas fa-edit" aria-hidden="true"></i>
-                            </a>
-                            {% if partner.supplier %}
-                            <a href="{{ url_for('partner.supplier_card', partner_id=partner.id) }}"
-                                class="btn btn-outline-secondary btn-sm action-btn"
-                                data-bs-toggle="tooltip" data-bs-placement="top" title="Kartica dobavljača" aria-label="Kartica dobavljača">
-                                <i class="fas fa-file-import" aria-hidden="true"></i>
-                            </a>
-                            {% endif %}
-                            {% if partner.customer %}
-                            <a href="{{ url_for('partner.customer_card', partner_id=partner.id) }}"
-                                class="btn btn-outline-secondary btn-sm action-btn"
-                                data-bs-toggle="tooltip" data-bs-placement="top" title="Kartica kupca" aria-label="Kartica kupca">
-                                <i class="fas fa-file-export" aria-hidden="true"></i>
-                            </a>
-                            {% endif %}
-                            {% if partner.customer and partner.supplier %}
-                            <a href="{{ url_for('partner.partner_card', partner_id=partner.id) }}"
-                                class="btn btn-outline-secondary btn-sm action-btn"
-                                data-bs-toggle="tooltip" data-bs-placement="top" title="Objedinjena kartica (kupac + dobavljač)" aria-label="Objedinjena kartica (kupac + dobavljač)">
-                                <i class="fas fa-scale-balanced" aria-hidden="true"></i>
-                            </a>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+                {# Redovi se ne renderuju ovde: stižu kao JSON (partneri-podaci), a DataTables
+                   pravi <tr> samo za stranu koja se prikazuje (deferRender) #}
+                <tbody></tbody>
             </table>
         </div>
     </div>
@@ -216,19 +148,89 @@
 {% endblock %}
 
 {% block scripts %}
+<script type="application/json" id="partneri-podaci">{{ partneri|tojson }}</script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (el) { return new bootstrap.Tooltip(el); });
+    // Tooltips (za redove tabele se prave pri svakom iscrtavanju, jer redovi nastaju tek kad se prikažu)
+    function initTooltips(root) {
+        root.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+            bootstrap.Tooltip.getOrCreateInstance(el);
+        });
+    }
+    initTooltips(document);
+
+    const tableEl = document.getElementById('partnersTable');
+
+    // Redovi stižu kao JSON (vrednosti su već escape-ovane u view-u). Ćelije se sklapaju
+    // u isti HTML (i isti razmak) koji je ranije pravio šablon, pa DataTables sortira i
+    // pretražuje isto kao kad je čitao <tr> iz strane.
+    const OZNAKA = '999999999';
+    const url = {
+        izmeni: {{ url_for('partner.edit_partner', partner_id=999999999)|tojson }},
+        dobavljac: {{ url_for('partner.supplier_card', partner_id=999999999)|tojson }},
+        kupac: {{ url_for('partner.customer_card', partner_id=999999999)|tojson }},
+        objedinjena: {{ url_for('partner.partner_card', partner_id=999999999)|tojson }}
+    };
+    const R = '\n' + ' '.repeat(28);        // razmak između redova šablona u ćeliji
+    const KRAJ = '\n' + ' '.repeat(24);
+    function celija(delovi) {                // delovi: sadržaj if-blokova iz šablona ('' ako nije ispunjen)
+        return (R + delovi.join(R) + KRAJ).trim();
+    }
+    function blok(uslov, html) { return uslov ? R + html + R : ''; }
+    function ikona(klasa, naziv) {
+        return '<i class="fas ' + klasa + ' partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="' + naziv + '" role="img" aria-label="' + naziv + '"></i>';
+    }
+    function dugme(adresa, id, naziv, klasa) {
+        return '<a href="' + adresa.replace(OZNAKA, id) + '" class="btn btn-outline-secondary btn-sm action-btn" data-bs-toggle="tooltip" data-bs-placement="top" title="' + naziv + '" aria-label="' + naziv + '">'
+            + '\n' + ' '.repeat(32) + '<i class="fas ' + klasa + '" aria-hidden="true"></i>' + R + '</a>';
+    }
+
+    const redovi = JSON.parse(document.getElementById('partneri-podaci').textContent).map(function (p) {
+        const id = String(p.id);
+        return [
+            id,
+            p.n.trim(),
+            celija([p.a[0], p.a[1] ? ',<br>' + p.a[1] : '', p.a[2] ? ',<br>' + p.a[2] : '']),
+            p.r.trim(),
+            celija([p.k[0], p.k[1] ? '<br>' + p.k[1] : '', p.k[2] ? '<br>' + p.k[2] : '']),
+            celija([p.p[0] ? 'PIB: ' + p.p[0] : '', p.p[0] && p.p[1] ? '<br>' : '', p.p[1] ? 'MB: ' + p.p[1] : '']),
+            celija([
+                blok(p.c, ikona('fa-shopping-cart', 'Kupac')),
+                blok(p.s, ikona('fa-truck', 'Dobavljač')),
+                blok(p.i, ikona('fa-globe', 'Strani partner')),
+                blok(true, p.v ? ikona('fa-check-circle', 'Aktivan') : ikona('fa-circle-minus', 'Neaktivan'))
+            ]),
+            celija([
+                dugme(url.izmeni, id, 'Izmeni partnera', 'fa-edit'),
+                blok(p.s, dugme(url.dobavljac, id, 'Kartica dobavljača', 'fa-file-import')),
+                blok(p.c, dugme(url.kupac, id, 'Kartica kupca', 'fa-file-export')),
+                blok(p.c && p.s, dugme(url.objedinjena, id, 'Objedinjena kartica (kupac + dobavljač)', 'fa-scale-balanced'))
+            ]),
+            // posle kolona tabele: oznake za filtere
+            !!p.c, !!p.s, !!p.i
+        ];
+    });
 
     // DataTables
     if ($.fn.DataTable.isDataTable('#partnersTable')) {
         $('#partnersTable').DataTable().destroy();
     }
 
+    // Kad redovi stižu kao podaci, DataTables posle prvog iscrtavanja ponovo računa širine
+    // kolona i tabeli upisuje širinu u px (uža od kartice); sa 100% ostaje pune širine kao ranije.
+    tableEl.style.width = '100%';
+
     let table = $('#partnersTable').DataTable({
-        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/sr-SP.json' },
+        data: redovi,
+        deferRender: true,
+        createdRow: function (tr, red) {
+            tr.className = 'partner-row';
+            tr.setAttribute('data-customer', String(red[8]));
+            tr.setAttribute('data-supplier', String(red[9]));
+            tr.setAttribute('data-international', String(red[10]));
+            tr.cells[6].className = 'partner-type-cell';
+            tr.cells[7].className = 'actions-column text-nowrap';
+        },
         pageLength: 25,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Prikaži sve']],
         order: [[1, 'asc']],
@@ -237,7 +239,16 @@ document.addEventListener('DOMContentLoaded', function() {
         ]
     });
 
-    // Filteri
+    initTooltips(tableEl);
+    table.on('draw', function () { initTooltips(tableEl); });
+
+    // Filteri (dobavljači / kupci) — čitaju oznake iz podataka reda, samo za ovu tabelu
+    let aktivanFilter = null;
+    $.fn.dataTable.ext.search.push(function (settings, searchData, index, red) {
+        if (settings.nTable !== tableEl || !aktivanFilter) return true;
+        return aktivanFilter === 'supplier' ? red[9] : red[8];
+    });
+
     const filterButtons = document.querySelectorAll('.filter-btn');
     filterButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -248,29 +259,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!isCurrentlyActive) {
                 this.classList.add('active');
-                if (filterType === 'supplier') {
-                    table.rows().every(function() {
-                        const row = this.node();
-                        if ($(row).data('supplier') === true) {
-                            this.nodes().to$().show();
-                        } else {
-                            this.nodes().to$().hide();
-                        }
-                    });
-                } else if (filterType === 'customer') {
-                    table.rows().every(function() {
-                        const row = this.node();
-                        if ($(row).data('customer') === true) {
-                            this.nodes().to$().show();
-                        } else {
-                            this.nodes().to$().hide();
-                        }
-                    });
-                }
+                aktivanFilter = filterType;
             } else {
-                table.rows().every(function() {
-                    this.nodes().to$().show();
-                });
+                aktivanFilter = null;
             }
             table.draw();
         });

@@ -1,6 +1,7 @@
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
+from sqlalchemy.orm import joinedload
 from flask_login import login_required
 from arhivjugoslavije import db, app
 from arhivjugoslavije.models import Partner, Invoice, InvoiceItem, Service, ArchiveSettings
@@ -15,7 +16,8 @@ invoices = Blueprint('invoices', __name__)
 @login_required
 def invoice_list():
     endpoint = request.endpoint
-    invoices = Invoice.query.all()
+    # Partner se učitava zajedno sa fakturama (ranije poseban upit za svaku fakturu)
+    invoices = Invoice.query.options(joinedload(Invoice.partner)).all()
     suppliers = Partner.query.filter_by(supplier=True).all()
     return render_template('invoice/invoice_list.html', 
                             endpoint=endpoint, 

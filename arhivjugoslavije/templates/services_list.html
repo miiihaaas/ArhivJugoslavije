@@ -30,7 +30,7 @@
             Lista usluga
         </div>
         <div class="table-responsive">
-            <table id="servicesTable" class="table table-compact table-hover mb-0">
+            <table id="servicesTable" class="dt-ceka table table-compact table-hover mb-0">
                 <thead>
                     <tr>
                         <th class="text-nowrap">ID</th>
@@ -240,7 +240,6 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#servicesTable').DataTable().destroy();
     }
     $('#servicesTable').DataTable({
-        language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/sr-SP.json' },
         order: [[0, 'desc']]
     });
 

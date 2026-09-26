@@ -1837,3 +1837,7 @@ div.dataTables_processing > div:last-child > div { background: var(--siva-svetla
 @media (max-width: 576px) {
     .etiketa__polje { white-space: normal; }
 }
+
+/* Tabela koju će srediti DataTables (klasa dt-ceka) ne prikazuje redove dok se ne inicijalizuje,
+   da se ne vidi kratko cela nesređena tabela. Osigurač u layout.html posle 5 s dodaje .dt-istek. */
+.js:not(.dt-istek) table.dt-ceka:not(.dataTable) > tbody { display: none; }

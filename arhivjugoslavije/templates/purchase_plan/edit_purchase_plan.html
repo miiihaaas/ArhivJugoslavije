@@ -66,7 +66,7 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table id="accountsTable" class="table table-hover">
+                <table id="accountsTable" class="dt-ceka table table-hover">
                     <thead>
                         <tr>
                             <th>Broj konta</th>
@@ -235,9 +235,6 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Inicijalizacija DataTables
         var table = $('#accountsTable').DataTable({
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Serbian.json"
-            },
             "pageLength": 10,
             "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Prikaži sve"]]
         });

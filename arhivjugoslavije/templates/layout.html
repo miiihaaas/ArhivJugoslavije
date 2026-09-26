@@ -2,6 +2,7 @@
 <html lang="sr-Latn" class="h-100">
 <head>
     <meta charset="utf-8">
+    <script>document.documentElement.classList.add('js');</script>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
@@ -105,6 +106,36 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <!-- DataTables: srpski prevod ugrađen u stranu (ranije se preuzimao sa CDN-a pri svakom učitavanju,
+         pa je tabela čekala na njega) + tabele sa klasom dt-ceka su skrivene dok ih DataTables ne sredi -->
+    <script>
+        if (window.jQuery && $.fn.dataTable) {
+            $.extend(true, $.fn.dataTable.defaults, {
+                language: {
+                    emptyTable: 'Nema podataka u tabeli',
+                    info: 'Prikaz _START_ do _END_ od ukupno _TOTAL_ zapisa',
+                    infoEmpty: 'Prikaz 0 do 0 od ukupno 0 zapisa',
+                    infoFiltered: '(filtrirano od ukupno _MAX_ zapisa)',
+                    lengthMenu: 'Prikaži _MENU_ zapisa',
+                    loadingRecords: 'Učitavanje...',
+                    processing: 'Obrada...',
+                    search: 'Pretraga:',
+                    zeroRecords: 'Nisu pronađeni odgovarajući zapisi',
+                    paginate: { first: 'Početna', last: 'Poslednja', next: 'Sledeća', previous: 'Prethodna' },
+                    aria: {
+                        sortAscending: ': aktivirajte da sortirate kolonu uzlazno',
+                        sortDescending: ': aktivirajte da sortirate kolonu silazno'
+                    }
+                }
+            });
+        } else {
+            // DataTables nije učitan (npr. CDN nedostupan) — ne skrivaj tabele
+            document.documentElement.classList.remove('js');
+        }
+        // Osigurač: ako neka tabela ne bude inicijalizovana, posle 5 s se ipak prikaže
+        setTimeout(function () { document.documentElement.classList.add('dt-istek'); }, 5000);
+    </script>
 
     <!-- Global UI bootstrap: flash auto-close + Select2 defaults -->
     <script>

@@ -18,7 +18,7 @@
     <div class="list-card">
         <div class="list-card__header">Svi projekti</div>
         <div class="table-responsive">
-            <table id="projectsTable" class="table table-compact table-hover mb-0">
+            <table id="projectsTable" class="dt-ceka table table-compact table-hover mb-0">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -212,7 +212,6 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#projectsTable').DataTable().destroy();
     }
     $('#projectsTable').DataTable({
-        language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/sr-SP.json' },
         "order": [[ 0, "desc" ]]
     });
 

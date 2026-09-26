@@ -124,7 +124,7 @@
                         <div class="tab-pane fade show active" id="statement-items-pane" role="tabpanel"
                              aria-labelledby="statement-items-tab">
                             <div class="table-responsive">
-                                <table class="table report-table table-hover" id="statementItemsTable">
+                                <table class="dt-ceka table report-table table-hover" id="statementItemsTable">
                                     <thead>
                                         <tr>
                                             <th>Račun</th>
@@ -170,7 +170,7 @@
                         <div class="tab-pane fade" id="project-accounts-pane" role="tabpanel"
                              aria-labelledby="project-accounts-tab">
                             <div class="table-responsive">
-                                <table class="table report-table table-hover" id="projectAccountsTable">
+                                <table class="dt-ceka table report-table table-hover" id="projectAccountsTable">
                                     <thead>
                                         <tr>
                                             <th>ID</th>
@@ -309,9 +309,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (hasAccountsData) {
         $('#projectAccountsTable').DataTable({
-            language: {
-                url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/sr-SP.json'
-            },
             pageLength: 10,
             order: [[0, 'asc']], // Sortiranje po ID-u
             columnDefs: [
@@ -331,9 +328,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (hasStatementItemsData) {
         $('#statementItemsTable').DataTable({
-            language: {
-                url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/sr-SP.json'
-            },
             pageLength: 25,
             order: [],
             dom: '<"top"lf>rt<"bottom"ip><"clear">'

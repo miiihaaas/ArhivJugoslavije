@@ -1,5 +1,14 @@
 {% extends "layout.html" %}
 {% block content %}
+{# Spiskovi za padajuće menije (partner / konto / projekat) se na strani šalju samo jednom, kao JSON:
+   opcije[kljuc] = [[vrednost, tekst], ...], a nazivi[kljuc] služi za opciju koja je već izabrana u redu #}
+{% set opcije = {'dobavljaci': [], 'kupci': [], 'konta': [], 'projekti': []} %}
+{% set nazivi = {'dobavljaci': {}, 'kupci': {}, 'konta': {}, 'projekti': {}} %}
+{% for p in suppliers %}{% if opcije.dobavljaci.append([p.id ~ '', p.name ~ '']) or nazivi.dobavljaci.update({p.id: p.name ~ ''}) %}{% endif %}{% endfor %}
+{% for p in customers %}{% if opcije.kupci.append([p.id ~ '', p.name ~ '']) or nazivi.kupci.update({p.id: p.name ~ ''}) %}{% endif %}{% endfor %}
+{% for a in accounts_level_6 %}{% if opcije.konta.append([a.number ~ '', a.number ~ ' - ' ~ a.name]) or nazivi.konta.update({a.number: a.number ~ ' - ' ~ a.name}) %}{% endif %}{% endfor %}
+{% for p in projects %}{% if opcije.projekti.append([p.id ~ '', p.name ~ '']) or nazivi.projekti.update({p.id: p.name ~ ''}) %}{% endif %}{% endfor %}
+{% macro izabrana_opcija(mapa, vrednost) %}{% if vrednost is not none and vrednost in mapa %}<option value="{{ vrednost }}" selected>{{ mapa[vrednost] }}</option>{% endif %}{% endmacro %}
 
 <div class="container py-4">
     <header class="page-header">
@@ -152,36 +161,30 @@
                                      <!-- Editabilna polja - organizovana u vertikalne grupe -->
                                     <td class="bg-light">
                                         <div class="mb-1">
+                                            {# Opcije se ne ponavljaju u svakom redu: u select-u je samo prazna i trenutno izabrana opcija,
+                                               a pun spisak (iz JSON bloka na dnu strane) se ubacuje tek kad korisnik uđe u polje #}
                                             {% if item.is_debit %}
-                                                <select name="partner_id_{{ item.id }}" class="form-select form-select-sm select2-field" data-type="partner" {% if not current_user.is_authenticated %}disabled{% endif %}>
+                                                <select name="partner_id_{{ item.id }}" class="form-select form-select-sm js-select2-lazy" data-type="partner" data-opcije="dobavljaci" {% if not current_user.is_authenticated %}disabled{% endif %}>
                                                     <option value="">-- Izaberite partnera --</option>
-                                                    {% for supplier in suppliers %}
-                                                        <option value="{{ supplier.id }}" {% if item.partner_id == supplier.id %}selected{% endif %}>{{ supplier.name }}</option>
-                                                    {% endfor %}
+                                                    {{ izabrana_opcija(nazivi.dobavljaci, item.partner_id) }}
                                                 </select>
                                             {% else %}
-                                                <select name="partner_id_{{ item.id }}" class="form-select form-select-sm select2-field" data-type="partner" {% if not current_user.is_authenticated %}disabled{% endif %}>
+                                                <select name="partner_id_{{ item.id }}" class="form-select form-select-sm js-select2-lazy" data-type="partner" data-opcije="kupci" {% if not current_user.is_authenticated %}disabled{% endif %}>
                                                     <option value="">-- Izaberite partnera --</option>
-                                                    {% for customer in customers %}
-                                                        <option value="{{ customer.id }}" {% if item.partner_id == customer.id %}selected{% endif %}>{{ customer.name }}</option>
-                                                    {% endfor %}
+                                                    {{ izabrana_opcija(nazivi.kupci, item.partner_id) }}
                                                 </select>
                                             {% endif %}
                                         </div>
                                         <div class="mb-1">
-                                            <select name="account_level_6_number_{{ item.id }}" class="form-select form-select-sm select2-field" data-type="konto" {% if not current_user.is_authenticated %}disabled{% endif %}>
+                                            <select name="account_level_6_number_{{ item.id }}" class="form-select form-select-sm js-select2-lazy" data-type="konto" data-opcije="konta" {% if not current_user.is_authenticated %}disabled{% endif %}>
                                                 <option value="">-- Izaberite konto --</option>
-                                                {% for account in accounts_level_6 %}
-                                                    <option value="{{ account.number }}" {% if item.account_level_6_number == account.number %}selected{% endif %}>{{ account.number }} - {{ account.name }}</option>
-                                                {% endfor %}
+                                                {{ izabrana_opcija(nazivi.konta, item.account_level_6_number) }}
                                             </select>
                                         </div>
                                         <div>
-                                            <select name="project_id_{{ item.id }}" class="form-select form-select-sm select2-field" data-type="projekat" {% if not current_user.is_authenticated %}disabled{% endif %}>
+                                            <select name="project_id_{{ item.id }}" class="form-select form-select-sm js-select2-lazy" data-type="projekat" data-opcije="projekti" {% if not current_user.is_authenticated %}disabled{% endif %}>
                                                 <option value="">-- Izaberite projekat --</option>
-                                                {% for project in projects %}
-                                                    <option value="{{ project.id }}" {% if item.project_id == project.id %}selected{% endif %}>{{ project.name }}</option>
-                                                {% endfor %}
+                                                {{ izabrana_opcija(nazivi.projekti, item.project_id) }}
                                             </select>
                                         </div>
                                     </td>
@@ -241,6 +244,21 @@
     </div>
 </div>
 
+{# Spiskovi opcija za padajuće menije — jednom po strani (vidi lenju inicijalizaciju select2 u skripti) #}
+{% for kljuc in ['dobavljaci', 'kupci', 'konta', 'projekti'] %}
+<script type="application/json" id="opcije-{{ kljuc }}">{{ opcije[kljuc]|tojson }}</script>
+{% endfor %}
+
+<style>
+    /* Select pre lenje inicijalizacije select2 izgleda kao select2 polje u tabeli (ista visina, razmaci i boja placeholder-a) */
+    .table select.js-select2-lazy {
+        padding: 0.25rem 2.25rem 0.25rem 0.5rem;
+        line-height: 1.5;
+        cursor: pointer;
+    }
+    .table select.js-select2-lazy:has(option[value=""]:checked) { color: var(--siva-svetla); }
+</style>
+
 {% if current_user.is_authenticated %}
 <!-- Modal za brisanje stavke izvoda (van glavne forme, sa sopstvenom formom) -->
 <div class="modal fade" id="deleteStatementItemModal" tabindex="-1" aria-labelledby="deleteStatementItemModalLabel" aria-hidden="true">
@@ -299,37 +317,87 @@
 {% block scripts %}
 <script>
 $(document).ready(function() {
-    // Inicijalizacija Select2 za polja Partner, Konto i Projekat
-    $('.select2-field[data-type="partner"]').select2({
-        placeholder: '-- Izaberite partnera --',
-        width: '100%',
-        theme: 'bootstrap-5',
-        allowClear: true,
-        dropdownParent: $('.table-responsive')
+    // ===== Select2 za polja Partner, Konto i Projekat — lenja inicijalizacija =====
+    // Svaki select u startu ima samo praznu i trenutno izabranu opciju (poslata vrednost forme je ista),
+    // a pun spisak iz JSON bloka (#opcije-*) se ubacuje i select2 inicijalizuje tek kad korisnik uđe u polje
+    // (klik ili Tab). Klasa select2-field se dodaje tek tada da globalna inicijalizacija iz layout-a ne bi
+    // odmah pokretala select2 na svim poljima.
+    var select2Podesavanja = {
+        partner: {
+            placeholder: '-- Izaberite partnera --',
+            width: '100%',
+            theme: 'bootstrap-5',
+            allowClear: true,
+            dropdownParent: $('.table-responsive')
+        },
+        konto: {
+            placeholder: '-- Izaberite konto --',
+            width: '100%',
+            theme: 'bootstrap-5',
+            allowClear: true,
+            dropdownParent: $('.table-responsive')
+        },
+        projekat: {
+            placeholder: '-- Izaberite projekat --',
+            width: '100%',
+            theme: 'bootstrap-5',
+            allowClear: true,
+            dropdownParent: $('.table-responsive')
+        }
+    };
+
+    var spiskoviOpcija = {};
+    function spisakOpcija(kljuc) {
+        if (!spiskoviOpcija.hasOwnProperty(kljuc)) {
+            var el = document.getElementById('opcije-' + kljuc);
+            spiskoviOpcija[kljuc] = el ? JSON.parse(el.textContent) : [];
+        }
+        return spiskoviOpcija[kljuc];
+    }
+
+    // Ubacuje pun spisak opcija u select, zadržavajući trenutni izbor
+    function popuniOpcije(select) {
+        var spisak = spisakOpcija(select.getAttribute('data-opcije'));
+        var trenutna = select.value;
+        var stara = select.selectedIndex > 0 ? select.options[select.selectedIndex] : null;
+        var nadjena = false;
+        var fragment = document.createDocumentFragment();
+        for (var i = 0; i < spisak.length; i++) {
+            var vrednost = String(spisak[i][0]);
+            var izabrana = trenutna !== '' && vrednost === trenutna;
+            if (izabrana) { nadjena = true; }
+            fragment.appendChild(new Option(spisak[i][1], vrednost, izabrana, izabrana));
+        }
+        while (select.options.length > 1) { select.remove(1); }
+        if (stara && !nadjena) { fragment.appendChild(stara); }
+        select.appendChild(fragment);
+        select.value = trenutna;
+    }
+
+    function aktivirajSelect2($select) {
+        if (!$select.hasClass('js-select2-lazy')) { return; }
+        popuniOpcije($select[0]);
+        $select.removeClass('js-select2-lazy').addClass('select2-field');
+        $select.select2(select2Podesavanja[$select.data('type')]);
+        $select.next('.select2-container--bootstrap-5').css('width', '100%');
+    }
+
+    // Miš / dodir: umesto izvornog padajućeg menija odmah se otvara select2
+    $(document).on('mousedown touchend', 'select.js-select2-lazy', function(e) {
+        if (e.type === 'mousedown' && e.button !== 0) { return; }
+        if (e.type === 'touchend' && !e.cancelable) { return; }
+        e.preventDefault();
+        var $select = $(this);
+        aktivirajSelect2($select);
+        // open posle trenutnog događaja, da ga select2-ov mousedown handler za zatvaranje ne bi odmah zatvorio
+        setTimeout(function() { $select.select2('open'); }, 0);
     });
-    
-    $('.select2-field[data-type="konto"]').select2({
-        placeholder: '-- Izaberite konto --',
-        width: '100%',
-        theme: 'bootstrap-5',
-        allowClear: true,
-        dropdownParent: $('.table-responsive')
+    // Tastatura (Tab): fokus prelazi na select2 polje, koje se otvara sa Enter / Space / Alt+strelica kao i ranije
+    $(document).on('focus', 'select.js-select2-lazy', function() {
+        var $select = $(this);
+        aktivirajSelect2($select);
+        $select.next('.select2-container').find('.select2-selection').trigger('focus');
     });
-    
-    $('.select2-field[data-type="projekat"]').select2({
-        placeholder: '-- Izaberite projekat --',
-        width: '100%',
-        theme: 'bootstrap-5',
-        allowClear: true,
-        dropdownParent: $('.table-responsive')
-    });
-    
-    // Stilizacija Select2 za tabele
-    setTimeout(function() {
-        $('.select2-container--bootstrap-5').each(function() {
-            $(this).css('width', '100%');
-        });
-    }, 100);
 
     // ===== Strana stavke (Duguje = isplata / Potražuje = uplata) i kontrola sa zaglavljem =====
     // Iznosi se računaju u celim parama (cents) da bi se izbegle greške zaokruživanja

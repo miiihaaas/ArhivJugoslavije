@@ -164,43 +164,30 @@
                                     <div><strong>Svrha:</strong> {{ stavka.SvrhaDoznake }}</div>
                                 </td>
                                 <td class="bg-light">
+                                    {# Select-i imaju samo praznu opciju; pun spisak (JSON blok ispod tabele) se ubacuje
+                                       i select2 inicijalizuje tek kad korisnik uđe u polje #}
                                     {% if stavka.Izlazna is none %}
-                                        <select name="partner_id[]" class="form-select form-select-sm select2-partner">
-                                            <option value=""></option>
-                                            {% for partner in partners %}
-                                            <option value="{{ partner.id }}">{{ partner.name }}</option>
-                                            {% endfor %}
+                                        <select name="partner_id[]" class="form-select form-select-sm select2-partner js-select2-lazy" data-opcije="partneri">
+                                            <option value="">Izaberite partnera</option>
                                         </select>
                                     {% elif stavka.Izlazna %}
-                                        <select name="partner_id[]" class="form-select form-select-sm select2-partner">
-                                            <option value=""></option>
-                                            {% for supplier in suppliers %}
-                                            <option value="{{ supplier.id }}">{{ supplier.name }}</option>
-                                            {% endfor %}
+                                        <select name="partner_id[]" class="form-select form-select-sm select2-partner js-select2-lazy" data-opcije="dobavljaci">
+                                            <option value="">Izaberite partnera</option>
                                         </select>
                                     {% else %}
-                                        <select name="partner_id[]" class="form-select form-select-sm select2-partner">
-                                            <option value=""></option>
-                                            {% for customer in customers %}
-                                            <option value="{{ customer.id }}">{{ customer.name }}</option>
-                                            {% endfor %}
+                                        <select name="partner_id[]" class="form-select form-select-sm select2-partner js-select2-lazy" data-opcije="kupci">
+                                            <option value="">Izaberite partnera</option>
                                         </select>
                                     {% endif %}
                                 </td>
                                 <td class="bg-light">
-                                    <select name="account_level_6_number[]" class="form-select form-select-sm select2-konto">
-                                        <option value=""></option>
-                                        {% for account in accounts_level_6 %}
-                                        <option value="{{ account.number }}">{{ account.number }} - {{ account.name }}</option>
-                                        {% endfor %}
+                                    <select name="account_level_6_number[]" class="form-select form-select-sm select2-konto js-select2-lazy" data-opcije="konta">
+                                        <option value="">Izaberite konto</option>
                                     </select>
                                 </td>
                                 <td class="bg-light">
-                                    <select name="project_id[]" class="form-select form-select-sm select2-projekat">
-                                        <option value=""></option>
-                                        {% for project in projects %}
-                                        <option value="{{ project.id }}">{{ project.name }}</option>
-                                        {% endfor %}
+                                    <select name="project_id[]" class="form-select form-select-sm select2-projekat js-select2-lazy" data-opcije="projekti">
+                                        <option value="">Izaberite projekat</option>
                                     </select>
                                 </td>
                                 <td class="bg-light">
@@ -260,6 +247,23 @@
         </div>
     </form>
 
+    {# Spiskovi opcija za padajuće menije — jednom po strani: [[vrednost, tekst], ...] #}
+    {% set opcije = {'partneri': [], 'dobavljaci': [], 'kupci': [], 'konta': [], 'projekti': []} %}
+    {% for p in partners %}{% if opcije.partneri.append([p.id ~ '', p.name ~ '']) %}{% endif %}{% endfor %}
+    {% for p in suppliers %}{% if opcije.dobavljaci.append([p.id ~ '', p.name ~ '']) %}{% endif %}{% endfor %}
+    {% for p in customers %}{% if opcije.kupci.append([p.id ~ '', p.name ~ '']) %}{% endif %}{% endfor %}
+    {% for a in accounts_level_6 %}{% if opcije.konta.append([a.number ~ '', a.number ~ ' - ' ~ a.name]) %}{% endif %}{% endfor %}
+    {% for p in projects %}{% if opcije.projekti.append([p.id ~ '', p.name ~ '']) %}{% endif %}{% endfor %}
+    {% for kljuc in ['partneri', 'dobavljaci', 'kupci', 'konta', 'projekti'] %}
+    <script type="application/json" id="opcije-{{ kljuc }}">{{ opcije[kljuc]|tojson }}</script>
+    {% endfor %}
+
+    <style>
+        /* Select pre lenje inicijalizacije select2 izgleda kao select2 polje (select2--small) */
+        .table select.js-select2-lazy { padding-right: 2rem; line-height: 1.5; cursor: pointer; }
+        .table select.js-select2-lazy:has(option[value=""]:checked) { color: var(--siva-svetla); }
+    </style>
+
     {% else %}
     {# ============================================================
        DEFAULT MODE — upload form + lista postojećih izvoda
@@ -304,7 +308,7 @@
     <div class="list-card">
         <div class="list-card__header">Prethodno učitani izvodi</div>
         <div class="table-responsive">
-            <table id="statementsTable" class="table table-compact table-hover mb-0">
+            <table id="statementsTable" class="dt-ceka table table-compact table-hover mb-0">
                 <thead>
                     <tr>
                         <th class="small">ID</th>
@@ -330,7 +334,7 @@
                         <td class="small text-end">{{ statement.total_debit | format_number }}</td>
                         <td class="small text-end">{{ statement.total_credit | format_number }}</td>
                         <td class="small text-end">{{ statement.final_balance | format_number }}</td>
-                        <td class="small text-center">{{ statement.statement_items|length }}</td>
+                        <td class="small text-center">{{ broj_stavki.get(statement.id, 0) }}</td>
                         <td class="text-center text-nowrap">
                             <a href="{{ url_for('statement.statement_details', statement_id=statement.id) }}" class="btn btn-sm btn-outline-primary" title="Detalji" aria-label="Detalji">
                                 <i class="fas fa-eye"></i>
@@ -357,33 +361,78 @@
 {{ super() }}
 <script>
     $(document).ready(function() {
-        // Select2 inicijalizacija za partner / konto / projekat select-e u editabilnoj tabeli
-        $('.select2-partner').select2({
-            theme: 'bootstrap-5',
-            placeholder: 'Izaberite partnera',
-            allowClear: true,
-            width: '100%',
-            selectionCssClass: 'select2--small',
-            dropdownCssClass: 'select2--small',
-            closeOnSelect: false
+        // ===== Select2 za partner / konto / projekat select-e u editabilnoj tabeli — lenja inicijalizacija =====
+        // Select u startu ima samo praznu opciju; pun spisak iz JSON bloka (#opcije-*) se ubacuje
+        // i select2 inicijalizuje tek kad korisnik uđe u polje (klik ili Tab).
+        var select2Podesavanja = function(placeholder) {
+            return {
+                theme: 'bootstrap-5',
+                placeholder: placeholder,
+                allowClear: true,
+                width: '100%',
+                selectionCssClass: 'select2--small',
+                dropdownCssClass: 'select2--small',
+                closeOnSelect: false
+            };
+        };
+        var podesavanjaPoKlasi = [
+            ['select2-partner', select2Podesavanja('Izaberite partnera')],
+            ['select2-konto', select2Podesavanja('Izaberite konto')],
+            ['select2-projekat', select2Podesavanja('Izaberite projekat')]
+        ];
+
+        var spiskoviOpcija = {};
+        var spisakOpcija = function(kljuc) {
+            if (!spiskoviOpcija.hasOwnProperty(kljuc)) {
+                var el = document.getElementById('opcije-' + kljuc);
+                spiskoviOpcija[kljuc] = el ? JSON.parse(el.textContent) : [];
+            }
+            return spiskoviOpcija[kljuc];
+        };
+
+        // Ubacuje pun spisak opcija u select, zadržavajući trenutni izbor
+        var popuniOpcije = function(select) {
+            var spisak = spisakOpcija(select.getAttribute('data-opcije'));
+            var trenutna = select.value;
+            var stara = select.selectedIndex > 0 ? select.options[select.selectedIndex] : null;
+            var nadjena = false;
+            var fragment = document.createDocumentFragment();
+            for (var i = 0; i < spisak.length; i++) {
+                var vrednost = String(spisak[i][0]);
+                var izabrana = trenutna !== '' && vrednost === trenutna;
+                if (izabrana) { nadjena = true; }
+                fragment.appendChild(new Option(spisak[i][1], vrednost, izabrana, izabrana));
+            }
+            while (select.options.length > 1) { select.remove(1); }
+            if (stara && !nadjena) { fragment.appendChild(stara); }
+            select.appendChild(fragment);
+            select.value = trenutna;
+        };
+
+        var aktivirajSelect2 = function($select) {
+            if (!$select.hasClass('js-select2-lazy')) { return; }
+            popuniOpcije($select[0]);
+            $select.removeClass('js-select2-lazy');
+            $.each(podesavanjaPoKlasi, function(_, par) {
+                if ($select.hasClass(par[0])) { $select.select2(par[1]); }
+            });
+        };
+
+        // Miš / dodir: umesto izvornog padajućeg menija odmah se otvara select2
+        $(document).on('mousedown touchend', 'select.js-select2-lazy', function(e) {
+            if (e.type === 'mousedown' && e.button !== 0) { return; }
+            if (e.type === 'touchend' && !e.cancelable) { return; }
+            e.preventDefault();
+            var $select = $(this);
+            aktivirajSelect2($select);
+            // open posle trenutnog događaja, da ga select2-ov mousedown handler za zatvaranje ne bi odmah zatvorio
+            setTimeout(function() { $select.select2('open'); }, 0);
         });
-        $('.select2-konto').select2({
-            theme: 'bootstrap-5',
-            placeholder: 'Izaberite konto',
-            allowClear: true,
-            width: '100%',
-            selectionCssClass: 'select2--small',
-            dropdownCssClass: 'select2--small',
-            closeOnSelect: false
-        });
-        $('.select2-projekat').select2({
-            theme: 'bootstrap-5',
-            placeholder: 'Izaberite projekat',
-            allowClear: true,
-            width: '100%',
-            selectionCssClass: 'select2--small',
-            dropdownCssClass: 'select2--small',
-            closeOnSelect: false
+        // Tastatura (Tab): fokus prelazi na select2 polje, koje se otvara sa Enter / Space / Alt+strelica kao i ranije
+        $(document).on('focus', 'select.js-select2-lazy', function() {
+            var $select = $(this);
+            aktivirajSelect2($select);
+            $select.next('.select2-container').find('.select2-selection').trigger('focus');
         });
 
         // Smer stavke (Duguje/Potražuje) i kontrola prema zaglavlju izvoda

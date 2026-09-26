@@ -16,9 +16,35 @@ def partners():
     endpoint = request.endpoint
     partners = Partner.query.all()
     form = PartnerForm()
+
+    # Redovi tabele idu u stranu kao JSON, a DataTables pravi DOM samo za prikazanu stranu
+    # (deferRender). Šalju se samo vrednosti, escape-ovane kao što ih pregledač serijalizuje
+    # (innerHTML); HTML ćelija sklapa JS u šablonu, isti kao ranije, pa pretraga i sortiranje
+    # rade identično.
+    def _txt(v):
+        return (str(v).replace('\r\n', '\n').replace('\r', '\n')
+                .replace('&', '&amp;').replace('\xa0', '&nbsp;')
+                .replace('<', '&lt;').replace('>', '&gt;'))
+
+    def _opt(v):
+        return _txt(v) if v else ''
+
+    partneri = [{
+        'id': p.id,
+        'n': _txt(p.name),
+        'a': [_opt(p.address), _opt(p.city), _opt(p.country)],
+        'r': _txt(p.account_number),
+        'k': [_opt(p.phone_1), _opt(p.phone_2), _opt(p.email)],
+        'p': [_opt(p.pib), _opt(p.mb)],
+        'c': 1 if p.customer else 0,
+        's': 1 if p.supplier else 0,
+        'i': 1 if p.international else 0,
+        'v': 1 if p.active else 0,
+    } for p in partners]
+
     return render_template('partner/partners.html', 
                             endpoint=endpoint, 
-                            partners=partners,
+                            partneri=partneri,
                             form=form,
                             legend='Poslovni partneri',
                             title='Poslovni partneri')

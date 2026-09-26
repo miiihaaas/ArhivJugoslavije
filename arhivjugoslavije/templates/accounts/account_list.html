@@ -22,7 +22,7 @@
                     <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAccount4Modal">Dodaj konto 4</button>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-compact table-hover mb-0" id="accounts4Table">
+                    <table class="dt-ceka table table-compact table-hover mb-0" id="accounts4Table">
                         <thead>
                             <tr>
                                 <th>Konto</th>
@@ -64,7 +64,7 @@
                     <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAccount6Modal">Dodaj konto 6</button>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-compact table-hover mb-0" id="accounts6Table">
+                    <table class="dt-ceka table table-compact table-hover mb-0" id="accounts6Table">
                         <thead>
                             <tr>
                                 <th>Konto</th>
@@ -244,7 +244,6 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#accounts4Table').DataTable().destroy();
     }
     $('#accounts4Table').DataTable({
-        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/sr-SP.json' },
         pageLength: 10,
         lengthMenu: [[5, 10, 15, 25, 50, -1], [5, 10, 15, 25, 50, 'Sve']],
         order: [[0, 'asc']],
@@ -256,7 +255,6 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#accounts6Table').DataTable().destroy();
     }
     $('#accounts6Table').DataTable({
-        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/sr-SP.json' },
         pageLength: 10,
         lengthMenu: [[5, 10, 15, 25, 50, -1], [5, 10, 15, 25, 50, 'Sve']],
         order: [[0, 'asc']],

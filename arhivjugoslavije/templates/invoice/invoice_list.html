@@ -39,7 +39,7 @@
             Sve fakture
         </div>
         <div class="table-responsive">
-            <table id="invoicesTable" class="table table-compact table-hover mb-0">
+            <table id="invoicesTable" class="dt-ceka table table-compact table-hover mb-0" style="width: 100%">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -55,76 +55,8 @@
                         <th class="text-center th-w-1 no-sort">Akcije</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for invoice in invoices %}
-                    <tr class="invoice-row" data-incoming="{{ invoice.incoming|lower }}">
-                        <td>{{ invoice.id }}</td>
-                        <td>{{ invoice.invoice_number }}</td>
-                        <td>{{ invoice.issue_date.strftime('%d.%m.%Y') }}</td>
-                        <td>{{ invoice.service_date.strftime('%d.%m.%Y') }}</td>
-                        <td>{% if invoice.payment_due_date %}{{ invoice.payment_due_date.strftime('%d.%m.%Y') }}{% endif %}</td>
-                        <td>{{ invoice.partner.name }}</td>
-                        <td class="iznos">{{ invoice.total_amount | format_number }}</td>
-                        <td>{{ invoice.currency }}</td>
-                        <td class="text-center">
-                            <span class="status-pill-group">
-                                {% if invoice.status == 'nacrt' %}
-                                    <span class="status-pill status-pill--draft" data-bs-toggle="tooltip" data-bs-placement="top" title="Nacrt">N</span>
-                                {% elif invoice.status == 'sacuvano' %}
-                                    <span class="status-pill status-pill--saved" data-bs-toggle="tooltip" data-bs-placement="top" title="Sačuvano">S</span>
-                                    {% if invoice.paid %}
-                                        <span class="status-pill status-pill--paid" data-bs-toggle="tooltip" data-bs-placement="top" title="Plaćeno">P</span>
-                                    {% else %}
-                                        <span class="status-pill status-pill--unpaid" data-bs-toggle="tooltip" data-bs-placement="top" title="Neplaćeno">N</span>
-                                    {% endif %}
-                                {% elif invoice.status == 'poslato' %}
-                                    <span class="status-pill status-pill--sent" data-bs-toggle="tooltip" data-bs-placement="top" title="Poslato">P</span>
-                                    {% if invoice.paid %}
-                                        <span class="status-pill status-pill--paid" data-bs-toggle="tooltip" data-bs-placement="top" title="Plaćeno">P</span>
-                                    {% else %}
-                                        <span class="status-pill status-pill--unpaid" data-bs-toggle="tooltip" data-bs-placement="top" title="Neplaćeno">N</span>
-                                    {% endif %}
-                                {% else %}
-                                    {% if invoice.paid %}
-                                        <span class="status-pill status-pill--paid" data-bs-toggle="tooltip" data-bs-placement="top" title="Plaćeno">P</span>
-                                    {% else %}
-                                        <span class="status-pill status-pill--unpaid" data-bs-toggle="tooltip" data-bs-placement="top" title="Neplaćeno">N</span>
-                                    {% endif %}
-                                {% endif %}
-                            </span>
-                        </td>
-                        <td class="text-center">
-                            {% if invoice.incoming %}
-                                <i class="fas fa-file-import text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Ulazna faktura"></i>
-                            {% else %}
-                                <i class="fas fa-file-export text-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Izlazna faktura"></i>
-                            {% endif %}
-                        </td>
-                        <td class="text-center text-nowrap">
-                            <a href="{{ url_for('invoices.edit_customer_invoice', invoice_id=invoice.id) }}" class="btn btn-outline-primary btn-sm edit-invoice" data-invoice-id="{{ invoice.id }}"{% if (invoice.status == 'nacrt' and not invoice.incoming) or (not invoice.paid and invoice.incoming) %} title="Izmeni" aria-label="Izmeni"{% else %} title="Pregled" aria-label="Pregled"{% endif %}>
-                                {% if invoice.status == 'nacrt' and not invoice.incoming %}
-                                    <i class="fas fa-edit"></i>
-                                {% elif not invoice.paid and invoice.incoming %}
-                                    <i class="fas fa-edit"></i>
-                                {% else %}
-                                    <i class="fas fa-eye"></i>
-                                {% endif %}
-                            </a>
-                            {% if not invoice.incoming %}
-                                <a href="{{ url_for('invoices.generate_invoice_pdf_route', invoice_id=invoice.id) }}" class="btn btn-outline-secondary btn-sm view-invoice" data-invoice-id="{{ invoice.id }}" target="_blank" title="PDF" aria-label="PDF">
-                                    <i class="fas fa-file-pdf"></i>
-                                </a>
-                            {% else %}
-                                {% if not invoice.paid %}
-                                    <a href="" class="btn btn-outline-danger btn-sm delete-invoice" data-invoice-id="{{ invoice.id }}" data-bs-toggle="modal" data-bs-target="#deleteInvoiceModal" title="Obriši" aria-label="Obriši">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                {% endif %}
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+                {# Redove crta DataTables iz JSON podataka ispod (samo vidljivu stranu, deferRender) #}
+                <tbody></tbody>
             </table>
         </div>
     </div>
@@ -236,6 +168,9 @@
 {% endblock %}
 
 {% block scripts %}
+{# Podaci za tabelu faktura: [id, broj, izdato, promet, dospeće, partner, iznos (formatiran), valuta, status, plaćeno, ulazna] #}
+<script type="application/json" id="fakture-podaci">[{% for invoice in invoices %}[{{ invoice.id|tojson }},{{ invoice.invoice_number|tojson }},{{ invoice.issue_date.strftime('%d.%m.%Y')|tojson }},{{ invoice.service_date.strftime('%d.%m.%Y')|tojson }},{{ (invoice.payment_due_date.strftime('%d.%m.%Y') if invoice.payment_due_date else '')|tojson }},{{ invoice.partner.name|tojson }},{{ (invoice.total_amount|format_number)|tojson }},{{ invoice.currency|tojson }},{{ invoice.status|tojson }},{{ invoice.paid|tojson }},{{ invoice.incoming|tojson }}]{% if not loop.last %},
+{% endif %}{% endfor %}]</script>
 <script>
 $(document).ready(function() {
     // Select2 za polje dobavljača u modalu
@@ -252,13 +187,82 @@ document.addEventListener('DOMContentLoaded', function() {
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (el) { return new bootstrap.Tooltip(el); });
 
+    // Redovi tabele: HTML ćelija se pravi iz JSON podataka (isti izgled kao ranije redovi iz šablona)
+    const ID_MESTO = '987654321';
+    const URL_IZMENA = {{ url_for('invoices.edit_customer_invoice', invoice_id=987654321)|tojson }};
+    const URL_PDF = {{ url_for('invoices.generate_invoice_pdf_route', invoice_id=987654321)|tojson }};
+    // tekst ćelije kao što ga je DataTables ranije čitao iz tabele (innerHTML, bez razmaka na krajevima)
+    const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\u00a0/g, '&nbsp;').trim();
+    const pill = (mod, naziv, slovo) =>
+        '<span class="status-pill status-pill--' + mod + '" data-bs-toggle="tooltip" data-bs-placement="top" title="' + naziv + '">' + slovo + '</span>';
+
+    const redovi = JSON.parse(document.getElementById('fakture-podaci').textContent).map(function (f) {
+        const [id, broj, izdato, promet, dospece, partner, iznos, valuta, status, placeno, ulazna] = f;
+
+        const placenoPill = placeno ? pill('paid', 'Plaćeno', 'P') : pill('unpaid', 'Neplaćeno', 'N');
+        let pilule;
+        if (status === 'nacrt') pilule = pill('draft', 'Nacrt', 'N');
+        else if (status === 'sacuvano') pilule = pill('saved', 'Sačuvano', 'S') + ' ' + placenoPill;
+        else if (status === 'poslato') pilule = pill('sent', 'Poslato', 'P') + ' ' + placenoPill;
+        else pilule = placenoPill;
+
+        const tip = ulazna
+            ? '<i class="fas fa-file-import text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Ulazna faktura"></i>'
+            : '<i class="fas fa-file-export text-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Izlazna faktura"></i>';
+
+        const izmena = (status === 'nacrt' && !ulazna) || (!placeno && ulazna);
+        let akcije = '<a href="' + URL_IZMENA.replace(ID_MESTO, id) + '" class="btn btn-outline-primary btn-sm edit-invoice" data-invoice-id="' + id + '"'
+            + (izmena ? ' title="Izmeni" aria-label="Izmeni"' : ' title="Pregled" aria-label="Pregled"')
+            + '> <i class="fas fa-' + (izmena ? 'edit' : 'eye') + '"></i> </a>';
+        if (!ulazna) {
+            akcije += ' <a href="' + URL_PDF.replace(ID_MESTO, id) + '" class="btn btn-outline-secondary btn-sm view-invoice" data-invoice-id="' + id + '" target="_blank" title="PDF" aria-label="PDF"> <i class="fas fa-file-pdf"></i> </a>';
+        } else if (!placeno) {
+            akcije += ' <a href="" class="btn btn-outline-danger btn-sm delete-invoice" data-invoice-id="' + id + '" data-bs-toggle="modal" data-bs-target="#deleteInvoiceModal" title="Obriši" aria-label="Obriši"> <i class="fas fa-trash"></i> </a>';
+        }
+
+        // Ključevi za sortiranje kolona Status i Akcije — isti redosled kao ranije, kad je DataTables
+        // sortirao HTML ćelija iz šablona (bez oznaka, sa razmacima): ulazne bez statusa prve, pa slova
+        // statusa; u Akcijama: samo izmena < izmena+PDF < izmena+brisanje
+        const statusKljuc = (status === 'nacrt') ? '1n'
+            : (status === 'sacuvano' || status === 'poslato') ? '1' + status.charAt(0) + (placeno ? 'p' : 'n')
+            : '0' + (placeno ? 'p' : 'n');
+        const akcijeKljuc = !ulazna ? '1' : (placeno ? '0' : '2');
+
+        // 0–10 = ćelije tabele (isti sadržaj kao ranije, pa pretraga i sortiranje rade isto);
+        // 11 = ulazna (filter), 12/13 = ključevi sortiranja za Status/Akcije
+        return [String(id), esc(broj), izdato, promet, dospece, esc(partner), iznos, esc(valuta),
+                '<span class="status-pill-group"> ' + pilule + ' </span>', tip, akcije, ulazna, statusKljuc, akcijeKljuc];
+    });
+    const sortKljuc = kolona => function (d, type, row) { return type === 'sort' ? row[kolona] : d; };
+
+    const KLASE_CELIJA = { 6: 'iznos', 8: 'text-center', 9: 'text-center', 10: 'text-center text-nowrap' };
+
+    // Filter ulazne/izlazne (null = sve)
+    let aktivniFilter = null;
+    $.fn.dataTable.ext.search.push(function (settings, searchData, dataIndex, rowData) {
+        if (settings.nTable.id !== 'invoicesTable' || !aktivniFilter) return true;
+        return aktivniFilter === 'incoming' ? rowData[11] === true : rowData[11] === false;
+    });
+
     // DataTables
     if ($.fn.DataTable.isDataTable('#invoicesTable')) {
         $('#invoicesTable').DataTable().destroy();
     }
-    $('#invoicesTable').DataTable({
-        language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/sr-SP.json' },
-        "order": [[ 0, "desc" ]]
+    const tabela = $('#invoicesTable').DataTable({
+        data: redovi,
+        deferRender: true,
+        "order": [[ 0, "desc" ]],
+        columnDefs: [
+            { targets: 8, render: sortKljuc(12) },
+            { targets: 10, render: sortKljuc(13) }
+        ],
+        createdRow: function (row, data) {
+            row.className = 'invoice-row';
+            row.setAttribute('data-incoming', data[11] ? 'true' : 'false');
+            Object.keys(KLASE_CELIJA).forEach(function (i) { row.cells[i].className = KLASE_CELIJA[i]; });
+            // Tooltip-ovi za statuse i tip (red se pravi tek kad dođe na vidljivu stranu)
+            row.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) { new bootstrap.Tooltip(el); });
+        }
     });
 
     // Filtriranje faktura
@@ -270,36 +274,26 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
 
             if (isActive) {
-                document.querySelectorAll('.invoice-row').forEach(row => { row.style.display = ''; });
-                return;
+                aktivniFilter = null;
+            } else {
+                this.classList.add('active');
+                aktivniFilter = filter;
             }
-
-            this.classList.add('active');
-            document.querySelectorAll('.invoice-row').forEach(row => {
-                if (filter === 'incoming' && row.getAttribute('data-incoming') === 'true') {
-                    row.style.display = '';
-                } else if (filter === 'outgoing' && row.getAttribute('data-incoming') === 'false') {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
+            tabela.draw();
         });
     });
 
-    // Brisanje fakture — popunjavanje modala
-    document.querySelectorAll('.delete-invoice').forEach(button => {
-        button.addEventListener('click', function() {
-            const invoiceId = this.getAttribute('data-invoice-id');
-            const deleteForm = document.getElementById('deleteInvoiceForm');
-            deleteForm.action = `{{ url_for('invoices.delete_invoice', invoice_id=0) }}`.replace('0', invoiceId);
+    // Brisanje fakture — popunjavanje modala (delegirano: redovi nastaju tek pri prikazu strane)
+    $('#invoicesTable').on('click', '.delete-invoice', function() {
+        const invoiceId = this.getAttribute('data-invoice-id');
+        const deleteForm = document.getElementById('deleteInvoiceForm');
+        deleteForm.action = `{{ url_for('invoices.delete_invoice', invoice_id=0) }}`.replace('0', invoiceId);
 
-            const row = this.closest('tr');
-            document.getElementById('deleteInvoiceNumber').textContent = row.querySelector('td:nth-child(2)').textContent;
-            document.getElementById('deleteInvoicePartner').textContent = row.querySelector('td:nth-child(6)').textContent;
-            document.getElementById('deleteInvoiceAmount').textContent = row.querySelector('td:nth-child(7)').textContent;
-            document.getElementById('deleteInvoiceCurrency').textContent = row.querySelector('td:nth-child(8)').textContent;
-        });
+        const row = this.closest('tr');
+        document.getElementById('deleteInvoiceNumber').textContent = row.querySelector('td:nth-child(2)').textContent;
+        document.getElementById('deleteInvoicePartner').textContent = row.querySelector('td:nth-child(6)').textContent;
+        document.getElementById('deleteInvoiceAmount').textContent = row.querySelector('td:nth-child(7)').textContent;
+        document.getElementById('deleteInvoiceCurrency').textContent = row.querySelector('td:nth-child(8)').textContent;
     });
 
     document.getElementById('confirmDelete').addEventListener('click', function() {

@@ -4,6 +4,8 @@ import os
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from decimal import Decimal
+from sqlalchemy import func
+from sqlalchemy.orm import joinedload
 from arhivjugoslavije.models import Partner, AccountLevel6, Project, BankAccount, BankStatement, StatementItem
 from arhivjugoslavije import db, app
 import sys
@@ -54,6 +56,7 @@ def statement_list():
     
     endpoint = request.endpoint
     bank_statements = []
+    broj_stavki = {}
     error_mesage = None
     stavke = None
     datum_izvoda_element = None
@@ -332,7 +335,13 @@ def statement_list():
             return redirect(url_for('statement.statement_list'))
     
     if request.method == 'GET':
-        bank_statements = BankStatement.query.all()
+        # Račun se učitava zajedno sa izvodima, a broj stavki jednim zbirnim upitom
+        # (ranije po dva upita za svaki izvod)
+        bank_statements = BankStatement.query.options(joinedload(BankStatement.bank_account)).all()
+        broj_stavki = dict(
+            db.session.query(StatementItem.bank_statement_id, func.count(StatementItem.id))
+            .group_by(StatementItem.bank_statement_id).all()
+        )
 
     bank_accounts_filter = BankAccount.query.order_by(BankAccount.account_number).all()
 
@@ -356,6 +365,7 @@ def statement_list():
                             projects=projects,
                             error_message=error_mesage,
                             bank_statements=bank_statements,
+                            broj_stavki=broj_stavki,
                             bank_accounts_filter=bank_accounts_filter,
                             izvod_vec_postoji=izvod_vec_postoji,
                             kontrola=kontrola)
