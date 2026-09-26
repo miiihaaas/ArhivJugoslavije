@@ -5,28 +5,20 @@
 
     {# Page header #}
     <header class="page-header">
-        <h2 class="page-header__title">
-            <i class="fas fa-project-diagram page-header__icon"></i>
-            {{ legend }}
-        </h2>
+        <div>
+            <h1 class="page-header__title">{{ legend }}</h1>
+        </div>
         <div class="page-header__actions">
-            <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-1"></i> Nazad
-            </a>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
-                <i class="fas fa-plus me-1"></i> Novi projekat
-            </button>
+            <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary">Nazad</a>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">Novi projekat</button>
         </div>
     </header>
 
     {# Projects list #}
     <div class="list-card">
-        <div class="list-card__header">
-            <i class="fas fa-folder-open"></i>
-            Svi projekti
-        </div>
+        <div class="list-card__header">Svi projekti</div>
         <div class="table-responsive">
-            <table id="projectsTable" class="table table-compact table-striped table-hover mb-0">
+            <table id="projectsTable" class="table table-compact table-hover mb-0">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -35,7 +27,7 @@
                         <th>Napomena</th>
                         <th>Godina</th>
                         <th class="text-center">Status</th>
-                        <th class="text-center th-w-1 no-sort">Akcije</th>
+                        <th class="text-center text-nowrap th-w-1 no-sort">Akcije</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -43,7 +35,7 @@
                     <tr>
                         <td>{{ project.id }}</td>
                         <td>{{ project.name }}</td>
-                        <td class="text-end">{{ project.amount | format_number }}</td>
+                        <td class="iznos">{{ project.amount | format_number }}</td>
                         <td>{{ project.note }}</td>
                         <td>{{ project.year }}</td>
                         <td class="text-center">
@@ -55,10 +47,10 @@
                         </td>
                         <td class="text-center text-nowrap">
                             <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProjectModal"
-                                    data-project-id="{{ project.id }}" data-archived="{{ '1' if project.archived else '0' }}" title="Izmeni projekat">
+                                    data-project-id="{{ project.id }}" data-archived="{{ '1' if project.archived else '0' }}" title="Izmeni projekat" aria-label="Izmeni projekat">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <a class="btn btn-sm btn-outline-success" href="{{ url_for('project.project_accounts', project_id=project.id) }}" title="Projektna konta">
+                            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('project.project_accounts', project_id=project.id) }}" title="Projektna konta" aria-label="Projektna konta">
                                 <i class="fas fa-hashtag"></i>
                             </a>
                         </td>
@@ -123,7 +115,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editProjectModalLabel"><i class="fas fa-edit me-2"></i>Izmena projekta</h5>
+                <h5 class="modal-title" id="editProjectModalLabel">Izmena projekta</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="{{ url_for('project.edit_project', project_id=0) }}" class="needs-validation" novalidate id="editProjectForm">
@@ -134,9 +126,7 @@
                         {# Leva strana — osnovni podaci #}
                         <div class="col-md-6">
                             <div class="card h-100">
-                                <div class="card-header bg-primary">
-                                    <i class="fas fa-info-circle me-2"></i>Osnovni podaci
-                                </div>
+                                <div class="card-header">Osnovni podaci</div>
                                 <div class="card-body">
                                     <div class="mb-3">
                                         {{ edit_form.name.label(class="form-label") }}
@@ -176,12 +166,10 @@
                         {# Desna strana — suma po kontima #}
                         <div class="col-md-6">
                             <div class="card h-100">
-                                <div class="card-header bg-success">
-                                    <i class="fas fa-chart-pie me-2"></i>Suma po kontima 4. stepena
-                                </div>
+                                <div class="card-header">Suma po kontima 4. stepena</div>
                                 <div class="card-body">
                                     <div class="table-responsive">
-                                        <table class="table table-compact table-striped table-hover mb-0">
+                                        <table class="table table-compact table-hover mb-0">
                                             <thead>
                                                 <tr>
                                                     <th>Konto</th>
@@ -194,9 +182,9 @@
                                                 </tr>
                                             </tbody>
                                             <tfoot>
-                                                <tr class="table-primary fw-bold">
+                                                <tr>
                                                     <th>Ukupno:</th>
-                                                    <th class="text-end" id="sum-data-total">0</th>
+                                                    <th class="iznos" id="sum-data-total">0</th>
                                                 </tr>
                                             </tfoot>
                                         </table>
@@ -207,9 +195,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Zatvori
-                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zatvori</button>
                     {{ edit_form.submit(class="btn btn-primary") }}
                 </div>
             </form>

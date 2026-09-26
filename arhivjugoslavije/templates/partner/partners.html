@@ -5,16 +5,15 @@
 
     {# Page header #}
     <header class="page-header">
-        <h2 class="page-header__title">
-            <i class="fas fa-handshake page-header__icon"></i>
-            {{ legend }}
-        </h2>
+        <div>
+            <h1 class="page-header__title">{{ legend }}</h1>
+        </div>
         <div class="page-header__actions">
             <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-1"></i> Nazad
+                Nazad
             </a>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPartnerModal">
-                <i class="fas fa-plus me-1"></i> Dodaj novog partnera
+                Dodaj novog partnera
             </button>
         </div>
     </header>
@@ -22,23 +21,20 @@
     {# Filter toolbar #}
     <div class="page-toolbar">
         <div class="d-flex gap-2 flex-wrap">
-            <button class="btn btn-outline-primary btn-sm filter-btn" data-filter="supplier">
-                <i class="fas fa-truck me-1"></i> Filtriraj dobavljače
+            <button class="btn btn-outline-secondary btn-sm filter-btn" data-filter="supplier">
+                Filtriraj dobavljače
             </button>
-            <button class="btn btn-outline-primary btn-sm filter-btn" data-filter="customer">
-                <i class="fas fa-shopping-cart me-1"></i> Filtriraj kupce
+            <button class="btn btn-outline-secondary btn-sm filter-btn" data-filter="customer">
+                Filtriraj kupce
             </button>
         </div>
     </div>
 
     {# List card #}
     <div class="list-card">
-        <div class="list-card__header">
-            <i class="fas fa-address-book"></i>
-            Svi partneri
-        </div>
+        <div class="list-card__header">Svi partneri</div>
         <div class="table-responsive">
-            <table id="partnersTable" class="table table-compact table-striped table-hover mb-0">
+            <table id="partnersTable" class="table table-compact table-hover mb-0">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -77,45 +73,45 @@
                         </td>
                         <td class="partner-type-cell">
                             {% if partner.customer %}
-                            <i class="fas fa-shopping-cart partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Kupac"></i>
+                            <i class="fas fa-shopping-cart partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Kupac" role="img" aria-label="Kupac"></i>
                             {% endif %}
                             {% if partner.supplier %}
-                            <i class="fas fa-truck partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Dobavljač"></i>
+                            <i class="fas fa-truck partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Dobavljač" role="img" aria-label="Dobavljač"></i>
                             {% endif %}
                             {% if partner.international %}
-                            <i class="fas fa-globe partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Strani partner"></i>
+                            <i class="fas fa-globe partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Strani partner" role="img" aria-label="Strani partner"></i>
                             {% endif %}
                             {% if partner.active %}
-                            <i class="fas fa-check-circle partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Aktivan"></i>
+                            <i class="fas fa-check-circle partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Aktivan" role="img" aria-label="Aktivan"></i>
                             {% else %}
-                            <i class="fas fa-circle-minus partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Neaktivan"></i>
+                            <i class="fas fa-circle-minus partner-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Neaktivan" role="img" aria-label="Neaktivan"></i>
                             {% endif %}
                         </td>
                         <td class="actions-column text-nowrap">
                             <a href="{{ url_for('partner.edit_partner', partner_id=partner.id) }}"
                                 class="btn btn-outline-secondary btn-sm action-btn"
-                                data-bs-toggle="tooltip" data-bs-placement="top" title="Izmeni partnera">
-                                <i class="fas fa-edit"></i>
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="Izmeni partnera" aria-label="Izmeni partnera">
+                                <i class="fas fa-edit" aria-hidden="true"></i>
                             </a>
                             {% if partner.supplier %}
                             <a href="{{ url_for('partner.supplier_card', partner_id=partner.id) }}"
-                                class="btn btn-outline-primary btn-sm action-btn"
-                                data-bs-toggle="tooltip" data-bs-placement="top" title="Kartica dobavljača">
-                                <i class="fas fa-file-import"></i>
+                                class="btn btn-outline-secondary btn-sm action-btn"
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="Kartica dobavljača" aria-label="Kartica dobavljača">
+                                <i class="fas fa-file-import" aria-hidden="true"></i>
                             </a>
                             {% endif %}
                             {% if partner.customer %}
                             <a href="{{ url_for('partner.customer_card', partner_id=partner.id) }}"
-                                class="btn btn-outline-success btn-sm action-btn"
-                                data-bs-toggle="tooltip" data-bs-placement="top" title="Kartica kupca">
-                                <i class="fas fa-file-export"></i>
+                                class="btn btn-outline-secondary btn-sm action-btn"
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="Kartica kupca" aria-label="Kartica kupca">
+                                <i class="fas fa-file-export" aria-hidden="true"></i>
                             </a>
                             {% endif %}
                             {% if partner.customer and partner.supplier %}
                             <a href="{{ url_for('partner.partner_card', partner_id=partner.id) }}"
-                                class="btn btn-outline-dark btn-sm action-btn"
-                                data-bs-toggle="tooltip" data-bs-placement="top" title="Objedinjena kartica (kupac + dobavljač)">
-                                <i class="fas fa-scale-balanced"></i>
+                                class="btn btn-outline-secondary btn-sm action-btn"
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="Objedinjena kartica (kupac + dobavljač)" aria-label="Objedinjena kartica (kupac + dobavljač)">
+                                <i class="fas fa-scale-balanced" aria-hidden="true"></i>
                             </a>
                             {% endif %}
                         </td>
@@ -133,7 +129,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="addPartnerModalLabel">Dodaj novog partnera</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
             </div>
             <form action="{{ url_for('partner.add_partner') }}" method="POST">
                 <div class="modal-body">

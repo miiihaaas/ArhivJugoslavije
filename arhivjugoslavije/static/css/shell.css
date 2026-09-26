@@ -1,0 +1,459 @@
+/* ============================================================================
+   ARHIV JUGOSLAVIJE — Okvir aplikacije (shell)
+   ----------------------------------------------------------------------------
+   Zaglavlje sa navigacijom, okvir strane, podnožje, ekrani za prijavu,
+   početna strana (kazalo). Koristi samo promenljive iz tokens.css.
+   Jedino "glasno" mesto je bordo zaglavlje; sve ostalo je tiho.
+   ============================================================================ */
+
+
+/* ----------------------------------------------------------------------------
+   Zaglavlje — bordo traka (povez)
+---------------------------------------------------------------------------- */
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    background-color: var(--povez);
+    border-bottom: 1px solid var(--povez-tamni);
+}
+
+.site-header .navbar {
+    --bs-navbar-padding-y: 0;
+    --bs-navbar-padding-x: 0;
+    --bs-navbar-color: rgba(255, 255, 255, 0.88);
+    --bs-navbar-hover-color: #fff;
+    --bs-navbar-active-color: #fff;
+    --bs-navbar-nav-link-padding-x: var(--sp-3);
+    --bs-navbar-toggler-border-color: rgba(255, 255, 255, 0.5);
+    --bs-navbar-toggler-border-radius: var(--radius);
+    --bs-navbar-toggler-padding-x: var(--sp-2);
+    --bs-navbar-toggler-padding-y: var(--sp-1);
+    --bs-navbar-toggler-icon-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%23fff' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    min-height: var(--header-height);
+}
+
+/* Vidljiv fokus na bordo podlozi — svetla linija umesto bordo */
+.site-header :focus-visible {
+    outline: 2px solid var(--etiketa);
+    outline-offset: -2px;
+    box-shadow: none;
+}
+
+
+/* ----------------------------------------------------------------------------
+   Znak (zgrada + natpis kao slika)
+---------------------------------------------------------------------------- */
+.site-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-height: var(--header-height);
+    margin-right: var(--sp-5);
+    flex-shrink: 0;
+}
+
+.site-brand:hover { text-decoration: none; }
+
+.site-brand img { display: block; width: auto; }
+.site-brand__zgrada { height: 38px; }
+.site-brand__natpis { height: 15px; }
+
+
+/* ----------------------------------------------------------------------------
+   Navigacija
+---------------------------------------------------------------------------- */
+.site-header .nav-link {
+    position: relative;
+    font-family: var(--font-natpis);
+    font-size: var(--fs-base);
+    font-weight: 400;
+    white-space: nowrap;
+    transition: color var(--prelaz);
+}
+
+.site-header .nav-link:hover { text-decoration: none; }
+
+/* Aktivna stavka: traka u boji etikete (::before, jer ::after nosi strelicu padajućeg menija) */
+.site-header .nav-link.active::before {
+    content: '';
+    position: absolute;
+    background-color: var(--etiketa);
+}
+
+/* Ime prijavljenog korisnika — uz "Odjava" */
+.site-nav__korisnik {
+    display: flex;
+    align-items: center;
+}
+
+.site-nav__ime {
+    display: block;
+    max-width: 14rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: var(--fs-sm);
+}
+
+.site-header .navbar-toggler:focus { box-shadow: none; }
+
+
+/* ----------------------------------------------------------------------------
+   Padajući meniji — beli list iznad strane
+---------------------------------------------------------------------------- */
+.site-header .dropdown-menu {
+    --bs-dropdown-spacer: 0;
+    --bs-dropdown-min-width: 13rem;
+    --bs-dropdown-padding-y: var(--sp-1);
+    --bs-dropdown-bg: var(--list);
+    --bs-dropdown-border-color: var(--linija);
+    --bs-dropdown-border-radius: var(--radius);
+    --bs-dropdown-box-shadow: var(--senka-plutajuce);
+    --bs-dropdown-font-size: var(--fs-sm);
+    --bs-dropdown-color: var(--grafit);
+    --bs-dropdown-link-color: var(--grafit);
+    --bs-dropdown-link-hover-color: var(--grafit);
+    --bs-dropdown-link-hover-bg: var(--list-hover);
+    --bs-dropdown-link-active-color: var(--povez);
+    --bs-dropdown-link-active-bg: var(--povez-svetli);
+    --bs-dropdown-item-padding-x: var(--sp-4);
+    --bs-dropdown-item-padding-y: var(--sp-2);
+    --bs-dropdown-divider-bg: var(--linija-meka);
+    --bs-dropdown-divider-margin-y: var(--sp-1);
+    font-family: var(--font-tekst);
+    box-shadow: var(--senka-plutajuce);
+}
+
+.site-header .dropdown-item.active { font-weight: 700; }
+.site-header .dropdown-item:hover { text-decoration: none; }
+
+.site-header .dropdown-menu :focus-visible {
+    outline-color: var(--povez);
+}
+
+
+/* ----------------------------------------------------------------------------
+   Zaglavlje — široki ekrani (navigacija u jednom redu)
+---------------------------------------------------------------------------- */
+@media (min-width: 992px) {
+    .site-header .navbar > .container { align-items: stretch; }
+
+    .site-header .navbar-collapse,
+    .site-header .navbar-nav { align-items: stretch; }
+
+    .site-header .nav-item { display: flex; }
+
+    .site-header .nav-link {
+        display: flex;
+        align-items: center;
+    }
+
+    /* Traka aktivne stavke leži na donjoj ivici zaglavlja, kao obeleživač */
+    .site-header .nav-link.active::before {
+        left: var(--sp-3);
+        right: var(--sp-3);
+        bottom: 0;
+        height: 3px;
+    }
+
+    .site-nav__korisnik {
+        margin-left: var(--sp-3);
+        padding-left: var(--sp-4);
+        border-left: 1px solid rgba(255, 255, 255, 0.3);
+        margin-top: var(--sp-4);
+        margin-bottom: var(--sp-4);
+    }
+}
+
+/* Između 992 i 1200px nema mesta za natpis — ostaje samo zgrada (alt nosi naziv) */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    .site-brand .site-brand__natpis { display: none; }
+    .site-header .navbar { --bs-navbar-nav-link-padding-x: var(--sp-2); }
+    .site-header .nav-link.active::before { left: var(--sp-2); right: var(--sp-2); }
+}
+
+
+/* ----------------------------------------------------------------------------
+   Zaglavlje — uski ekrani (sklopiva navigacija)
+---------------------------------------------------------------------------- */
+@media (max-width: 991.98px) {
+    .site-brand { margin-right: 0; }
+
+    .site-header .navbar-collapse { padding-bottom: var(--sp-3); }
+
+    .site-header .navbar-nav { border-top: 1px solid rgba(255, 255, 255, 0.2); }
+
+    .site-header .nav-link {
+        padding: var(--sp-2) var(--sp-3);
+    }
+
+    .site-header .nav-link.active::before {
+        left: 0;
+        top: var(--sp-2);
+        bottom: var(--sp-2);
+        width: 3px;
+    }
+
+    /* Podmeniji se otvaraju u traci, bez belog lista */
+    .site-header .dropdown-menu {
+        --bs-dropdown-bg: transparent;
+        --bs-dropdown-border-color: transparent;
+        --bs-dropdown-link-color: rgba(255, 255, 255, 0.88);
+        --bs-dropdown-link-hover-color: #fff;
+        --bs-dropdown-link-hover-bg: rgba(255, 255, 255, 0.1);
+        --bs-dropdown-link-active-color: #fff;
+        --bs-dropdown-link-active-bg: rgba(255, 255, 255, 0.14);
+        --bs-dropdown-divider-bg: rgba(255, 255, 255, 0.2);
+        --bs-dropdown-item-padding-x: var(--sp-5);
+        box-shadow: none;
+        padding-top: 0;
+    }
+
+    .site-header .dropdown-menu :focus-visible { outline-color: var(--etiketa); }
+
+    .site-nav__korisnik {
+        margin-top: var(--sp-2);
+        padding: var(--sp-3) var(--sp-3) var(--sp-1);
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .site-nav__ime { max-width: 100%; }
+}
+
+@media (max-width: 575.98px) {
+    .site-brand { gap: var(--sp-2); }
+    .site-brand__zgrada { height: 30px; }
+    .site-brand__natpis { height: 12px; }
+}
+
+
+/* ----------------------------------------------------------------------------
+   Okvir strane
+---------------------------------------------------------------------------- */
+.container { --bs-gutter-x: 2rem; }   /* 16px sa strane i na telefonu */
+
+/* Guste tabele dobijaju širu stranu na velikim ekranima */
+@media (min-width: 1400px) {
+    .container {
+        --bs-gutter-x: 3rem;
+        max-width: var(--content-max);
+    }
+}
+
+main { padding-bottom: var(--sp-6); }
+
+
+/* ----------------------------------------------------------------------------
+   Podnožje
+---------------------------------------------------------------------------- */
+.footer {
+    padding: var(--sp-4) 0;
+    background-color: var(--papir);
+    border-top: 1px solid var(--linija);
+    color: var(--siva);
+    font-size: var(--fs-xs);
+}
+
+.footer .row { row-gap: var(--sp-1); }
+
+.footer-link {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--linija);
+    text-underline-offset: 2px;
+}
+
+.footer-link:hover {
+    color: var(--povez);
+    text-decoration-color: currentColor;
+}
+
+
+/* ----------------------------------------------------------------------------
+   Prijava i lozinka (neprijavljen korisnik)
+---------------------------------------------------------------------------- */
+body.auth-screen .site-header { display: none; }
+
+body.auth-screen main {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 0;
+}
+
+.auth-page {
+    flex: 1 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-7) var(--sp-4);
+}
+
+.auth-sheet {
+    width: 100%;
+    max-width: 25rem;
+    padding: var(--sp-6);
+    background-color: var(--list);
+    border: 1px solid var(--linija);
+    border-radius: var(--radius);
+}
+
+.auth-sheet__glava {
+    text-align: center;
+    margin-bottom: var(--sp-5);
+}
+
+.auth-sheet__logo {
+    display: block;
+    width: 212px;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto var(--sp-5);
+}
+
+.auth-sheet__naslov {
+    font-size: var(--fs-lg);
+    margin-bottom: var(--sp-1);
+}
+
+.auth-sheet__uvod {
+    margin: 0;
+    color: var(--siva);
+    font-size: var(--fs-sm);
+}
+
+.auth-sheet__dno {
+    margin: var(--sp-4) 0 0;
+    text-align: center;
+    font-size: var(--fs-sm);
+}
+
+@media (max-width: 575.98px) {
+    .auth-page { padding: var(--sp-5) var(--sp-4); }
+    .auth-sheet { padding: var(--sp-5) var(--sp-4); }
+    .auth-sheet__logo { width: 170px; }
+}
+
+
+/* ----------------------------------------------------------------------------
+   Početna — naslov i vreme
+---------------------------------------------------------------------------- */
+.home-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-1) var(--sp-5);
+    padding-bottom: var(--sp-3);
+    margin-bottom: var(--sp-5);
+    border-bottom: 1px solid var(--linija);
+}
+
+.home-head__naslov { margin: 0; }
+
+.home-vreme {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--sp-3);
+    margin: 0;
+    color: var(--siva);
+    font-size: var(--fs-sm);
+}
+
+.home-vreme__datum { display: inline-block; }
+.home-vreme__datum::first-letter { text-transform: uppercase; }
+.home-vreme__sat { color: var(--grafit); }
+
+
+/* ----------------------------------------------------------------------------
+   Početna — kazalo (sadržaj kao u arhivskom inventaru)
+---------------------------------------------------------------------------- */
+.kazalo {
+    padding: var(--sp-2) var(--sp-5);
+    background-color: var(--list);
+    border: 1px solid var(--linija);
+    border-radius: var(--radius);
+}
+
+.kazalo__lista {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.kazalo__stavka {
+    position: relative;
+    padding: var(--sp-4) 0;
+    border-bottom: 1px solid var(--linija-meka);
+}
+
+.kazalo__stavka:last-child { border-bottom: 0; }
+
+.kazalo__naslov {
+    font-family: var(--font-natpis);
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    line-height: var(--lh-tight);
+    color: var(--povez);
+}
+
+/* Cela stavka je klikabilna, a link ostaje jedini fokusabilni element */
+.kazalo__naslov::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+}
+
+.kazalo__stavka:hover .kazalo__naslov {
+    color: var(--povez-tamni);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.kazalo__opis {
+    margin: var(--sp-1) 0 0;
+    color: var(--siva);
+    font-size: var(--fs-sm);
+}
+
+/* Dve kolone, čitaju se odozgo nadole kao sadržaj knjige */
+@media (min-width: 768px) {
+    .kazalo__lista {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: repeat(3, auto);
+        grid-auto-flow: column;
+        column-gap: var(--sp-7);
+    }
+
+    .kazalo__stavka:nth-child(3n) { border-bottom: 0; }
+}
+
+
+/* ----------------------------------------------------------------------------
+   Stare klase koje još koristi reports/report_list.html — tiho, bez ikona u boji
+---------------------------------------------------------------------------- */
+a > .shortcut-card { color: var(--grafit); transition: border-color var(--prelaz); }
+a:hover > .shortcut-card { border-color: var(--povez); }
+
+.time-display {
+    display: inline-block;
+    color: var(--siva);
+    font-size: var(--fs-sm);
+}
+
+.time-display .time-text { color: var(--grafit); font-size: var(--fs-lg); }
+.time-display .date-text { display: inline-block; }
+.time-display .date-text::first-letter { text-transform: uppercase; }
+
+
+/* ----------------------------------------------------------------------------
+   Štampa — bez zaglavlja i podnožja
+---------------------------------------------------------------------------- */
+@media print {
+    .site-header,
+    .footer { display: none; }
+}

@@ -1,39 +1,51 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="container mt-4">
-    <!-- Zaglavlje stranice sa naslovom i dugmadima za akcije -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card bg-light">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h2 class="mb-0"><i class="fas fa-handshake me-2 text-primary"></i>{{ legend }}</h2>
-                        <div>
-                            <a href="{{ url_for('partner.partners') }}" class="btn btn-outline-secondary me-2">
-                                <i class="fas fa-arrow-left me-1"></i> Nazad na listu partnera
-                            </a>
-                            <a href="{{ url_for('partner.edit_partner', partner_id=partner.id) }}" class="btn btn-primary">
-                                <i class="fas fa-edit me-1"></i> Izmeni podatke
-                            </a>
-                        </div>
-                    </div>
-                </div>
+    <header class="page-header">
+        <div>
+            <h1 class="page-header__title">{{ legend }}</h1>
+            <div class="etiketa">
+                <span class="etiketa__polje">
+                    <span class="etiketa__naziv">Partner</span>
+                    <strong class="etiketa__vrednost">{{ partner.name }}</strong>
+                </span>
+                {% if partner.pib %}
+                <span class="etiketa__polje">
+                    <span class="etiketa__naziv">PIB</span>
+                    <strong class="etiketa__vrednost">{{ partner.pib }}</strong>
+                </span>
+                {% endif %}
+                {% if partner.mb %}
+                <span class="etiketa__polje">
+                    <span class="etiketa__naziv">MB</span>
+                    <strong class="etiketa__vrednost">{{ partner.mb }}</strong>
+                </span>
+                {% endif %}
+                <span class="etiketa__polje">
+                    <span class="etiketa__naziv">Period</span>
+                    <strong class="etiketa__vrednost">{{ start_date.strftime('%d.%m.%Y') }} – {{ end_date.strftime('%d.%m.%Y') }}</strong>
+                </span>
             </div>
         </div>
-    </div>
+        <div class="page-header__actions">
+            <a href="{{ url_for('partner.partners') }}" class="btn btn-outline-secondary">
+                Nazad na listu partnera
+            </a>
+            <a href="{{ url_for('partner.edit_partner', partner_id=partner.id) }}" class="btn btn-primary">
+                Izmeni podatke
+            </a>
+        </div>
+    </header>
     
     <div class="row mb-3">
         <div class="col-md-6">
             <div class="card h-100">
-                <div class="card-header bg-light">
-                    <h5 class="card-title mb-0"><i class="fas fa-info-circle me-2"></i>Informacije o kupcu</h5>
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Informacije o kupcu</h5>
                 </div>
                 <div class="card-body">
                     <!-- Osnovni podaci -->
                     <div class="d-flex align-items-center mb-2">
-                        <div class="bg-light rounded-circle p-2 me-2">
-                            <i class="fas fa-building text-primary"></i>
-                        </div>
                         <div>
                             <h6 class="mb-0">{{ partner.name }}</h6>
                             <div>
@@ -55,7 +67,7 @@
                         <!-- Leva kolona -->
                         <div class="col-md-6 pe-md-2">
                             <div class="mb-2">
-                                <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>Adresa:</small>
+                                <small class="text-muted">Adresa:</small>
                                 <div class="small">
                                     {% if partner.address %}{{ partner.address }}{% else %}<span class="text-muted">Nije uneto</span>{% endif %}
                                     {% if partner.city %}, {{ partner.city }}{% endif %}
@@ -64,7 +76,7 @@
                             </div>
                             
                             <div class="mb-2">
-                                <small class="text-muted"><i class="fas fa-phone-alt me-1"></i>Telefon:</small>
+                                <small class="text-muted">Telefon:</small>
                                 <div class="small">
                                     {% if partner.phone_1 %}{{ partner.phone_1 }}{% endif %}
                                     {% if partner.phone_2 %}, {{ partner.phone_2 }}{% endif %}
@@ -72,8 +84,8 @@
                                 </div>
                             </div>
                             <div class="mb-2">
-                                <small class="text-muted"><i class="fas fa-money-bill me-1"></i>SALDO:</small>
-                                <div class="small">
+                                <small class="text-muted">Saldo:</small>
+                                <div class="small{% if saldo < 0 %} iznos-negativan{% endif %}">
                                     {{ '{:,.2f}'.format(saldo)|replace(',', ' ')|replace('.', ',') }} RSD
                                 </div>
                             </div>
@@ -82,7 +94,7 @@
                         <!-- Desna kolona -->
                         <div class="col-md-6 ps-md-2">
                             <div class="mb-2">
-                                <small class="text-muted"><i class="fas fa-id-card me-1"></i>PIB/MB:</small>
+                                <small class="text-muted">PIB/MB:</small>
                                 <div class="small">
                                     {% if partner.pib %}PIB: {{ partner.pib }}{% else %}<span class="text-muted">PIB: Nije uneto</span>{% endif %}
                                     {% if partner.mb %}<br>MB: {{ partner.mb }}{% else %}<br><span class="text-muted">MB: Nije uneto</span>{% endif %}
@@ -90,7 +102,7 @@
                             </div>
                             
                             <div class="mb-2">
-                                <small class="text-muted"><i class="fas fa-university me-1"></i>Račun:</small>
+                                <small class="text-muted">Račun:</small>
                                 <div class="small">
                                     {% if partner.account_number %}{{ partner.account_number }}{% else %}<span class="text-muted">Nije uneto</span>{% endif %}
                                 </div>
@@ -98,7 +110,7 @@
                             
                             {% if partner.email %}
                             <div class="mb-2">
-                                <small class="text-muted"><i class="fas fa-envelope me-1"></i>Mejl:</small>
+                                <small class="text-muted">Mejl:</small>
                                 <div class="small">{{ partner.email }}</div>
                             </div>
                             {% endif %}
@@ -110,22 +122,22 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0"><i class="fas fa-file-export me-2"></i>Izlazne fakture</h5>
-                    <a href="{{ url_for('invoices.create_customer_invoice', partner_id=partner.id) }}" class="btn btn-success btn-sm">
-                        <i class="fas fa-file-export me-1 text-success"></i> Nova izlazna faktura
+                    <h5 class="card-title mb-0">Izlazne fakture</h5>
+                    <a href="{{ url_for('invoices.create_customer_invoice', partner_id=partner.id) }}" class="btn btn-outline-secondary btn-sm">
+                        Nova izlazna faktura
                     </a>
                 </div>
                 <div class="card-body">
                     {% if invoices %}
                         <div class="table-responsive">
                             <table class="table table-sm table-hover">
-                                <thead class="table-light">
+                                <thead>
                                     <tr>
                                         <th>Broj fakture</th>
                                         <th>Datum izdavanja</th>
                                         <th>Datum prometa</th>
                                         <th>Rok plaćanja</th>
-                                        <th class="text-end">Iznos</th>
+                                        <th class="iznos">Iznos</th>
                                         <th class="text-center">Status</th>
                                     </tr>
                                 </thead>
@@ -134,13 +146,13 @@
                                         <tr>
                                             <td>
                                                 <a href="{{ url_for('invoices.edit_customer_invoice', invoice_id=invoice.id) }}" class="text-decoration-none">
-                                                    <i class="fas fa-file-invoice me-1 text-primary"></i> {{ invoice.invoice_number }}
+                                                    {{ invoice.invoice_number }}
                                                 </a>
                                             </td>
                                             <td>{{ invoice.issue_date.strftime('%d.%m.%Y') }}</td>
                                             <td>{{ invoice.service_date.strftime('%d.%m.%Y') }}</td>
                                             <td>{% if invoice.payment_due_date %}{{ invoice.payment_due_date.strftime('%d.%m.%Y') }}{% else %}<span class="text-muted">-</span>{% endif %}</td>
-                                            <td class="text-end">{{ invoice.total_amount | format_number }} {{ invoice.currency }}</td>
+                                            <td class="iznos">{{ invoice.total_amount | format_number }} {{ invoice.currency }}</td>
                                             <td class="text-center">
                                                 {% if invoice.paid %}
                                                     <span class="badge bg-success">Plaćeno</span>
@@ -169,23 +181,23 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0"><i class="fas fa-credit-card me-2"></i>Pregled kartice kupca</h5>
-                    <div class="d-flex align-items-center">
-                        <form method="POST" class="d-flex me-2">
-                            <div class="input-group input-group-sm me-2" style="width: 170px;">
+                    <h5 class="card-title mb-0">Pregled kartice kupca</h5>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <form method="POST" class="d-flex flex-wrap gap-2">
+                            <div class="input-group input-group-sm input-group-170">
                                 <span class="input-group-text">Od</span>
                                 <input type="date" class="form-control form-control-sm" name="start_date" value="{{ start_date.strftime('%Y-%m-%d') }}">
                             </div>
-                            <div class="input-group input-group-sm me-2" style="width: 170px;">
+                            <div class="input-group input-group-sm input-group-170">
                                 <span class="input-group-text">Do</span>
                                 <input type="date" class="form-control form-control-sm" name="end_date" value="{{ end_date.strftime('%Y-%m-%d') }}">
                             </div>
                             <button type="submit" class="btn btn-sm btn-primary">
-                                <i class="fas fa-filter me-1"></i> Filtriraj
+                                Filtriraj
                             </button>
                         </form>
-                        <a href="{{ url_for('partner.customer_card_pdf', partner_id=partner.id, start_date=start_date.strftime('%Y-%m-%d'), end_date=end_date.strftime('%Y-%m-%d')) }}" class="btn btn-primary btn-sm" target="_blank">
-                            <i class="fas fa-print me-1"></i> Štampa kartice kupca
+                        <a href="{{ url_for('partner.customer_card_pdf', partner_id=partner.id, start_date=start_date.strftime('%Y-%m-%d'), end_date=end_date.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                            Štampa kartice kupca
                         </a>
                     </div>
                 </div>
@@ -193,14 +205,14 @@
                     {% if combined_data %}
                         <div class="table-responsive">
                             <table class="table table-sm table-hover">
-                                <thead class="table-light">
+                                <thead>
                                     <tr>
                                         <th>Datum</th>
                                         <th>Konto</th>
                                         <th>Dokument</th>
-                                        <th class="text-end">Duguje</th>
-                                        <th class="text-end">Potražuje</th>
-                                        <th class="text-end">Saldo</th>
+                                        <th class="iznos">Duguje</th>
+                                        <th class="iznos">Potražuje</th>
+                                        <th class="iznos">Saldo</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -211,26 +223,26 @@
                                             <td>
                                                 {% if item.document_type == 'invoice' %}
                                                     <a href="{{ url_for('invoices.edit_customer_invoice', invoice_id=item.document_id) }}" class="text-decoration-none">
-                                                        <i class="fas fa-file-export me-1 text-success"></i> {{ item.document_number }}
+                                                        {{ item.document_number }}
                                                     </a>
                                                 {% else %}
                                                     <a href="{{ url_for('statement.statement_details', statement_id=item.document_id) }}" class="text-decoration-none">
-                                                        <i class="fas fa-file-invoice-dollar me-1 text-primary"></i> {{ item.document_number }}
+                                                        {{ item.document_number }}
                                                     </a>
                                                 {% endif %}
                                             </td>
-                                            <td class="text-end">{% if item.debit %}{{ '{:,.2f}'.format(item.debit)|replace(',', ' ')|replace('.', ',') }} RSD{% else %}<span class="text-muted">-</span>{% endif %}</td>
-                                            <td class="text-end">{% if item.credit %}{{ '{:,.2f}'.format(item.credit)|replace(',', ' ')|replace('.', ',') }} RSD{% else %}<span class="text-muted">-</span>{% endif %}</td>
-                                            <td class="text-end">{{ '{:,.2f}'.format(item.saldo)|replace(',', ' ')|replace('.', ',') }} RSD</td>
+                                            <td class="iznos">{% if item.debit %}{{ '{:,.2f}'.format(item.debit)|replace(',', ' ')|replace('.', ',') }} RSD{% else %}<span class="text-muted">-</span>{% endif %}</td>
+                                            <td class="iznos">{% if item.credit %}{{ '{:,.2f}'.format(item.credit)|replace(',', ' ')|replace('.', ',') }} RSD{% else %}<span class="text-muted">-</span>{% endif %}</td>
+                                            <td class="iznos{% if item.saldo < 0 %} iznos-negativan{% endif %}">{{ '{:,.2f}'.format(item.saldo)|replace(',', ' ')|replace('.', ',') }} RSD</td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
-                                <tfoot class="table-light fw-bold">
+                                <tfoot>
                                     <tr>
                                         <td colspan="3" class="text-end">Ukupno:</td>
-                                        <td class="text-end">{{ '{:,.2f}'.format(total_debit)|replace(',', ' ')|replace('.', ',') }} RSD</td>
-                                        <td class="text-end">{{ '{:,.2f}'.format(total_credit)|replace(',', ' ')|replace('.', ',') }} RSD</td>
-                                        <td class="text-end">{{ '{:,.2f}'.format(saldo)|replace(',', ' ')|replace('.', ',') }} RSD</td>
+                                        <td class="iznos">{{ '{:,.2f}'.format(total_debit)|replace(',', ' ')|replace('.', ',') }} RSD</td>
+                                        <td class="iznos">{{ '{:,.2f}'.format(total_credit)|replace(',', ' ')|replace('.', ',') }} RSD</td>
+                                        <td class="iznos{% if saldo < 0 %} iznos-negativan{% endif %}">{{ '{:,.2f}'.format(saldo)|replace(',', ' ')|replace('.', ',') }} RSD</td>
                                     </tr>
                                 </tfoot>
                             </table>

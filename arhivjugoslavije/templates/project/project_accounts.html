@@ -1,45 +1,44 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="container mt-4">
-    <!-- Zaglavlje stranice sa naslovom i dugmadima za akcije -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card bg-light">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h2 class="mb-0"><i class="fas fa-project-diagram me-2 text-primary"></i>Račun projekta: {{ project.name }}</h2>
-                        <div>
-                            <a href="{{ url_for('project.project_list') }}" class="btn btn-outline-secondary me-2">
-                                <i class="fas fa-arrow-left me-1"></i> Nazad
-                            </a>
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAccountModal">
-                                <i class="fas fa-plus me-1"></i> Dodaj konto
-                            </button>
-                        </div>
-                    </div>
-                </div>
+    <header class="page-header">
+        <div>
+            <h1 class="page-header__title">Račun projekta: {{ project.name }}</h1>
+            <div class="etiketa">
+                <span class="etiketa__polje">
+                    <span class="etiketa__naziv">Projekat</span>
+                    <strong class="etiketa__vrednost">{{ project.name }}</strong>
+                </span>
+                <span class="etiketa__polje">
+                    <span class="etiketa__naziv">Godina</span>
+                    <strong class="etiketa__vrednost">{{ project.year }}</strong>
+                </span>
             </div>
         </div>
-    </div>
-    
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-light">
-            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Projekat: {{ project.name }}</h5>
+        <div class="page-header__actions">
+            <a href="{{ url_for('project.project_list') }}" class="btn btn-outline-secondary">Nazad</a>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAccountModal">Dodaj konto</button>
+        </div>
+    </header>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Projekat: {{ project.name }}</h5>
         </div>
         <div class="card-body">
             <div class="row mb-4">
                 <!-- Osnovni podaci o projektu -->
                 <div class="col-md-4">
-                    <div class="card h-100 border-secondary">
-                        <div class="card-header bg-secondary text-white">
-                            <h6 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Osnovni podaci</h6>
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h6 class="mb-0">Osnovni podaci</h6>
                         </div>
                         <div class="card-body">
                             {% if project.note %}
-                            <p><strong><i class="fas fa-comment me-1"></i>Napomena:</strong> {{ project.note }}</p>
+                            <p><strong>Napomena:</strong> {{ project.note }}</p>
                             {% endif %}
-                            <p><strong><i class="fas fa-calendar me-1"></i>Godina:</strong> {{ project.year }}</p>
-                            <p><strong><i class="fas fa-tag me-1"></i>Status:</strong> 
+                            <p><strong>Godina:</strong> {{ project.year }}</p>
+                            <p><strong>Status:</strong> 
                                 {% if project.archived %}
                                 <span class="badge bg-secondary">Arhivirano</span>
                                 {% else %}
@@ -52,14 +51,14 @@
                 
                 <!-- Suma po kontima 4 stepena -->
                 <div class="col-md-8">
-                    <div class="card h-100 border-secondary">
-                        <div class="card-header bg-secondary text-white">
-                            <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Suma po kontima 4 stepena</h6>
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h6 class="mb-0">Suma po kontima 4 stepena</h6>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-sm table-striped table-hover">
-                                    <thead class="table-light">
+                                <table class="table table-sm table-hover">
+                                    <thead>
                                         <tr>
                                             <th>Konto</th>
                                             <th class="text-end">Planirani iznos</th>
@@ -72,10 +71,10 @@
                                         {% for account in sum_data.values() %}
                                         <tr>
                                             <td>{{ account['account'] }}</td>
-                                            <td class="text-end">{{ account['planned'] | format_number }}</td>
-                                            <td class="text-end">{{ account['paid_in'] | format_number }}</td>
-                                            <td class="text-end">{{ account['spent'] | format_number }}</td>
-                                            <td class="text-end">{{ account['unspent'] | format_number }}</td>
+                                            <td class="iznos">{{ account['planned'] | format_number }}</td>
+                                            <td class="iznos">{{ account['paid_in'] | format_number }}</td>
+                                            <td class="iznos">{{ account['spent'] | format_number }}</td>
+                                            <td class="iznos">{{ account['unspent'] | format_number }}</td>
                                         </tr>
                                         {% else %}
                                         <tr>
@@ -84,12 +83,12 @@
                                         {% endfor %}
                                     </tbody>
                                     <tfoot>
-                                        <tr class="table-primary fw-bold">
+                                        <tr>
                                             <th>Ukupno:</th>
-                                            <th class="text-end">{{ sum_totals['planned'] | format_number }}</th>
-                                            <th class="text-end">{{ sum_totals['paid_in'] | format_number }}</th>
-                                            <th class="text-end">{{ sum_totals['spent'] | format_number }}</th>
-                                            <th class="text-end">{{ sum_totals['unspent'] | format_number }}</th>
+                                            <th class="iznos">{{ sum_totals['planned'] | format_number }}</th>
+                                            <th class="iznos">{{ sum_totals['paid_in'] | format_number }}</th>
+                                            <th class="iznos">{{ sum_totals['spent'] | format_number }}</th>
+                                            <th class="iznos">{{ sum_totals['unspent'] | format_number }}</th>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -100,21 +99,21 @@
             </div>
             
             <!-- Tabovi: Stavke izvoda / Konta projekta -->
-            <div class="card shadow-sm project-tabs-card">
+            <div class="card project-tabs-card">
                 <div class="card-header project-tabs-header">
                     <ul class="nav project-tabs" id="projectTabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="statement-items-tab" data-bs-toggle="tab"
                                     data-bs-target="#statement-items-pane" type="button" role="tab"
                                     aria-controls="statement-items-pane" aria-selected="true">
-                                <i class="fas fa-exchange-alt"></i><span>Stavke izvoda</span>
+                                <span>Stavke izvoda</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="project-accounts-tab" data-bs-toggle="tab"
                                     data-bs-target="#project-accounts-pane" type="button" role="tab"
                                     aria-controls="project-accounts-pane" aria-selected="false">
-                                <i class="fas fa-list"></i><span>Konta projekta</span>
+                                <span>Konta projekta</span>
                             </button>
                         </li>
                     </ul>
@@ -125,15 +124,15 @@
                         <div class="tab-pane fade show active" id="statement-items-pane" role="tabpanel"
                              aria-labelledby="statement-items-tab">
                             <div class="table-responsive">
-                                <table class="table report-table table-striped table-hover" id="statementItemsTable">
-                                    <thead class="table-light">
+                                <table class="table report-table table-hover" id="statementItemsTable">
+                                    <thead>
                                         <tr>
-                                            <th><i class="fas fa-university me-1"></i>Račun</th>
-                                            <th><i class="fas fa-handshake me-1"></i>Partner</th>
-                                            <th><i class="fas fa-comment-dots me-1"></i>Svrha doznake</th>
-                                            <th><i class="fas fa-list-ol me-1"></i>Konto</th>
-                                            <th class="text-end"><i class="fas fa-arrow-up me-1"></i>Duguje</th>
-                                            <th class="text-end"><i class="fas fa-arrow-down me-1"></i>Potražuje</th>
+                                            <th>Račun</th>
+                                            <th>Partner</th>
+                                            <th>Svrha doznake</th>
+                                            <th>Konto</th>
+                                            <th class="text-end">Duguje</th>
+                                            <th class="text-end">Potražuje</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -145,8 +144,8 @@
                                             <td>{{ item.partner.name if item.partner else '' }}</td>
                                             <td>{{ item.description or '' }}</td>
                                             <td>{{ item.account_level_6_number or '' }}</td>
-                                            <td class="text-end">{{ (item.amount | format_number) if item.is_debit else '' }}</td>
-                                            <td class="text-end">{{ (item.amount | format_number) if not item.is_debit else '' }}</td>
+                                            <td class="iznos">{{ (item.amount | format_number) if item.is_debit else '' }}</td>
+                                            <td class="iznos">{{ (item.amount | format_number) if not item.is_debit else '' }}</td>
                                         </tr>
                                         {% else %}
                                         <tr>
@@ -156,10 +155,10 @@
                                     </tbody>
                                     {% if project_statement_items %}
                                     <tfoot>
-                                        <tr class="table-primary fw-bold">
+                                        <tr>
                                             <th colspan="4">Ukupno:</th>
-                                            <th class="text-end">{{ statement_items_totals['debit'] | format_number }}</th>
-                                            <th class="text-end">{{ statement_items_totals['credit'] | format_number }}</th>
+                                            <th class="iznos">{{ statement_items_totals['debit'] | format_number }}</th>
+                                            <th class="iznos">{{ statement_items_totals['credit'] | format_number }}</th>
                                         </tr>
                                     </tfoot>
                                     {% endif %}
@@ -171,14 +170,14 @@
                         <div class="tab-pane fade" id="project-accounts-pane" role="tabpanel"
                              aria-labelledby="project-accounts-tab">
                             <div class="table-responsive">
-                                <table class="table report-table table-striped table-hover" id="projectAccountsTable">
-                                    <thead class="table-light">
+                                <table class="table report-table table-hover" id="projectAccountsTable">
+                                    <thead>
                                         <tr>
-                                            <th><i class="fas fa-hashtag me-1"></i>ID</th>
-                                            <th><i class="fas fa-list-ol me-1"></i>Konto</th>
-                                            <th class="text-end"><i class="fas fa-money-bill-wave me-1"></i>Iznos</th>
-                                            <th><i class="fas fa-comment me-1"></i>Napomena</th>
-                                            <th class="text-center"><i class="fas fa-cogs me-1"></i>Akcije</th>
+                                            <th>ID</th>
+                                            <th>Konto</th>
+                                            <th class="text-end">Iznos</th>
+                                            <th>Napomena</th>
+                                            <th class="text-center">Akcije</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -186,11 +185,11 @@
                                         <tr>
                                             <td>{{ account.id }}</td>
                                             <td>{{ account.account_level_6_number }}</td>
-                                            <td class="text-end">{{ account.amount | format_number }}</td>
+                                            <td class="iznos">{{ account.amount | format_number }}</td>
                                             <td>{{ account.note }}</td>
                                             <td class="text-center">
                                                 <button type="button" class="btn btn-sm btn-outline-primary edit-account-btn"
-                                                        data-id="{{ account.id }}" title="Izmeni konto">
+                                                        data-id="{{ account.id }}" title="Izmeni konto" aria-label="Izmeni konto">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
                                             </td>
@@ -216,7 +215,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAccountModalLabel"><i class="fas fa-plus me-2"></i>Dodaj konto za projekat</h5>
+                <h5 class="modal-title" id="addAccountModalLabel">Dodaj konto za projekat</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="addAccountForm" action="{{ url_for('project.add_project_account') }}" method="POST">
@@ -242,7 +241,7 @@
                     <input type="hidden" id="project_id" name="project_id" value="{{ project.id }}">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Odustani</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Odustani</button>
                     <button type="submit" class="btn btn-primary">Sačuvaj</button>
                 </div>
             </form>
@@ -255,7 +254,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editAccountModalLabel"><i class="fas fa-edit me-2"></i>Izmeni konto projekta</h5>
+                <h5 class="modal-title" id="editAccountModalLabel">Izmeni konto projekta</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="editAccountForm">
@@ -281,7 +280,7 @@
                     <input type="hidden" id="edit_account_id" name="account_id">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Odustani</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Odustani</button>
                     <button type="submit" class="btn btn-primary">Sačuvaj izmene</button>
                 </div>
             </form>

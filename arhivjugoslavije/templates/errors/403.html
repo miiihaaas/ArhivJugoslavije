@@ -1,12 +1,12 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="container text-center pt-40">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <h1 class="display-1">403</h1>
-            <h2>Pristup zabranjen</h2>
-            <p class="lead">Nemate dozvolu za pristup ovoj stranici.</p>
-            <a href="{{ url_for('main.home') }}" class="btn btn-primary mt-4">Vratite se na početnu stranu</a>
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-7">
+            <p class="display-1 mb-2">403</p>
+            <h1 class="page-header__title mb-3">Pristup nije dozvoljen</h1>
+            <p class="mb-4">Vaš nalog nema dozvolu za ovu stranu. Ako vam je pristup potreban, obratite se administratoru aplikacije.</p>
+            <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary">Nazad na početnu</a>
         </div>
     </div>
 </div>

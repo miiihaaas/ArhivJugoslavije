@@ -5,17 +5,16 @@
 
     {# Page header #}
     <header class="page-header">
-        <h2 class="page-header__title">
-            <i class="fas fa-users page-header__icon"></i>
-            {{ legend }}
-        </h2>
+        <div>
+            <h1 class="page-header__title">{{ legend }}</h1>
+        </div>
         <div class="page-header__actions">
             <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-1"></i> Nazad
+                Nazad
             </a>
             {% if not active_inventory_list %}
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newUser">
-                <i class="fas fa-user-plus me-1"></i> Registruj novog korisnika
+                Registruj novog korisnika
             </button>
             {% endif %}
         </div>
@@ -24,18 +23,17 @@
     {# Users list #}
     <div class="list-card">
         <div class="list-card__header">
-            <i class="fas fa-users"></i>
             Korisnički nalozi
         </div>
         <div class="table-responsive">
-            <table id="data" class="table table-compact table-striped table-hover mb-0">
+            <table id="data" class="table table-compact table-hover mb-0">
                 <thead>
                     <tr>
-                        <th class="text-center"><i class="fa fa-hashtag me-1"></i>ID</th>
-                        <th><i class="fa fa-user me-1"></i>Ime</th>
-                        <th><i class="fa fa-user me-1"></i>Prezime</th>
-                        <th><i class="fa fa-envelope me-1"></i>Mejl</th>
-                        <th class="text-center th-w-1 no-sort"><i class="fa fa-cog me-1"></i>Akcije</th>
+                        <th class="text-center">ID</th>
+                        <th>Ime</th>
+                        <th>Prezime</th>
+                        <th>Mejl</th>
+                        <th class="text-center th-w-1 no-sort">Akcije</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -52,7 +50,8 @@
                                 data-bs-toggle="modal"
                                 data-bs-target="#editUser"
                                 onclick="editUser('{{user.id}}', '{{user.name}}', '{{user.surname}}', '{{user.email}}', '{{user.authorization}}')"
-                                title="Izmena profila">
+                                title="Izmena profila"
+                                aria-label="Izmena profila">
                                 <i class="fa fa-edit"></i>
                             </button>
                             {% if number_of_users > 1 %}
@@ -60,7 +59,8 @@
                                 data-bs-toggle="modal"
                                 data-bs-target="#deleteUser"
                                 onclick="deleteUser('{{user.id}}', '{{user.name}}', '{{user.surname}}', '{{user.email}}')"
-                                title="Brisanje profila">
+                                title="Brisanje profila"
+                                aria-label="Brisanje profila">
                                 <i class="fa fa-user-slash"></i>
                             </button>
                             {% endif %}
@@ -80,9 +80,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="newUserLabel">
-                    <i class="fa fa-user-plus me-2"></i>Kreiranje novog korisnika
-                </h5>
+                <h5 class="modal-title" id="newUserLabel">Kreiranje novog korisnika</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="{{ url_for('users.register_user') }}">
@@ -90,15 +88,11 @@
                     <div class="section-title">Osnovni podaci</div>
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label class="form-label" for="name">
-                                <i class="fa fa-user me-2"></i>Ime
-                            </label>
+                            <label class="form-label" for="name">Ime</label>
                             <input class="form-control" type="text" id="name" name="name" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label" for="surname">
-                                <i class="fa fa-user me-2"></i>Prezime
-                            </label>
+                            <label class="form-label" for="surname">Prezime</label>
                             <input class="form-control" type="text" id="surname" name="surname" required>
                         </div>
                     </div>
@@ -106,25 +100,21 @@
                     <div class="section-title">Pristupni podaci</div>
                     <div class="row g-3">
                         <div class="col-md-12">
-                            <label class="form-label" for="email">
-                                <i class="fa fa-envelope me-2"></i>Mejl
-                            </label>
+                            <label class="form-label" for="email">Mejl</label>
                             <input class="form-control" type="email" id="email" name="email" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label" for="password">
-                                <i class="fa fa-lock me-2"></i>Lozinka
-                            </label>
+                            <label class="form-label" for="password">Lozinka</label>
                             <input class="form-control" type="password" id="password" name="password" required>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="fa fa-times me-2"></i>Otkaži
+                        Otkaži
                     </button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fa fa-save me-2"></i>Sačuvaj
+                        Sačuvaj
                     </button>
                 </div>
             </form>
@@ -137,32 +127,24 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editUserLabel">
-                    <i class="fa fa-user-edit me-2"></i>Izmena korisničkog profila
-                </h5>
+                <h5 class="modal-title" id="editUserLabel">Izmena korisničkog profila</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="{{ url_for('users.edit_user') }}">
                 <div class="modal-body">
                     <div class="mb-4">
-                        <label class="form-label" for="user_id">
-                            <i class="fa fa-hashtag me-2"></i>ID
-                        </label>
+                        <label class="form-label" for="user_id">ID</label>
                         <input class="form-control bg-light" type="text" id="user_id" name="user_id" readonly>
                     </div>
 
                     <div class="section-title">Osnovni podaci</div>
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label class="form-label" for="edit_name">
-                                <i class="fa fa-user me-2"></i>Ime
-                            </label>
+                            <label class="form-label" for="edit_name">Ime</label>
                             <input class="form-control" type="text" id="edit_name" name="edit_name" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label" for="edit_surname">
-                                <i class="fa fa-user me-2"></i>Prezime
-                            </label>
+                            <label class="form-label" for="edit_surname">Prezime</label>
                             <input class="form-control" type="text" id="edit_surname" name="edit_surname" required>
                         </div>
                     </div>
@@ -170,19 +152,17 @@
                     <div class="section-title">Pristupni podaci</div>
                     <div class="row g-3">
                         <div class="col-md-8">
-                            <label class="form-label" for="edit_email">
-                                <i class="fa fa-envelope me-2"></i>Mejl
-                            </label>
+                            <label class="form-label" for="edit_email">Mejl</label>
                             <input class="form-control" type="email" id="edit_email" name="edit_email" required>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="fa fa-times me-2"></i>Otkaži
+                        Otkaži
                     </button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fa fa-save me-2"></i>Sačuvaj
+                        Sačuvaj
                     </button>
                 </div>
             </form>
@@ -194,10 +174,8 @@
 <div class="modal fade" id="deleteUser" tabindex="-1" aria-labelledby="deleteUserLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-danger-subtle">
-                <h5 class="modal-title" id="deleteUserLabel">
-                    <i class="fa fa-user-slash me-2"></i>Brisanje korisničkog profila
-                </h5>
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteUserLabel">Brisanje korisničkog profila</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="{{ url_for('users.delete_user') }}">
@@ -212,27 +190,19 @@
                     <div class="section-title">Podaci o korisniku</div>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label" for="delete_user_id">
-                                <i class="fa fa-hashtag me-2"></i>ID
-                            </label>
+                            <label class="form-label" for="delete_user_id">ID</label>
                             <input class="form-control bg-light" type="text" id="delete_user_id" name="delete_user_id" readonly>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label" for="delete_email">
-                                <i class="fa fa-envelope me-2"></i>Mejl
-                            </label>
+                            <label class="form-label" for="delete_email">Mejl</label>
                             <input class="form-control bg-light" type="text" id="delete_email" name="delete_email" readonly>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label" for="delete_name">
-                                <i class="fa fa-user me-2"></i>Ime
-                            </label>
+                            <label class="form-label" for="delete_name">Ime</label>
                             <input class="form-control bg-light" type="text" id="delete_name" name="delete_name" readonly>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label" for="delete_surname">
-                                <i class="fa fa-user me-2"></i>Prezime
-                            </label>
+                            <label class="form-label" for="delete_surname">Prezime</label>
                             <input class="form-control bg-light" type="text" id="delete_surname" name="delete_surname" readonly>
                         </div>
                     </div>
@@ -246,10 +216,10 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="fa fa-times me-2"></i>Odustani
+                        Odustani
                     </button>
                     <button type="submit" class="btn btn-danger">
-                        <i class="fa fa-user-slash me-2"></i>Obriši profil
+                        Obriši profil
                     </button>
                 </div>
             </form>

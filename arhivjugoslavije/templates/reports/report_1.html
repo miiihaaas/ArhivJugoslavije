@@ -3,48 +3,33 @@
 <style>
     /* Red konta nivoa 4 - klikom se otvaraju/zatvaraju konta nivoa 6 */
     #reportTable tr.account-row { cursor: pointer; }
-    #reportTable tr.account-row > td { font-weight: 600; }
-    #reportTable tr.account-row .toggle-icon { width: 1rem; transition: transform 0.15s ease; }
+    #reportTable tr.account-row > td { font-weight: 700; }
+    #reportTable tr.account-row .toggle-icon { width: 1rem; color: var(--siva); }
     #reportTable tr.account-row.expanded .toggle-icon { transform: rotate(90deg); }
     /* Red konta nivoa 6 - uvučen, sitniji i prigušen */
-    #reportTable tr.child-row > td { font-size: 0.76rem; color: var(--color-text-light); padding-top: 0.3rem; padding-bottom: 0.3rem; }
-    #reportTable tr.child-row > td:first-child { padding-left: 2.25rem; }
-    #reportTable td.text-end, #reportTable th.text-end { white-space: nowrap; }
+    #reportTable tr.child-row > td { font-size: var(--fs-xs); color: var(--siva); padding-top: var(--sp-1); padding-bottom: var(--sp-1); }
+    #reportTable tr.child-row > td:first-child { padding-left: calc(1rem + var(--sp-5)); }
 </style>
 <div class="container mt-4">
-    <!-- Zaglavlje stranice sa naslovom i dugmadima za akcije -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card bg-light">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h2 class="mb-0"><i class="fas fa-chart-line me-2 text-primary"></i>Realizacija po kontima</h2>
-                        <div>
-                            <a href="{{ url_for('reports.report_list') }}" class="btn btn-outline-secondary me-2">
-                                <i class="fas fa-arrow-left me-1"></i> Nazad
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <header class="page-header">
+        <div>
+            <h1 class="page-header__title">Realizacija po kontima</h1>
         </div>
-    </div>
+        <div class="page-header__actions">
+            <a href="{{ url_for('reports.report_list') }}" class="btn btn-outline-secondary">Nazad</a>
+        </div>
+    </header>
 
     <!-- Filter po godinama i proširivanje svih konta -->
-    <div class="row mb-3">
-        <div class="col-12 d-flex justify-content-end gap-2">
-            <button type="button" id="toggleAll" class="btn btn-outline-secondary" {% if not accounts %}disabled{% endif %}>
-                <i class="fas fa-angle-double-down me-1"></i> <span>Proširi sve</span>
-            </button>
-            <div class="input-group" style="width: 200px;">
-                <span class="input-group-text"><i class="fas fa-filter"></i></span>
-                <select id="yearFilter" class="form-select">
-                    {% for plan in purchase_plans %}
-                    <option value="{{ plan.year }}" {% if plan.year == selected_year %}selected{% endif %}>{{ plan.year }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
+    <div class="page-toolbar justify-content-end">
+        <button type="button" id="toggleAll" class="btn btn-outline-secondary" {% if not accounts %}disabled{% endif %}>
+            <span>Proširi sve</span>
+        </button>
+        <select id="yearFilter" class="form-select input-group-200" aria-label="Godina">
+            {% for plan in purchase_plans %}
+            <option value="{{ plan.year }}" {% if plan.year == selected_year %}selected{% endif %}>{{ plan.year }}</option>
+            {% endfor %}
+        </select>
     </div>
 
     <!-- Tabela sa podacima: konta nivoa 4 sa kontima nivoa 6 ispod (sklopivo) -->
@@ -76,22 +61,22 @@
                             <span class="badge bg-warning text-dark ms-1" title="Konto nije u planu nabavke za {{ account.year }}. godinu">van plana</span>
                             {% endif %}
                         </td>
-                        <td class="text-end">{{ account.planned | format_currency }}</td>
-                        <td class="text-end">{{ account.budget_received | format_currency }}</td>
-                        <td class="text-end">{{ account.budget_spent | format_currency }}</td>
-                        <td class="text-end{% if account.budget_balance < 0 %} text-danger{% endif %}">{{ account.budget_balance | format_currency }}</td>
-                        <td class="text-end">{{ account.own_spent | format_currency }}</td>
-                        <td class="text-end">{{ account.total_expense | format_currency }}</td>
+                        <td class="iznos">{{ account.planned | format_currency }}</td>
+                        <td class="iznos">{{ account.budget_received | format_currency }}</td>
+                        <td class="iznos">{{ account.budget_spent | format_currency }}</td>
+                        <td class="iznos{% if account.budget_balance < 0 %} iznos-negativan text-danger{% endif %}">{{ account.budget_balance | format_currency }}</td>
+                        <td class="iznos">{{ account.own_spent | format_currency }}</td>
+                        <td class="iznos">{{ account.total_expense | format_currency }}</td>
                     </tr>
                     {% for child in account.children %}
                     <tr class="child-row d-none" data-parent="{{ account.account_number }}">
                         <td>{{ child.account_number }}{% if child.account_name %} - {{ child.account_name }}{% endif %}</td>
                         <td></td>
-                        <td class="text-end">{{ child.budget_received | format_currency }}</td>
-                        <td class="text-end">{{ child.budget_spent | format_currency }}</td>
+                        <td class="iznos">{{ child.budget_received | format_currency }}</td>
+                        <td class="iznos">{{ child.budget_spent | format_currency }}</td>
                         <td></td>
-                        <td class="text-end">{{ child.own_spent | format_currency }}</td>
-                        <td class="text-end">{{ child.total_expense | format_currency }}</td>
+                        <td class="iznos">{{ child.own_spent | format_currency }}</td>
+                        <td class="iznos">{{ child.total_expense | format_currency }}</td>
                     </tr>
                     {% endfor %}
                     {% else %}
@@ -101,14 +86,14 @@
                     {% endfor %}
                 </tbody>
                 <tfoot>
-                    <tr class="table-secondary fw-bold">
+                    <tr>
                         <td>UKUPNO</td>
-                        <td class="text-end">{{ totals.planned | format_currency }}</td>
-                        <td class="text-end">{{ totals.budget_received | format_currency }}</td>
-                        <td class="text-end">{{ totals.budget_spent | format_currency }}</td>
-                        <td class="text-end">{{ totals.budget_balance | format_currency }}</td>
-                        <td class="text-end">{{ totals.own_spent | format_currency }}</td>
-                        <td class="text-end">{{ totals.total_expense | format_currency }}</td>
+                        <td class="iznos">{{ totals.planned | format_currency }}</td>
+                        <td class="iznos">{{ totals.budget_received | format_currency }}</td>
+                        <td class="iznos">{{ totals.budget_spent | format_currency }}</td>
+                        <td class="iznos{% if totals.budget_balance < 0 %} iznos-negativan text-danger{% endif %}">{{ totals.budget_balance | format_currency }}</td>
+                        <td class="iznos">{{ totals.own_spent | format_currency }}</td>
+                        <td class="iznos">{{ totals.total_expense | format_currency }}</td>
                     </tr>
                 </tfoot>
             </table>
@@ -118,7 +103,7 @@
     <!-- Napomena o isplatama bez konta, koje nisu obuhvaćene izveštajem -->
     {% if unassigned %}
     <div class="small text-muted mt-2">
-        <i class="fas fa-info-circle me-1"></i>Isplate bez konta (nisu u izveštaju):
+        Isplate bez konta (nisu u izveštaju):
         {% for entry in unassigned %}
         {{ entry.label }} {{ entry.count }} kom., ukupno {{ entry.amount | format_currency }}{% if not loop.last %}; {% endif %}
         {% endfor %}

@@ -2,34 +2,28 @@
 {% block content %}
 <div class="container py-4">
     <!-- Zaglavlje stranice sa naslovom i dugmadima za akcije -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card bg-light">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h2 class="mb-0"><i class="fas fa-cogs me-2 text-primary"></i>Podaci Arhiva Jugoslavije</h2>
-                        <div>
-                            <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary me-2">
-                                <i class="fas fa-arrow-left me-1"></i> Nazad
-                            </a>
-                            <button type="button" class="btn btn-primary" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#editArchiveModal"
-                                    {% if active_inventory_list %}disabled{% endif %}>
-                                <i class="fas fa-edit me-1"></i> Izmenite podatke
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <header class="page-header">
+        <div>
+            <h1 class="page-header__title">Podaci Arhiva Jugoslavije</h1>
         </div>
-    </div>
+        <div class="page-header__actions">
+            <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary">
+                Nazad
+            </a>
+            <button type="button" class="btn btn-primary" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#editArchiveModal"
+                    {% if active_inventory_list %}disabled{% endif %}>
+                Izmenite podatke
+            </button>
+        </div>
+    </header>
     
     <!-- Main Content -->
     <div class="row g-4">
         <!-- Basic Archive Info Card -->
         <div class="col-12">
-            <div class="card shadow-sm">
+            <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Osnovni podaci</h5>
                 </div>
@@ -39,13 +33,11 @@
                         <div class="col-md-8">
                             <div class="row mb-4">
                                 <div class="col-12">
-                                    <h3 class="text-primary mb-3">{{ archive.name }}</h3>
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="fa fa-map-marker-alt text-secondary me-2"></i>
+                                    <h3 class="h5 mb-3">{{ archive.name }}</h3>
+                                    <div class="mb-2">
                                         <span>{{ archive.address }}, {{ archive.zip_code }} {{ archive.city }}, {{ archive.country }}</span>
                                     </div>
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="fa fa-id-card text-secondary me-2"></i>
+                                    <div class="mb-2">
                                         <span>PIB: {{ archive.pib }} | MB: {{ archive.mb }}</span>
                                     </div>
                                 </div>
@@ -53,28 +45,24 @@
                             
                             <div class="row">
                                 <div class="col-md-6">
-                                    <h5 class="border-bottom pb-2 mb-3">Kontakt podaci</h5>
+                                    <h4 class="section-title">Kontakt podaci</h4>
                                     {% if archive.phone_1 %}
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="fa fa-phone text-secondary me-2"></i>
+                                    <div class="mb-2">
                                         <span>{{ archive.phone_1 }}</span>
                                     </div>
                                     {% endif %}
                                     {% if archive.phone_2 %}
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="fa fa-phone text-secondary me-2"></i>
+                                    <div class="mb-2">
                                         <span>{{ archive.phone_2 }}</span>
                                     </div>
                                     {% endif %}
                                     {% if archive.email %}
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="fa fa-envelope text-secondary me-2"></i>
+                                    <div class="mb-2">
                                         <span>{{ archive.email }}</span>
                                     </div>
                                     {% endif %}
                                     {% if archive.web_site %}
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="fa fa-globe text-secondary me-2"></i>
+                                    <div class="mb-2">
                                         <span>{{ archive.web_site }}</span>
                                     </div>
                                     {% endif %}
@@ -86,42 +74,39 @@
                         <div class="col-md-4">
                             <div class="row">
                                 <div class="col-12 mb-4">
-                                    <h5 class="border-bottom pb-2 mb-3">Logo</h5>
+                                    <h4 class="section-title">Logo</h4>
                                     {% if logo_url %}
                                         <div class="text-center">
-                                            <img src="{{ logo_url }}" alt="Logo arhiva" class="img-fluid mb-2" style="max-height: 100px;">
+                                            <img src="{{ logo_url }}" alt="Logo arhiva" class="img-fluid mb-2 preview-img-lg">
                                         </div>
                                     {% else %}
                                         <div class="text-center text-muted">
-                                            <i class="fa fa-image fa-3x mb-2"></i>
                                             <p>Logo nije postavljen</p>
                                         </div>
                                     {% endif %}
                                 </div>
                                 
                                 <div class="col-6 mb-4">
-                                    <h5 class="border-bottom pb-2 mb-3">Pečat</h5>
+                                    <h4 class="section-title">Pečat</h4>
                                     {% if stamp_url %}
                                         <div class="text-center">
-                                            <img src="{{ stamp_url }}" alt="Pečat arhiva" class="img-fluid mb-2" style="max-height: 80px;">
+                                            <img src="{{ stamp_url }}" alt="Pečat arhiva" class="img-fluid mb-2 preview-img-md">
                                         </div>
                                     {% else %}
                                         <div class="text-center text-muted">
-                                            <i class="fa fa-stamp fa-2x mb-2"></i>
                                             <p>Nije postavljen</p>
                                         </div>
                                     {% endif %}
                                 </div>
                                 
                                 <div class="col-6 mb-4">
-                                    <h5 class="border-bottom pb-2 mb-3">Faksimil</h5>
+                                    <h4 class="section-title">Faksimil</h4>
                                     {% if facsimile_url %}
                                         <div class="text-center">
-                                            <img src="{{ facsimile_url }}" alt="Faksimil" class="img-fluid mb-2" style="max-height: 80px;">
+                                            <img src="{{ facsimile_url }}" alt="Faksimil" class="img-fluid mb-2 preview-img-md">
                                         </div>
                                     {% else %}
                                         <div class="text-center text-muted">
-                                            <i class="fa fa-signature fa-2x mb-2"></i>
                                             <p>Nije postavljen</p>
                                         </div>
                                     {% endif %}
@@ -135,7 +120,7 @@
 
         <!-- Settings Card -->
         <div class="col-12">
-            <div class="card shadow-sm">
+            <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Podešavanja aplikacije</h5>
                 </div>
@@ -143,7 +128,7 @@
                     <div class="row g-4">
                         <div class="col-md-4">
                             <div class="card h-100">
-                                <div class="card-header bg-secondary text-white">
+                                <div class="card-header">
                                     <h6 class="card-title mb-0">Kurs evra</h6>
                                 </div>
                                 <div class="card-body">
@@ -154,7 +139,7 @@
                                             <input type="text" class="form-control" id="eur_rate" name="eur_rate" placeholder="npr. 117,20" value="{{ archive.eur_rate if archive.eur_rate else '' }}" required pattern="^[0-9]+([\.,][0-9]{1,2})?$" title="Unesite broj sa najviše 2 decimale">
                                         </div>
                                         <button type="submit" class="btn btn-primary w-100">
-                                            <i class="fa fa-save me-2"></i>Sačuvaj kurs
+                                            Sačuvaj kurs
                                         </button>
                                     </form>
                                     <p class="mb-2"><strong>Trenutni kurs:</strong> 
@@ -176,16 +161,16 @@
                         </div>
                         <div class="col-md-8">
                             <div class="card h-100">
-                                <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                                <div class="card-header d-flex justify-content-between align-items-center">
                                     <h6 class="card-title mb-0">Žiro računi</h6>
-                                    <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#addBankAccountModal">
-                                        <i class="fa fa-plus me-1"></i>Dodaj
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#addBankAccountModal">
+                                        Dodaj
                                     </button>
                                 </div>
                                 <div class="card-body">
                                     {% if archive.bank_accounts %}
                                         <div class="table-responsive">
-                                            <table class="table table-striped table-hover mb-0">
+                                            <table class="table table-hover mb-0">
                                                 <thead>
                                                     <tr>
                                                         <th>Broj računa</th>
@@ -214,13 +199,15 @@
                                                         </td>
                                                         <td class="text-end">
                                                             <button type="button" class="btn btn-sm btn-outline-primary edit-account-btn" 
-                                                                    data-id="{{ account.id }}">
+                                                                    data-id="{{ account.id }}"
+                                                                    title="Izmeni račun" aria-label="Izmeni račun">
                                                                 <i class="fa fa-edit"></i>
                                                             </button>
                                                             <button type="button" class="btn btn-sm btn-outline-danger delete-account-btn"
                                                                     data-id="{{ account.id }}" 
                                                                     data-purpose="{{ account.purpose }}" 
-                                                                    data-account="{{ account.account_number }}">
+                                                                    data-account="{{ account.account_number }}"
+                                                                    title="Obriši račun" aria-label="Obriši račun">
                                                                 <i class="fa fa-trash"></i>
                                                             </button>
                                                         </td>
@@ -502,10 +489,10 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="fa fa-times me-2"></i>Odustani
+                        Odustani
                     </button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fa fa-save me-2"></i>Sačuvaj izmene
+                        Sačuvaj izmene
                     </button>
                 </div>
             </form>
@@ -597,10 +584,10 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="fa fa-times me-2"></i>Odustani
+                        Odustani
                     </button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fa fa-save me-2"></i>Sačuvaj
+                        Sačuvaj
                     </button>
                 </div>
             </form>
@@ -621,11 +608,11 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                    <i class="fa fa-times me-2"></i>Odustani
+                    Odustani
                 </button>
                 <form method="POST" id="deleteAccountForm">
                     <button type="submit" class="btn btn-danger">
-                        <i class="fa fa-trash me-2"></i>Obriši
+                        Obriši
                     </button>
                 </form>
             </div>

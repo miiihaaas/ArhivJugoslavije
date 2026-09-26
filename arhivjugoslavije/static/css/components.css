@@ -1,0 +1,1839 @@
+/* ============================================================================
+   ARHIV JUGOSLAVIJE — Komponente
+   ----------------------------------------------------------------------------
+   Pravac: "Arhivski registar". Strana je fascikla sa etiketom, tabela je
+   knjiga (ledger), bordo (--povez) je boja poveza i pečata.
+   Koristi isključivo promenljive iz tokens.css (i Bootstrap --bs-* promenljive).
+
+   Redosled učitavanja: tokens.css → components.css → shell.css
+   (Bootstrap, DataTables i select2 CSS sa CDN-a moraju biti PRE ovog fajla.)
+
+   Pravila:
+   - bez senki na listovima; senka samo na plutajućim elementima (modal, meni)
+   - radius: 3px listovi/polja/dugmad, 0 tabele, 6px modali
+   - animacije samo kratke promene boje/ivice (--prelaz)
+   - !important samo da bi se nadjačale Bootstrap pomoćne klase (bg-*,
+     text-white, shadow-sm...) koje i same imaju !important — uvek uz komentar
+
+   Sadržaj:
+     5.  Okvir strane: .page-header, .etiketa, .page-toolbar, .list-card,
+         .section-title, .stat-strip
+     6.  Forme
+     7.  Dugmad
+     8.  Kartice (listovi) + tabovi projekta + nav-tabs
+     9.  Tabele (knjiga) + DataTables + status-pill + report-table
+     10. Obaveštenja (alert)
+     11. Oznake (badge)
+     12. Semantičke boje (partneri, iznosi, tekst)
+     13. Modali
+     14. Select2
+     15. Ostalo: padajući meni, list-group, paginacija, progress, tooltip,
+         popover; pomoćne klase (th-w-*, slike, grupe polja, akcije)
+     16. Responsive
+   ============================================================================ */
+
+
+/* ----------------------------------------------------------------------------
+   Bootstrap promenljive koje zavise od komponenti
+   (Bootstrap mnogim komponentama daje --bs-body-bg kao pozadinu; kod nas je
+   to --papir, a polja/listovi/tabele moraju biti beli — --list.)
+---------------------------------------------------------------------------- */
+:root {
+    /* bg-light (pozadina uređivih ćelija, "card bg-light") → hladni papir,
+       ne Bootstrap siva #f8f9fa. Vrednosti = --papir #f2f2ef. */
+    --bs-light-rgb: 242, 242, 239;
+    --bs-secondary-bg: var(--papir);
+    --bs-tertiary-bg: var(--papir);
+
+    --bs-form-invalid-color: var(--pecat);
+    --bs-form-invalid-border-color: var(--pecat);
+    --bs-form-valid-color: var(--uspeh);
+    --bs-form-valid-border-color: var(--uspeh);
+
+    --bs-emphasis-color: var(--grafit);
+    --bs-heading-color: var(--grafit);
+}
+
+
+/* ============================================================================
+   5. OKVIR STRANE
+   ============================================================================ */
+
+/* --- Zaglavlje strane ------------------------------------------------------
+   <header class="page-header">
+       <div>
+           <h2 class="page-header__title">
+               <i class="fas fa-file-invoice-dollar page-header__icon"></i> Izvodi
+           </h2>
+           (opciono) <div class="etiketa">…</div>
+       </div>
+       <div class="page-header__actions"> …dugmad… </div>
+   </header>
+--------------------------------------------------------------------------- */
+.page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--sp-3) var(--sp-4);
+    padding: 0 0 var(--sp-3);
+    margin-bottom: var(--sp-5);
+    border-bottom: 1px solid var(--linija);
+}
+
+.page-header__title {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-2);
+    margin: 0;
+    font-family: var(--font-natpis);
+    font-size: var(--fs-xl);
+    font-weight: 700;
+    line-height: var(--lh-tight);
+    color: var(--grafit);
+}
+
+.page-header__icon {
+    color: var(--povez);
+    font-size: 0.8em;
+    width: 1.25em;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.page-header__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+}
+
+.page-header__title + .etiketa { margin-top: var(--sp-2); }
+
+
+/* --- Etiketa dokumenta -----------------------------------------------------
+   Nalepnica na arhivskoj kutiji: identifikuje KONKRETAN dokument koji je
+   otvoren (izvod, faktura, projekat). Samo za strane jednog dokumenta —
+   ne za liste. Polja se odvajaju tankom vertikalnom linijom (CSS), bez
+   tačaka i crtica u markupu.
+
+   <div class="etiketa">
+       <span class="etiketa__polje">
+           <span class="etiketa__naziv">Izvod</span>
+           <strong class="etiketa__vrednost">67</strong>
+       </span>
+       <span class="etiketa__polje">
+           <span class="etiketa__naziv">Datum</span>
+           <strong class="etiketa__vrednost">26.01.2026.</strong>
+       </span>
+       <span class="etiketa__polje">
+           <span class="etiketa__naziv">Račun</span>
+           <strong class="etiketa__vrednost">840-0000640900100-12</strong>
+       </span>
+   </div>
+
+   - vrednost može biti i običan <strong> bez klase
+   - .etiketa--blok: puna širina (npr. u telu kartice ili na telefonu)
+   - kada se red prelomi, linija na početku novog reda se ne vidi
+     (margin-left: -1px + overflow: hidden na etiketi)
+--------------------------------------------------------------------------- */
+.etiketa {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    row-gap: var(--sp-1);
+    max-width: 100%;
+    overflow: hidden;
+    padding: var(--sp-1) 0;
+    background-color: var(--etiketa);
+    border: 1px solid var(--etiketa-ivica);
+    border-left: 2px solid var(--povez);
+    border-radius: var(--radius);
+    font-family: var(--font-natpis);
+    font-size: var(--fs-base);
+    line-height: var(--lh-tight);
+    color: var(--grafit);
+    vertical-align: middle;
+}
+
+.etiketa--blok { display: flex; }
+
+.etiketa__polje {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--sp-2);
+    margin-left: -1px;
+    padding: 0 var(--sp-3);
+    border-left: 1px solid var(--etiketa-ivica);
+    white-space: nowrap;
+}
+
+.etiketa__naziv {
+    color: var(--siva);
+    font-weight: 400;
+    font-size: var(--fs-sm);
+}
+
+.etiketa__vrednost,
+.etiketa__polje > strong,
+.etiketa__polje > b {
+    font-weight: 700;
+    color: var(--grafit);
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* --- Traka sa filterima ispod zaglavlja -------------------------------- */
+.page-toolbar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    margin-bottom: var(--sp-3);
+}
+
+
+/* --- List (sheet) za liste/tabele -------------------------------------- */
+.list-card {
+    background-color: var(--list);
+    border: 1px solid var(--linija);
+    border-radius: var(--radius);
+    box-shadow: none;
+    margin-bottom: var(--sp-4);
+}
+
+.list-card__header {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-4);
+    border-bottom: 1px solid var(--linija);
+    font-family: var(--font-natpis);
+    font-size: var(--fs-base);
+    font-weight: 700;
+    color: var(--grafit);
+}
+
+.list-card__header > i,
+.list-card__header > .fas { color: var(--siva); }
+
+
+/* --- Naslov odeljka (u formama, modalima) ------------------------------ */
+.section-title {
+    font-family: var(--font-natpis);
+    font-size: var(--fs-base);
+    font-weight: 700;
+    color: var(--grafit);
+    margin-bottom: var(--sp-3);
+    padding-bottom: var(--sp-1);
+    border-bottom: 1px solid var(--linija);
+}
+
+
+/* --- Traka pokazatelja (zbirni podaci u jednom redu) ------------------- */
+.stat-strip {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;   /* skriva liniju na početku prelomljenog reda */
+}
+
+.stat-strip__item {
+    flex: 1 1 110px;
+    min-width: 110px;
+    margin-left: -1px;
+    padding: var(--sp-1) var(--sp-3);
+    border-left: 1px solid var(--linija);
+}
+
+.stat-strip__label {
+    display: block;
+    font-size: var(--fs-xs);
+    color: var(--siva);
+    margin-bottom: 2px;
+    white-space: nowrap;
+}
+
+.stat-strip__value {
+    display: block;
+    font-size: var(--fs-base);
+    font-weight: 700;
+    color: var(--grafit);
+    font-variant-numeric: tabular-nums;
+}
+
+.stat-strip__value--end    { text-align: right; }
+.stat-strip__value--center { text-align: center; }
+.stat-strip__value--mono   { font-variant-numeric: tabular-nums; }
+
+
+/* ============================================================================
+   6. FORME
+   ============================================================================ */
+.form-control,
+.form-select {
+    padding: 0.375rem 0.625rem;
+    font-size: var(--fs-base);
+    line-height: var(--lh-base);
+    color: var(--grafit);
+    background-color: var(--list);
+    border: 1px solid var(--linija);
+    border-radius: var(--radius);
+    transition: border-color var(--prelaz), box-shadow var(--prelaz);
+}
+
+.form-select { padding-right: 2rem; background-position: right 0.5rem center; }
+
+.form-control::placeholder { color: var(--siva-svetla); opacity: 1; }
+
+.form-control:hover:not(:disabled):not([readonly]),
+.form-select:hover:not(:disabled) { border-color: var(--siva-svetla); }
+
+.form-control:focus,
+.form-select:focus {
+    color: var(--grafit);
+    background-color: var(--list);
+    border-color: var(--povez);
+    outline: 0;   /* fokus je vidljiv kroz ivicu + prsten */
+    box-shadow: 0 0 0 0.2rem rgba(119, 30, 50, 0.2);
+}
+
+.form-control-sm,
+.form-select-sm {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    padding-left: 0.5rem;
+    font-size: var(--fs-sm);
+    border-radius: var(--radius);
+}
+.form-control-sm { padding-right: 0.5rem; }
+.form-select-sm  { padding-right: 1.75rem; }
+
+/* Onemogućeno / samo za čitanje — čitljivo, ali jasno drugačije */
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled {
+    background-color: var(--papir);
+    color: var(--grafit);
+    border-color: var(--linija);
+    opacity: 1;
+}
+.form-control[readonly]:focus { border-color: var(--siva-svetla); box-shadow: none; }
+
+textarea.form-control { min-height: calc(1.5em + 0.75rem + 2px); }
+
+.form-label,
+.col-form-label {
+    font-family: var(--font-tekst);
+    font-size: var(--fs-sm);
+    font-weight: 400;
+    color: var(--siva);
+    margin-bottom: var(--sp-1);
+}
+
+.form-text {
+    font-size: var(--fs-xs);
+    color: var(--siva);
+    margin-top: var(--sp-1);
+}
+
+/* Grupe polja */
+.input-group-text {
+    padding: 0.375rem 0.625rem;
+    font-size: var(--fs-sm);
+    color: var(--siva);
+    background-color: var(--papir);
+    border: 1px solid var(--linija);
+    border-radius: var(--radius);
+}
+.input-group-sm > .input-group-text { font-size: var(--fs-xs); padding: 0.25rem 0.5rem; border-radius: var(--radius); }
+.input-group > .form-control:focus,
+.input-group > .form-select:focus { z-index: 5; }
+
+/* Čekiranje i prekidači */
+.form-check-input {
+    background-color: var(--list);
+    border: 1px solid var(--siva-svetla);
+    transition: background-color var(--prelaz), border-color var(--prelaz);
+}
+.form-check-input[type="checkbox"] { border-radius: 2px; }
+.form-check-input:checked {
+    background-color: var(--povez);
+    border-color: var(--povez);
+}
+.form-check-input[type="checkbox"]:indeterminate {
+    background-color: var(--povez);
+    border-color: var(--povez);
+}
+.form-check-input:focus {
+    border-color: var(--povez);
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(119, 30, 50, 0.2);
+}
+.form-check-input:disabled { opacity: 0.45; }
+
+/* Dugme prekidača u fokusu: umesto Bootstrap plave, svetli bordo */
+.form-switch .form-check-input:focus:not(:checked) {
+    --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23bb8e98'/%3e%3c/svg%3e");
+}
+
+.form-check-label {
+    font-size: var(--fs-sm);
+    color: var(--grafit);
+}
+
+/* Greška */
+.form-control.is-invalid,
+.form-select.is-invalid,
+.was-validated .form-control:invalid,
+.was-validated .form-select:invalid {
+    border-color: var(--pecat);
+    background-image: none;          /* bez ikonice u polju — dovoljna je ivica i poruka */
+    padding-right: 0.625rem;
+}
+.form-select.is-invalid,
+.was-validated .form-select:invalid {
+    background-image: var(--bs-form-select-bg-img);
+    padding-right: 2rem;
+}
+.form-control.is-invalid:focus,
+.form-select.is-invalid:focus,
+.was-validated .form-control:invalid:focus {
+    border-color: var(--pecat);
+    box-shadow: 0 0 0 0.2rem rgba(175, 37, 43, 0.2);
+}
+.form-check-input.is-invalid,
+.was-validated .form-check-input:invalid { border-color: var(--pecat); }
+.form-check-input.is-invalid ~ .form-check-label,
+.was-validated .form-check-input:invalid ~ .form-check-label { color: var(--pecat); }
+
+/* Validno: Bootstrap zelene ikonice nisu potrebne */
+.form-control.is-valid,
+.was-validated .form-control:valid {
+    border-color: var(--linija);
+    background-image: none;
+    padding-right: 0.625rem;
+}
+.was-validated .form-control:valid:focus { border-color: var(--povez); box-shadow: 0 0 0 0.2rem rgba(119, 30, 50, 0.2); }
+.was-validated .form-check-input:valid,
+.form-check-input.is-valid { border-color: var(--siva-svetla); }
+.was-validated .form-check-input:valid:checked { background-color: var(--povez); border-color: var(--povez); }
+.was-validated .form-check-input:valid ~ .form-check-label { color: var(--grafit); }
+
+.invalid-feedback {
+    font-size: var(--fs-xs);
+    color: var(--pecat);
+    margin-top: var(--sp-1);
+}
+
+
+/* ============================================================================
+   7. DUGMAD
+   Bootstrap 5.3 dugmad se boje preko --bs-btn-* promenljivih; menjamo samo
+   promenljive, bez podizanja, senki i velikih slova.
+   ============================================================================ */
+.btn {
+    --bs-btn-padding-x: 0.75rem;
+    --bs-btn-padding-y: 0.375rem;
+    --bs-btn-font-family: var(--font-natpis);
+    --bs-btn-font-size: var(--fs-base);
+    --bs-btn-font-weight: 700;
+    --bs-btn-line-height: var(--lh-base);
+    --bs-btn-border-radius: var(--radius);
+    --bs-btn-box-shadow: none;
+    --bs-btn-disabled-opacity: 0.5;
+    letter-spacing: 0;
+    text-transform: none;
+    transition: color var(--prelaz), background-color var(--prelaz), border-color var(--prelaz);
+}
+
+.btn-sm,
+.btn-group-sm > .btn {
+    --bs-btn-padding-x: 0.5rem;
+    --bs-btn-padding-y: 0.25rem;
+    --bs-btn-font-size: var(--fs-sm);
+    --bs-btn-border-radius: var(--radius);
+}
+
+.btn-lg,
+.btn-group-lg > .btn {
+    --bs-btn-padding-x: 1.25rem;
+    --bs-btn-padding-y: 0.5rem;
+    --bs-btn-font-size: var(--fs-lg);
+    --bs-btn-border-radius: var(--radius);
+}
+
+/* Fokus sa tastature: ista linija kao na ostalim elementima (tokens.css) */
+.btn:focus-visible,
+.btn-check:focus-visible + .btn,
+.btn:first-child:active:focus-visible {
+    outline: 2px solid var(--povez);
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
+.btn:active,
+.btn.active,
+.btn.show { box-shadow: none; }
+
+/* Primarno — pun bordo */
+.btn-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--povez);
+    --bs-btn-border-color: var(--povez);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--povez-tamni);
+    --bs-btn-hover-border-color: var(--povez-tamni);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--povez-tamni);
+    --bs-btn-active-border-color: var(--povez-tamni);
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: var(--povez);
+    --bs-btn-disabled-border-color: var(--povez);
+}
+
+/* Sekundarno / neutralno — tiha grafitna kontura
+   (btn-secondary, btn-outline-secondary, btn-light, btn-outline-dark,
+    btn-info, btn-outline-info: info je u paleti grafit) */
+.btn-secondary,
+.btn-outline-secondary,
+.btn-light,
+.btn-outline-light,
+.btn-outline-dark,
+.btn-info,
+.btn-outline-info {
+    --bs-btn-color: var(--grafit);
+    --bs-btn-bg: var(--list);
+    --bs-btn-border-color: var(--siva-svetla);
+    --bs-btn-hover-color: var(--grafit);
+    --bs-btn-hover-bg: var(--list-hover);
+    --bs-btn-hover-border-color: var(--grafit);
+    --bs-btn-active-color: var(--grafit);
+    --bs-btn-active-bg: var(--linija-meka);
+    --bs-btn-active-border-color: var(--grafit);
+    --bs-btn-disabled-color: var(--siva);
+    --bs-btn-disabled-bg: var(--list);
+    --bs-btn-disabled-border-color: var(--linija);
+}
+
+/* Kontura bordo — sporedna radnja iste težine kao primarna */
+.btn-outline-primary {
+    --bs-btn-color: var(--povez);
+    --bs-btn-bg: var(--list);
+    --bs-btn-border-color: var(--povez);
+    --bs-btn-hover-color: var(--povez-tamni);
+    --bs-btn-hover-bg: var(--povez-svetli);
+    --bs-btn-hover-border-color: var(--povez-tamni);
+    /* .active (npr. .filter-btn) = pun bordo, jasno uključeno */
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--povez);
+    --bs-btn-active-border-color: var(--povez);
+    --bs-btn-disabled-color: var(--povez);
+    --bs-btn-disabled-bg: var(--list);
+    --bs-btn-disabled-border-color: var(--povez);
+}
+
+/* Opasno — pečat */
+.btn-danger {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--pecat);
+    --bs-btn-border-color: var(--pecat);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--pecat);
+    --bs-btn-hover-border-color: var(--pecat);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--pecat);
+    --bs-btn-active-border-color: var(--pecat);
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: var(--pecat);
+    --bs-btn-disabled-border-color: var(--pecat);
+}
+/* Nema tamnijeg tokena za pečat/uspeh — potamnjenje unutrašnjim slojem */
+.btn-danger:hover,
+.btn-success:hover { box-shadow: inset 0 0 0 100vmax rgba(0, 0, 0, 0.12); }
+.btn-danger:active,
+.btn-success:active { box-shadow: inset 0 0 0 100vmax rgba(0, 0, 0, 0.2); }
+
+.btn-outline-danger {
+    --bs-btn-color: var(--pecat);
+    --bs-btn-bg: var(--list);
+    --bs-btn-border-color: var(--pecat);
+    --bs-btn-hover-color: var(--pecat);
+    --bs-btn-hover-bg: var(--pecat-svetli);
+    --bs-btn-hover-border-color: var(--pecat);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--pecat);
+    --bs-btn-active-border-color: var(--pecat);
+    --bs-btn-disabled-color: var(--pecat);
+    --bs-btn-disabled-bg: var(--list);
+    --bs-btn-disabled-border-color: var(--pecat);
+}
+
+/* Uspeh — prigušena maslinasto-zelena */
+.btn-success {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--uspeh);
+    --bs-btn-border-color: var(--uspeh);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--uspeh);
+    --bs-btn-hover-border-color: var(--uspeh);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--uspeh);
+    --bs-btn-active-border-color: var(--uspeh);
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: var(--uspeh);
+    --bs-btn-disabled-border-color: var(--uspeh);
+}
+
+.btn-outline-success {
+    --bs-btn-color: var(--uspeh);
+    --bs-btn-bg: var(--list);
+    --bs-btn-border-color: var(--uspeh);
+    --bs-btn-hover-color: var(--uspeh);
+    --bs-btn-hover-bg: var(--uspeh-svetli);
+    --bs-btn-hover-border-color: var(--uspeh);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--uspeh);
+    --bs-btn-active-border-color: var(--uspeh);
+    --bs-btn-disabled-color: var(--uspeh);
+    --bs-btn-disabled-bg: var(--list);
+    --bs-btn-disabled-border-color: var(--uspeh);
+}
+
+/* Upozorenje — oker kontura na svetloj podlozi, bez Bootstrap žute */
+.btn-warning,
+.btn-outline-warning {
+    --bs-btn-color: var(--grafit);
+    --bs-btn-bg: var(--oker-svetli);
+    --bs-btn-border-color: var(--oker);
+    --bs-btn-hover-color: var(--grafit);
+    --bs-btn-hover-bg: var(--oker-svetli);
+    --bs-btn-hover-border-color: var(--grafit);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--oker);
+    --bs-btn-active-border-color: var(--oker);
+    --bs-btn-disabled-color: var(--siva);
+    --bs-btn-disabled-bg: var(--oker-svetli);
+    --bs-btn-disabled-border-color: var(--oker);
+}
+.btn-outline-warning { --bs-btn-bg: var(--list); }
+
+.btn-dark {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--grafit);
+    --bs-btn-border-color: var(--grafit);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--grafit);
+    --bs-btn-hover-border-color: var(--grafit);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--grafit);
+    --bs-btn-active-border-color: var(--grafit);
+}
+
+/* Link-dugme — bordo tekst, podvlačenje tek na prelaz */
+.btn-link {
+    --bs-btn-color: var(--povez);
+    --bs-btn-hover-color: var(--povez-tamni);
+    --bs-btn-active-color: var(--povez-tamni);
+    --bs-btn-disabled-color: var(--siva-svetla);
+    --bs-btn-font-family: var(--font-tekst);
+    --bs-btn-font-weight: 400;
+    text-decoration: none;
+}
+.btn-link:hover { text-decoration: underline; text-underline-offset: 2px; }
+/* .text-danger na btn-link (npr. brisanje stavke) ima !important u tokens.css — ostaje crveno */
+
+/* Veće dugme za glavnu radnju (prijava, reset) — nekad VELIKA slova, sada normalno */
+.btn-cta {
+    --bs-btn-padding-x: var(--sp-5);
+    --bs-btn-padding-y: var(--sp-2);
+    --bs-btn-font-size: var(--fs-base);
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* Dugme za zatvaranje (×) — tiho */
+.btn-close {
+    --bs-btn-close-opacity: 0.55;
+    --bs-btn-close-hover-opacity: 0.9;
+    --bs-btn-close-focus-opacity: 1;
+    --bs-btn-close-focus-shadow: none;
+    border-radius: var(--radius);
+}
+.btn-close:focus-visible { outline: 2px solid var(--povez); outline-offset: 2px; }
+
+/* Grupa dugmadi: radius samo na krajevima (Bootstrap), razmak ne dodajemo */
+.btn-group > .btn { --bs-btn-border-radius: var(--radius); }
+.btn-group > .btn:hover,
+.btn-group > .btn:focus-visible { z-index: 2; }
+
+
+/* ============================================================================
+   8. KARTICE (LISTOVI)
+   Beo list, tanka ivica, bez senke. Zaglavlje belo, PT Sans Narrow, linija.
+   ============================================================================ */
+.card {
+    --bs-card-bg: var(--list);
+    --bs-card-color: var(--grafit);
+    --bs-card-border-color: var(--linija);
+    --bs-card-border-radius: var(--radius);
+    --bs-card-inner-border-radius: calc(var(--radius) - 1px);
+    --bs-card-box-shadow: none;
+    --bs-card-cap-bg: var(--list);
+    --bs-card-cap-color: var(--grafit);
+    --bs-card-cap-padding-y: var(--sp-2);
+    --bs-card-cap-padding-x: var(--sp-4);
+    --bs-card-spacer-y: var(--sp-4);
+    --bs-card-spacer-x: var(--sp-4);
+    --bs-card-title-color: var(--grafit);
+    box-shadow: none;
+}
+
+/* .shadow-sm (Bootstrap, sa !important) je na većini kartica — listovi nemaju senku */
+.card.shadow-sm,
+.card.shadow,
+.list-card.shadow-sm { box-shadow: none !important; }
+
+/* "card bg-light" se koristi kao zaglavlje strane — ostaje beo list
+   (!important jer .bg-light ima !important) */
+.card.bg-light { background-color: var(--list) !important; }
+
+/* .border-secondary na kartici → obična ivica lista (Bootstrap ima !important) */
+.card.border-secondary,
+.card.border-primary,
+.card.border-info { border-color: var(--linija) !important; }
+
+.card-header {
+    font-family: var(--font-natpis);
+    font-weight: 700;
+    font-size: var(--fs-base);
+    color: var(--grafit);
+    background-color: var(--list);
+    border-bottom: 1px solid var(--linija);
+}
+
+.card-header.d-flex { flex-wrap: wrap; gap: var(--sp-2); }
+
+/* Naslovi u zaglavlju su h5/h6/.small različitih veličina — izjednačeni */
+.card-header :is(h1, h2, h3, h4, h5, h6, .card-title) {
+    font-family: var(--font-natpis);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: var(--lh-tight);
+    color: inherit;
+    margin: 0;
+}
+
+.card-header .fas,
+.card-header .fa { color: var(--siva); }
+
+/* --- Neutralizacija Bootstrap obojenih zaglavlja -------------------------
+   Šabloni još imaju .bg-primary/.bg-info/.bg-success... i .text-white na
+   zaglavljima kartica. Ove klase imaju !important, pa ga i ovde moramo
+   koristiti. Faza 3 uklanja klase iz šablona; tada ovaj blok postaje suvišan. */
+.card-header.bg-primary,
+.card-header.bg-secondary,
+.card-header.bg-success,
+.card-header.bg-info,
+.card-header.bg-warning,
+.card-header.bg-danger,
+.card-header.bg-light,
+.card-header.bg-dark,
+.card-header.bg-white {
+    background-color: var(--list) !important;
+    color: var(--grafit) !important;
+    border-bottom-color: var(--linija) !important;
+}
+.card-header.text-white,
+.card-header .text-white {
+    color: var(--grafit) !important;
+}
+.card-header.text-white .fas,
+.card-header .text-white .fas { color: var(--siva); }
+
+.card-footer {
+    background-color: var(--list);
+    border-top: 1px solid var(--linija);
+    padding: var(--sp-3) var(--sp-4);
+}
+/* .bg-white na podnožju — već je belo; samo ivica ostaje */
+.card-footer.bg-white { background-color: var(--list) !important; }
+
+.card-title {
+    font-family: var(--font-natpis);
+    font-weight: 700;
+    color: var(--grafit);
+}
+h5.card-title, .card-title.h5 { font-size: 1.0625rem; }
+
+.card-text { color: var(--grafit); }
+
+/* Tabela direktno u telu kartice (card-body p-0) ili u .list-card:
+   prva/poslednja kolona poravnate sa naslovom kartice */
+.card-body.p-0 > .table-responsive > .table > :not(caption) > tr > :first-child,
+.card-body.p-0 > .table > :not(caption) > tr > :first-child,
+.list-card > .table-responsive > .table > :not(caption) > tr > :first-child,
+.list-card > .table > :not(caption) > tr > :first-child { padding-left: var(--sp-4); }
+
+.card-body.p-0 > .table-responsive > .table > :not(caption) > tr > :last-child,
+.card-body.p-0 > .table > :not(caption) > tr > :last-child,
+.list-card > .table-responsive > .table > :not(caption) > tr > :last-child,
+.list-card > .table > :not(caption) > tr > :last-child { padding-right: var(--sp-4); }
+
+/* Ikonica ispred podatka (npr. podaci o partneru na fakturi) — tiha.
+   !important jer ikone nose text-primary/text-danger/... koji imaju !important */
+.icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    flex-shrink: 0;
+}
+.icon-wrapper .fas,
+.icon-wrapper .fa {
+    color: var(--siva) !important;
+    font-size: var(--fs-base) !important;
+}
+
+
+/* --- Tabovi projekta (podvučeni) ---------------------------------------
+   Selektori su namerno .project-tabs .nav-link (bez !important);
+   shell.css mora navbar pravila za .nav-link vezati za navbar. */
+.project-tabs-card .project-tabs-header {
+    padding: 0;
+    background-color: var(--list);
+    border-bottom: 1px solid var(--linija);
+}
+
+.project-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    list-style: none;
+    margin: 0;
+    padding: 0 var(--sp-2);
+    border-bottom: 0;
+}
+
+.project-tabs .nav-item { margin: 0; }
+
+.project-tabs .nav-link,
+.nav-tabs .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: 0 0 -1px;
+    padding: var(--sp-2) var(--sp-3);
+    font-family: var(--font-natpis);
+    font-size: var(--fs-base);
+    font-weight: 700;
+    color: var(--siva);
+    background-color: transparent;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    box-shadow: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color var(--prelaz), border-color var(--prelaz);
+}
+
+.project-tabs .nav-link i,
+.nav-tabs .nav-link i {
+    color: var(--siva-svetla);
+    font-size: 0.9em;
+    transition: color var(--prelaz);
+}
+
+.project-tabs .nav-link:hover,
+.nav-tabs .nav-link:hover {
+    color: var(--grafit);
+    background-color: transparent;
+    border-bottom-color: var(--linija);
+}
+
+.project-tabs .nav-link:focus-visible,
+.nav-tabs .nav-link:focus-visible {
+    outline: 2px solid var(--povez);
+    outline-offset: -2px;
+    box-shadow: none;
+}
+
+.project-tabs .nav-link.active,
+.nav-tabs .nav-link.active,
+.nav-tabs .nav-item.show .nav-link {
+    color: var(--povez);
+    background-color: transparent;
+    border-bottom-color: var(--povez);
+}
+
+.project-tabs .nav-link.active i,
+.nav-tabs .nav-link.active i { color: var(--povez); }
+
+.nav-tabs {
+    --bs-nav-tabs-border-width: 1px;
+    --bs-nav-tabs-border-color: var(--linija);
+    --bs-nav-tabs-border-radius: 0;
+    gap: 0;
+}
+
+.project-tabs-card .tab-content { padding-top: var(--sp-1); }
+
+/* Pill-navigacija (ako se pojavi) — ne pilula, nego tiha oznaka */
+.nav-pills {
+    --bs-nav-pills-border-radius: var(--radius);
+    --bs-nav-pills-link-active-bg: var(--povez-svetli);
+    --bs-nav-pills-link-active-color: var(--povez);
+}
+
+
+/* ============================================================================
+   9. TABELE — KNJIGA
+   Bez zebre; zaglavlje PT Sans Narrow sa punom grafitnom linijom; redovi
+   odvojeni mekom linijom; zbir na etiketa podlozi sa dvostrukom linijom.
+   ============================================================================ */
+.table {
+    --bs-table-color: var(--grafit);
+    --bs-table-bg: var(--list);
+    --bs-table-border-color: var(--linija-meka);
+    --bs-table-accent-bg: transparent;
+    --bs-table-striped-color: var(--grafit);
+    --bs-table-striped-bg: transparent;       /* neutralizacija .table-striped */
+    --bs-table-active-color: var(--grafit);
+    --bs-table-active-bg: var(--povez-svetli);
+    --bs-table-hover-color: var(--grafit);
+    --bs-table-hover-bg: var(--list-hover);
+    font-size: var(--fs-sm);
+    margin-bottom: 0;
+    border-radius: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.table > :not(caption) > * > * {
+    padding: 0.5rem 0.625rem;
+    border-bottom-width: 1px;
+    vertical-align: middle;
+}
+
+/* Zaglavlje knjige */
+.table > thead > tr > th,
+.table > thead > tr > td {
+    font-family: var(--font-natpis);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    line-height: var(--lh-tight);
+    color: var(--grafit);
+    background-color: var(--list);
+    border-bottom: 1px solid var(--grafit);
+    vertical-align: bottom;
+    white-space: nowrap;
+}
+.table > thead > tr > th .text-muted,
+.table > thead > tr > th .fw-normal { font-family: var(--font-tekst); font-size: var(--fs-xs); }
+.table > thead > tr > th > i,
+.table > thead > tr > th > .fas { color: var(--siva); }
+
+/* Brojevi: desno, iste širine, bez preloma */
+.table td.text-end,
+.table th.text-end { font-variant-numeric: tabular-nums; }
+.table > tbody > tr > td.text-end,
+.table > tfoot > tr > .text-end { white-space: nowrap; }
+
+/* Zebra je isključena (.table-striped ostaje u šablonima, bez efekta) */
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+    --bs-table-color-type: var(--bs-table-color);
+}
+
+/* Prelaz mišem */
+.table-hover > tbody > tr:hover > * {
+    --bs-table-color-state: var(--bs-table-hover-color);
+    --bs-table-bg-state: var(--bs-table-hover-bg);
+}
+
+/* Red koji vodi negde (klik otvara dokument) — hover u boji poveza */
+.table > tbody > tr.clickable-row { cursor: pointer; }
+.table > tbody > tr.clickable-row:hover > * { --bs-table-bg-state: var(--povez-svetli); }
+
+/* --- Zbir: podnožje tabele i redovi zbira -------------------------------
+   Računovodstvena konvencija: dvostruka linija iznad zbira. */
+.table > tfoot {
+    --bs-table-bg: var(--etiketa);
+    --bs-table-border-color: var(--etiketa-ivica);
+    --bs-table-hover-bg: var(--etiketa);
+}
+.table > tfoot > tr > * {
+    font-weight: 700;
+    color: var(--grafit);
+    background-color: var(--etiketa);
+    border-bottom-color: var(--etiketa-ivica);
+}
+.table > tfoot > tr:first-child > * { border-top: 3px double var(--grafit); }
+.table > tfoot > tr > * .fw-normal { font-weight: 400; }
+
+/* Red zbira unutar tbody (za fazu 3): <tr class="red-zbir"> */
+.table > tbody > tr.red-zbir > * {
+    font-weight: 700;
+    background-color: var(--etiketa);
+    border-top: 3px double var(--grafit);
+    border-bottom-color: var(--etiketa-ivica);
+}
+
+/* --- Kontekstni redovi ---------------------------------------------------
+   JS na stranama izvoda koristi table-danger (nepoznata strana) i
+   table-warning (nesačuvana izmena) — moraju ostati jasno vidljivi.
+   Boja se postavlja i kao accent/striped/hover promenljiva da bi prekrila
+   i ćelije sa .bg-light (unutrašnja senka se crta preko pozadine). */
+.table-primary {
+    /* u šablonima je samo na redu zbira (tfoot) → izgleda kao zbir */
+    --bs-table-color: var(--grafit);
+    --bs-table-bg: var(--etiketa);
+    --bs-table-border-color: var(--etiketa-ivica);
+    --bs-table-striped-bg: var(--etiketa);
+    --bs-table-striped-color: var(--grafit);
+    --bs-table-active-bg: var(--etiketa);
+    --bs-table-hover-bg: var(--etiketa);
+    --bs-table-hover-color: var(--grafit);
+    color: var(--grafit);
+    border-color: var(--etiketa-ivica);
+}
+
+.table-light {
+    /* u šablonima je na <thead> — zaglavlje knjige ostaje belo */
+    --bs-table-color: var(--grafit);
+    --bs-table-bg: var(--list);
+    --bs-table-border-color: var(--linija-meka);
+    --bs-table-striped-bg: transparent;
+    --bs-table-hover-bg: var(--list-hover);
+    color: var(--grafit);
+    border-color: var(--linija-meka);
+}
+
+.table-secondary {
+    --bs-table-color: var(--grafit);
+    --bs-table-bg: var(--papir);
+    --bs-table-accent-bg: var(--papir);
+    --bs-table-striped-bg: var(--papir);
+    --bs-table-hover-bg: var(--papir);
+    --bs-table-border-color: var(--linija-meka);
+    color: var(--grafit);
+    border-color: var(--linija-meka);
+}
+
+.table-info {
+    --bs-table-color: var(--grafit);
+    --bs-table-bg: var(--info-svetli);
+    --bs-table-accent-bg: var(--info-svetli);
+    --bs-table-striped-bg: var(--info-svetli);
+    --bs-table-hover-bg: var(--info-svetli);
+    --bs-table-border-color: var(--linija);
+    color: var(--grafit);
+    border-color: var(--linija);
+}
+
+.table-success {
+    --bs-table-color: var(--grafit);
+    --bs-table-bg: var(--uspeh-svetli);
+    --bs-table-accent-bg: var(--uspeh-svetli);
+    --bs-table-striped-bg: var(--uspeh-svetli);
+    --bs-table-hover-bg: var(--uspeh-svetli);
+    --bs-table-border-color: var(--linija);
+    color: var(--grafit);
+    border-color: var(--linija);
+}
+
+.table-warning {
+    --bs-table-color: var(--grafit);
+    --bs-table-bg: var(--oker-svetli);
+    --bs-table-accent-bg: var(--oker-svetli);
+    --bs-table-striped-bg: var(--oker-svetli);
+    --bs-table-hover-bg: var(--oker-svetli);
+    --bs-table-border-color: var(--etiketa-ivica);
+    color: var(--grafit);
+    border-color: var(--etiketa-ivica);
+}
+
+.table-danger {
+    --bs-table-color: var(--grafit);
+    --bs-table-bg: var(--pecat-svetli);
+    --bs-table-accent-bg: var(--pecat-svetli);
+    --bs-table-striped-bg: var(--pecat-svetli);
+    --bs-table-hover-bg: var(--pecat-svetli);
+    --bs-table-border-color: var(--linija);
+    color: var(--grafit);
+    border-color: var(--linija);
+}
+
+.table-active {
+    --bs-table-color-state: var(--grafit);
+    --bs-table-bg-state: var(--povez-svetli);
+}
+
+/* Oznaka na margini knjige: 3px traka u prvoj ćeliji reda sa greškom /
+   nesačuvanom izmenom — vidljivo i kad je pozadina reda bleda. */
+.table > tbody > tr.table-danger > :first-child,
+.table > tbody > tr.table-warning > :first-child { position: relative; }
+
+.table > tbody > tr.table-danger > :first-child::before,
+.table > tbody > tr.table-warning > :first-child::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 3px;
+    background-color: var(--pecat);
+}
+.table > tbody > tr.table-warning > :first-child::before { background-color: var(--oker); }
+
+/* Mala tabela */
+.table-sm > :not(caption) > * > * { padding: 0.3125rem 0.5rem; }
+
+/* Bez okvira — i .table-bordered ostaje knjiga (samo horizontalne linije) */
+.table-bordered > :not(caption) > * > * { border-left-width: 0; border-right-width: 0; }
+.table-bordered > :not(caption) > * { border-width: 0; }
+
+/* Obavijač za horizontalni pomeraj */
+.table-responsive { -webkit-overflow-scrolling: touch; }
+
+
+/* --- Gusta tabela (liste sa mnogo kolona) ------------------------------ */
+.table.table-compact {
+    table-layout: auto;
+    font-size: var(--fs-xs);
+}
+
+.table.table-compact > thead > tr > th {
+    padding: 0.4375rem 0.4375rem;
+    font-size: var(--fs-sm);
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+}
+
+.table.table-compact > tbody > tr > td,
+.table.table-compact > tfoot > tr > * {
+    padding: 0.4375rem 0.4375rem;
+    overflow-wrap: anywhere;
+}
+.table.table-compact > tbody > tr > td.text-end,
+.table.table-compact > tbody > tr > td.text-nowrap { overflow-wrap: normal; }
+
+.table.table-compact .btn-sm {
+    --bs-btn-padding-x: 0.375rem;
+    --bs-btn-padding-y: 0.125rem;
+    --bs-btn-font-size: var(--fs-xs);
+}
+
+
+/* --- Legacy report-table (izveštaji, tabovi projekta) ------------------ */
+.report-table { margin-bottom: 0; }
+.report-table > thead > tr > th { white-space: nowrap; }
+.report-table > thead > tr > th i { color: var(--siva); font-size: 0.9em; }
+.report-table .badge { font-size: var(--fs-xs); }
+
+
+/* --- Status faktura: kvadratić sa slovom (pun naziv u tooltip-u) ------- */
+.status-pill-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.375rem;
+    height: 1.375rem;
+    flex-shrink: 0;
+    border: 1px solid currentColor;
+    border-radius: var(--radius);
+    font-family: var(--font-natpis);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    line-height: 1;
+    cursor: help;
+    user-select: none;
+}
+
+.status-pill--draft  { color: var(--siva);  background-color: var(--papir); border-color: var(--linija); }   /* Nacrt */
+.status-pill--saved  { color: var(--oker);  background-color: var(--oker-svetli); }                          /* Sačuvano — čeka akciju */
+.status-pill--sent   { color: var(--povez); background-color: var(--povez-svetli); }                         /* Poslato */
+.status-pill--paid   { color: var(--uspeh); background-color: var(--uspeh-svetli); }                         /* Plaćeno */
+.status-pill--unpaid { color: var(--pecat); background-color: var(--pecat-svetli); }                         /* Neplaćeno */
+
+
+/* --- DataTables 1.13 (bootstrap5) -------------------------------------- */
+.dataTables_wrapper {
+    padding: var(--sp-3) 0 0;
+    font-size: var(--fs-sm);
+}
+
+/* redovi sa kontrolama (dužina/pretraga gore, info/paginacija dole) */
+.dataTables_wrapper > .row:not(.dt-row),
+.dataTables_wrapper > .top,
+.dataTables_wrapper > .bottom {
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0 var(--sp-3);
+    align-items: center;
+    row-gap: var(--sp-2);
+}
+.dataTables_wrapper > .top,
+.dataTables_wrapper > .bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--sp-2) var(--sp-3);
+}
+.dataTables_wrapper > .row:first-child:not(.dt-row),
+.dataTables_wrapper > .top { margin-bottom: var(--sp-3); }
+.dataTables_wrapper > .row:last-child:not(.dt-row),
+.dataTables_wrapper > .bottom { padding-top: var(--sp-3); padding-bottom: var(--sp-3); border-top: 1px solid var(--linija-meka); }
+.dataTables_wrapper > .row.dt-row { margin: 0; }
+.dataTables_wrapper > .row.dt-row > [class*="col-"] { padding: 0; }
+.dataTables_wrapper > .clear { clear: both; }
+
+.dataTables_wrapper .dataTables_length label,
+.dataTables_wrapper .dataTables_filter label,
+.dataTables_wrapper .dataTables_info {
+    font-size: var(--fs-sm);
+    font-weight: 400;
+    color: var(--siva);
+}
+
+.dataTables_wrapper .dataTables_info { padding-top: 0; }
+
+.dataTables_wrapper .dataTables_length select {
+    display: inline-block;
+    width: auto;
+    min-width: 4.5rem;
+    margin: 0 var(--sp-1);
+}
+
+.dataTables_wrapper .dataTables_filter input {
+    width: 16rem;
+    max-width: 100%;
+    margin-left: var(--sp-2);
+}
+
+.dataTables_wrapper .dataTables_paginate { display: flex; justify-content: flex-end; }
+.dataTables_wrapper .dataTables_paginate .pagination { margin: 0; flex-wrap: wrap; }
+
+/* Zebra i hover iz DataTables CSS-a (unutrašnja senka rgba crne) → knjiga.
+   Neparni redovi dobijaju svoju accent boju (providno ili boju stanja reda). */
+table.dataTable.table-striped > tbody > tr.odd > * {
+    box-shadow: inset 0 0 0 9999px var(--bs-table-accent-bg);
+}
+table.dataTable.table-hover > tbody > tr:hover > * {
+    box-shadow: inset 0 0 0 9999px var(--bs-table-hover-bg);
+}
+table.dataTable > tbody > tr.selected > * {
+    box-shadow: inset 0 0 0 9999px var(--povez-svetli);
+    color: var(--grafit);
+}
+table.dataTable > tbody > tr.selected a { color: var(--povez); }
+
+table.dataTable { margin-top: 0 !important; margin-bottom: 0 !important; }   /* DT stavlja !important margine */
+
+/* Strelice za sortiranje: prigušene, aktivna u boji poveza */
+table.dataTable > thead > tr > th.sorting,
+table.dataTable > thead > tr > th.sorting_asc,
+table.dataTable > thead > tr > th.sorting_desc { padding-right: 1.5rem; cursor: pointer; }
+
+table.dataTable > thead .sorting::before,
+table.dataTable > thead .sorting::after,
+table.dataTable > thead .sorting_asc::before,
+table.dataTable > thead .sorting_asc::after,
+table.dataTable > thead .sorting_desc::before,
+table.dataTable > thead .sorting_desc::after {
+    color: var(--siva-svetla);
+    opacity: 0.45;
+    right: 0.5rem;
+}
+table.dataTable > thead .sorting_asc::before,
+table.dataTable > thead .sorting_desc::after {
+    color: var(--povez);
+    opacity: 1;
+}
+table.dataTable > thead > tr > th.sorting_asc,
+table.dataTable > thead > tr > th.sorting_desc { color: var(--povez); }
+
+/* Kolone bez sortiranja (klasa no-sort u šablonima) */
+table.dataTable > thead > tr > th.no-sort { padding-right: 0.625rem; cursor: default; }
+
+/* Prazno stanje i učitavanje — tiho */
+table.dataTable td.dataTables_empty {
+    padding: var(--sp-5) var(--sp-4);
+    text-align: center;
+    color: var(--siva);
+    background-color: var(--list);
+}
+
+div.dataTables_wrapper div.dataTables_processing {
+    background-color: var(--list);
+    border: 1px solid var(--linija);
+    border-radius: var(--radius);
+    box-shadow: var(--senka-plutajuce);
+    color: var(--siva);
+    font-size: var(--fs-sm);
+}
+div.dataTables_processing > div:last-child > div { background: var(--siva-svetla); }
+
+
+/* ============================================================================
+   10. OBAVEŠTENJA (alert / flash)
+   Beo list sa trakom od 4px u boji statusa; tekst uvek grafit.
+   ============================================================================ */
+.alert {
+    --bs-alert-bg: var(--list);
+    --bs-alert-color: var(--grafit);
+    --bs-alert-border-color: var(--linija);
+    --bs-alert-link-color: var(--povez);
+    --bs-alert-padding-x: var(--sp-4);
+    --bs-alert-padding-y: var(--sp-3);
+    --bs-alert-margin-bottom: var(--sp-4);
+    --bs-alert-border-radius: var(--radius);
+    border-left: 4px solid var(--siva-svetla);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-base);
+    box-shadow: none;
+}
+
+.alert-primary,
+.alert-secondary,
+.alert-success,
+.alert-info,
+.alert-warning,
+.alert-danger,
+.alert-light,
+.alert-dark,
+.alert-message {
+    --bs-alert-bg: var(--list);
+    --bs-alert-color: var(--grafit);
+    --bs-alert-border-color: var(--linija);
+    --bs-alert-link-color: var(--povez);
+}
+
+.alert-primary   { border-left-color: var(--povez); }
+.alert-secondary { border-left-color: var(--siva-svetla); }
+.alert-light     { border-left-color: var(--linija); }
+.alert-dark,
+.alert-info      { border-left-color: var(--info); }
+.alert-success   { border-left-color: var(--uspeh); }
+.alert-warning   { border-left-color: var(--oker); }
+.alert-danger    { border-left-color: var(--pecat); }
+
+/* Ikonica na početku obaveštenja preuzima boju statusa */
+.alert > .fas:first-child,
+.alert > .fa:first-child   { color: var(--siva); }
+.alert-primary > .fas:first-child { color: var(--povez); }
+.alert-success > .fas:first-child { color: var(--uspeh); }
+.alert-warning > .fas:first-child { color: var(--oker); }
+.alert-danger  > .fas:first-child { color: var(--pecat); }
+
+.alert .alert-link,
+.alert a { color: var(--povez); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+
+.alert-heading { font-family: var(--font-natpis); font-size: var(--fs-base); color: var(--grafit); }
+
+.alert-dismissible { padding-right: 2.75rem; }
+.alert-dismissible .btn-close {
+    padding: calc(var(--sp-3) + 0.125rem) var(--sp-3);
+    background-size: 0.625em;
+}
+
+
+/* ============================================================================
+   11. OZNAKE (badge)
+   Male, pravougaone (--radius), prigušene podloge sa tamnim tekstom.
+   bg-* klase imaju !important u Bootstrapu — zato i ovde.
+   ============================================================================ */
+.badge {
+    --bs-badge-padding-x: 0.4em;
+    --bs-badge-padding-y: 0.2em;
+    --bs-badge-font-size: 0.8125em;
+    --bs-badge-font-weight: 700;
+    --bs-badge-color: var(--grafit);
+    --bs-badge-border-radius: var(--radius);
+    font-family: var(--font-natpis);
+    line-height: 1.2;
+    letter-spacing: 0;
+    border: 1px solid transparent;
+    vertical-align: 0.1em;
+}
+.badge.rounded-pill { border-radius: var(--radius) !important; }   /* bez pilula */
+
+.badge.bg-primary   { background-color: var(--povez-svetli) !important; color: var(--povez) !important; border-color: rgba(119, 30, 50, 0.25); }
+.badge.bg-secondary { background-color: var(--papir) !important;        color: var(--siva) !important;  border-color: var(--linija); }
+.badge.bg-success   { background-color: var(--uspeh-svetli) !important; color: var(--uspeh) !important; border-color: rgba(62, 107, 76, 0.3); }
+.badge.bg-danger    { background-color: var(--pecat-svetli) !important; color: var(--pecat) !important; border-color: rgba(175, 37, 43, 0.3); }
+.badge.bg-warning   { background-color: var(--oker-svetli) !important;  color: var(--grafit) !important; border-color: var(--oker); }
+.badge.bg-info      { background-color: var(--info-svetli) !important;  color: var(--grafit) !important; border-color: var(--linija); }
+.badge.bg-light     { background-color: var(--papir) !important;        color: var(--grafit) !important; border-color: var(--linija); }
+.badge.bg-dark      { background-color: var(--grafit) !important;       color: #fff !important; }
+.badge.bg-white     { background-color: var(--list) !important;         color: var(--grafit) !important; border-color: var(--linija); }
+
+.table .badge { font-size: var(--fs-xs); }
+
+
+/* ============================================================================
+   12. SEMANTIČKE BOJE
+   ============================================================================ */
+/* Bootstrap tekst-klase koje tokens.css ne pokriva (!important kao u Bootstrapu) */
+.text-info { color: var(--info) !important; }
+.text-dark { color: var(--grafit) !important; }
+.text-body { color: var(--grafit) !important; }
+
+/* Tipovi partnera: kupac = uspeh, dobavljač = povez, inostrani = siva */
+.text-customer      { color: var(--uspeh) !important; }
+.text-supplier      { color: var(--povez) !important; }
+.text-international { color: var(--siva) !important; }
+
+.partner-icon {
+    margin: 0 2px;
+    font-size: 1em;
+    color: var(--siva);
+}
+.partner-icon.fa-shopping-cart { color: var(--uspeh); }
+.partner-icon.fa-truck         { color: var(--povez); }
+.partner-icon.fa-globe         { color: var(--siva); }
+.partner-icon.fa-check-circle  { color: var(--grafit); }
+.partner-icon.fa-circle-minus  { color: var(--siva-svetla); }
+
+/* Iznosi (za fazu 3): <td class="iznos">1.234,56</td>
+                        <td class="iznos iznos-negativan">-500,00</td> */
+.iznos {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.iznos-negativan { color: var(--pecat); }
+
+/* U tabelama Bootstrap boji ćelije preko .table > :not(caption) > * > *,
+   a red zbira preko tfoot pravila — zato ovde veća specifičnost */
+.table > :not(caption) > tr > .iznos-negativan,
+.table > :not(caption) > tr > * > .iznos-negativan { color: var(--pecat); }
+
+
+/* ============================================================================
+   13. MODALI
+   ============================================================================ */
+.modal {
+    --bs-modal-bg: var(--list);
+    --bs-modal-color: var(--grafit);
+    --bs-modal-border-color: var(--linija);
+    --bs-modal-border-width: 1px;
+    --bs-modal-border-radius: var(--radius-modal);
+    --bs-modal-inner-border-radius: calc(var(--radius-modal) - 1px);
+    --bs-modal-box-shadow: var(--senka-plutajuce);
+    --bs-modal-padding: var(--sp-4);
+    --bs-modal-header-padding: var(--sp-3) var(--sp-4);
+    --bs-modal-header-border-color: var(--linija);
+    --bs-modal-header-border-width: 1px;
+    --bs-modal-footer-border-color: var(--linija);
+    --bs-modal-footer-border-width: 1px;
+    --bs-modal-footer-gap: var(--sp-2);
+    --bs-modal-title-line-height: var(--lh-tight);
+}
+
+.modal-content { box-shadow: var(--bs-modal-box-shadow); }
+
+/* Bez klizanja odozgo — modal se samo pojavi (kratak fade ostaje) */
+.modal.fade .modal-dialog { transform: none; transition: none; }
+
+.modal-backdrop {
+    --bs-backdrop-bg: var(--grafit);
+    --bs-backdrop-opacity: 0.55;
+}
+
+.modal-header { background-color: var(--list); }
+
+.modal-title {
+    font-family: var(--font-natpis);
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    color: var(--grafit);
+}
+
+/* Obojena zaglavlja modala (npr. bg-danger-subtle kod brisanja korisnika)
+   → belo zaglavlje, naslov u boji pečata. !important zbog bg-* klase. */
+.modal-header[class*="bg-"] { background-color: var(--list) !important; color: var(--grafit) !important; }
+.modal-header.bg-danger,
+.modal-header.bg-danger-subtle { border-top: 3px solid var(--pecat); border-top-left-radius: var(--bs-modal-inner-border-radius); border-top-right-radius: var(--bs-modal-inner-border-radius); }
+.modal-header.bg-danger .modal-title,
+.modal-header.bg-danger-subtle .modal-title { color: var(--pecat); }
+
+.modal-footer {
+    justify-content: flex-end;
+    background-color: var(--list);
+}
+
+
+/* ============================================================================
+   14. SELECT2 (tema bootstrap-5 1.3)
+   Selektori prate temu (ista specifičnost; ovaj fajl se učitava posle).
+   ============================================================================ */
+.select2-container--bootstrap-5 .select2-selection {
+    min-height: calc(1.5em + 0.75rem + 2px);
+    padding: 0.375rem 0.625rem;
+    font-family: var(--font-tekst);
+    font-size: var(--fs-base);
+    line-height: var(--lh-base);
+    color: var(--grafit);
+    background-color: var(--list);
+    border: 1px solid var(--linija);
+    border-radius: var(--radius);
+    box-shadow: none;
+    transition: border-color var(--prelaz), box-shadow var(--prelaz);
+}
+
+.select2-container--bootstrap-5 .select2-selection--single { padding-right: 2.25rem; background-position: right 0.5rem center; }
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered { color: var(--grafit); }
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered .select2-selection__placeholder,
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__rendered .select2-selection__placeholder { color: var(--siva-svetla); }
+
+.select2-container--bootstrap-5.select2-container--focus .select2-selection,
+.select2-container--bootstrap-5.select2-container--open .select2-selection {
+    border-color: var(--povez);
+    box-shadow: 0 0 0 0.2rem rgba(119, 30, 50, 0.2);
+}
+.select2-container--bootstrap-5.select2-container--open.select2-container--below .select2-selection { border-bottom-color: transparent; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.select2-container--bootstrap-5.select2-container--open.select2-container--above .select2-selection { border-top-color: transparent; border-top-left-radius: 0; border-top-right-radius: 0; }
+
+.select2-container--bootstrap-5.select2-container--disabled .select2-selection,
+.select2-container--bootstrap-5.select2-container--disabled.select2-container--focus .select2-selection {
+    color: var(--grafit);
+    background-color: var(--papir);
+    border-color: var(--linija);
+    box-shadow: none;
+}
+
+/* Padajuća lista */
+.select2-container--bootstrap-5 .select2-dropdown {
+    color: var(--grafit);
+    background-color: var(--list);
+    border-color: var(--povez);
+    border-radius: var(--radius);
+    box-shadow: var(--senka-plutajuce);
+    font-size: var(--fs-sm);
+}
+.select2-container--bootstrap-5 .select2-dropdown.select2-dropdown--below { border-top-left-radius: 0; border-top-right-radius: 0; }
+.select2-container--bootstrap-5 .select2-dropdown.select2-dropdown--above { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+
+.select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field {
+    padding: 0.25rem 0.5rem;
+    font-size: var(--fs-sm);
+    color: var(--grafit);
+    background-color: var(--list);
+    border: 1px solid var(--linija);
+    border-radius: var(--radius);
+}
+.select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field:focus {
+    border-color: var(--povez);
+    box-shadow: 0 0 0 0.2rem rgba(119, 30, 50, 0.2);
+    outline: 0;
+}
+
+.select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option {
+    padding: 0.3125rem 0.625rem;
+    font-size: var(--fs-sm);
+    color: var(--grafit);
+}
+/* izabrana stavka (nije pod kursorom) — svetli bordo */
+.select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option.select2-results__option--selected,
+.select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option[aria-selected="true"]:not(.select2-results__option--highlighted) {
+    color: var(--grafit);
+    background-color: var(--povez-svetli);
+}
+/* stavka pod kursorom/tastaturom — pun bordo */
+.select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option.select2-results__option--highlighted {
+    color: #fff;
+    background-color: var(--povez);
+}
+.select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option.select2-results__option--disabled,
+.select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option[aria-disabled="true"] { color: var(--siva-svetla); }
+.select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option.select2-results__message { color: var(--siva); }
+.select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option[role="group"] .select2-results__group {
+    font-family: var(--font-natpis);
+    font-weight: 700;
+    color: var(--siva);
+    padding: 0.375rem 0.625rem 0.25rem;
+}
+
+/* Višestruki izbor — tihi čipovi */
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__rendered .select2-selection__choice {
+    padding: 0.125rem 0.5rem;
+    font-size: var(--fs-sm);
+    color: var(--grafit);
+    background-color: var(--papir);
+    border: 1px solid var(--linija);
+    border-radius: var(--radius);
+}
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__rendered .select2-selection__choice .select2-selection__choice__remove { opacity: 0.6; }
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__rendered .select2-selection__choice .select2-selection__choice__remove:hover { opacity: 1; }
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-search .select2-search__field { color: var(--grafit); font-family: var(--font-tekst); }
+
+/* Dugme "obriši izbor" — preneseno iz starog CSS-a (tema ga ponekad sakriva) */
+.select2-selection__clear {
+    display: inline-block !important;
+    padding-right: 5px;
+    color: var(--siva-svetla);
+    opacity: 0.7;
+}
+.select2-selection__clear:hover { opacity: 1; }
+
+/* Mala varijanta: selectionCssClass / dropdownCssClass: 'select2--small' */
+.select2-container--bootstrap-5 .select2--small.select2-selection {
+    min-height: calc(1.5em + 0.5rem + 2px);
+    padding: 0.25rem 0.5rem;
+    font-size: var(--fs-sm);
+    border-radius: var(--radius);
+}
+.select2-container--bootstrap-5 .select2--small.select2-selection--single { padding-right: 2rem; }
+.select2-container--bootstrap-5 .select2--small.select2-dropdown { font-size: var(--fs-sm); border-radius: var(--radius); }
+.select2-container--bootstrap-5 .select2--small.select2-dropdown .select2-results__options .select2-results__option {
+    padding: 0.25rem 0.5rem;
+    font-size: var(--fs-sm);
+}
+.select2-container--bootstrap-5 .select2--small.select2-dropdown .select2-search .select2-search__field { padding: 0.25rem 0.5rem; font-size: var(--fs-sm); }
+
+/* select2 u uređivoj ćeliji tabele — ne sme da probije širinu kolone */
+.table .select2-container { max-width: 100%; }
+.table .select2-container--bootstrap-5 .select2-selection { font-size: var(--fs-sm); }
+
+
+/* ============================================================================
+   15. OSTALO
+   ============================================================================ */
+
+/* --- Padajući meni (van navigacije; navbar meni je u shell.css) -------- */
+.dropdown-menu {
+    --bs-dropdown-bg: var(--list);
+    --bs-dropdown-color: var(--grafit);
+    --bs-dropdown-border-color: var(--linija);
+    --bs-dropdown-border-radius: var(--radius);
+    --bs-dropdown-inner-border-radius: calc(var(--radius) - 1px);
+    --bs-dropdown-box-shadow: var(--senka-plutajuce);
+    --bs-dropdown-font-size: var(--fs-sm);
+    --bs-dropdown-padding-y: var(--sp-1);
+    --bs-dropdown-divider-bg: var(--linija-meka);
+    --bs-dropdown-link-color: var(--grafit);
+    --bs-dropdown-link-hover-color: var(--grafit);
+    --bs-dropdown-link-hover-bg: var(--list-hover);
+    --bs-dropdown-link-active-color: #fff;
+    --bs-dropdown-link-active-bg: var(--povez);
+    --bs-dropdown-link-disabled-color: var(--siva-svetla);
+    --bs-dropdown-item-padding-x: var(--sp-3);
+    --bs-dropdown-item-padding-y: 0.3125rem;
+    --bs-dropdown-header-color: var(--siva);
+    box-shadow: var(--bs-dropdown-box-shadow);
+}
+.dropdown-item { transition: background-color var(--prelaz), color var(--prelaz); }
+.dropdown-item:focus-visible { outline: 2px solid var(--povez); outline-offset: -2px; }
+.dropdown-header { font-family: var(--font-natpis); font-weight: 700; font-size: var(--fs-sm); }
+
+/* --- List-group -------------------------------------------------------- */
+.list-group {
+    --bs-list-group-color: var(--grafit);
+    --bs-list-group-bg: var(--list);
+    --bs-list-group-border-color: var(--linija);
+    --bs-list-group-border-radius: var(--radius);
+    --bs-list-group-item-padding-x: var(--sp-4);
+    --bs-list-group-item-padding-y: var(--sp-2);
+    --bs-list-group-action-color: var(--grafit);
+    --bs-list-group-action-hover-color: var(--grafit);
+    --bs-list-group-action-hover-bg: var(--list-hover);
+    --bs-list-group-action-active-color: var(--grafit);
+    --bs-list-group-action-active-bg: var(--povez-svetli);
+    --bs-list-group-disabled-color: var(--siva-svetla);
+    --bs-list-group-disabled-bg: var(--list);
+    --bs-list-group-active-color: var(--povez);
+    --bs-list-group-active-bg: var(--povez-svetli);
+    --bs-list-group-active-border-color: var(--linija);
+}
+.list-group-item.active { font-weight: 700; box-shadow: inset 2px 0 0 var(--povez); }
+
+/* --- Paginacija -------------------------------------------------------- */
+.pagination {
+    --bs-pagination-padding-x: 0.625rem;
+    --bs-pagination-padding-y: 0.25rem;
+    --bs-pagination-font-size: var(--fs-sm);
+    --bs-pagination-color: var(--grafit);
+    --bs-pagination-bg: var(--list);
+    --bs-pagination-border-color: var(--linija);
+    --bs-pagination-border-radius: var(--radius);
+    --bs-pagination-hover-color: var(--povez);
+    --bs-pagination-hover-bg: var(--list-hover);
+    --bs-pagination-hover-border-color: var(--linija);
+    --bs-pagination-focus-color: var(--povez);
+    --bs-pagination-focus-bg: var(--list);
+    --bs-pagination-focus-box-shadow: 0 0 0 0.2rem rgba(119, 30, 50, 0.25);
+    --bs-pagination-active-color: #fff;
+    --bs-pagination-active-bg: var(--povez);
+    --bs-pagination-active-border-color: var(--povez);
+    --bs-pagination-disabled-color: var(--siva-svetla);
+    --bs-pagination-disabled-bg: var(--list);
+    --bs-pagination-disabled-border-color: var(--linija);
+    font-variant-numeric: tabular-nums;
+}
+.pagination-sm { --bs-pagination-border-radius: var(--radius); }
+.page-link { min-width: 2rem; text-align: center; transition: color var(--prelaz), background-color var(--prelaz), border-color var(--prelaz); }
+
+/* --- Progress ---------------------------------------------------------- */
+.progress,
+.progress-stacked {
+    --bs-progress-height: 0.5rem;
+    --bs-progress-bg: var(--linija-meka);
+    --bs-progress-border-radius: var(--radius);
+    --bs-progress-bar-bg: var(--povez);
+    --bs-progress-box-shadow: none;
+}
+.progress-bar.bg-success { background-color: var(--uspeh) !important; }   /* bg-* ima !important */
+.progress-bar.bg-warning { background-color: var(--oker) !important; }
+.progress-bar.bg-danger  { background-color: var(--pecat) !important; }
+.progress-bar.bg-info    { background-color: var(--siva) !important; }
+
+/* --- Tooltip / popover ------------------------------------------------- */
+.tooltip {
+    --bs-tooltip-bg: var(--grafit);
+    --bs-tooltip-color: #fff;
+    --bs-tooltip-font-size: var(--fs-xs);
+    --bs-tooltip-border-radius: var(--radius);
+    --bs-tooltip-opacity: 1;
+    --bs-tooltip-padding-x: var(--sp-2);
+    --bs-tooltip-padding-y: 0.1875rem;
+    font-family: var(--font-tekst);
+}
+
+.popover {
+    --bs-popover-bg: var(--list);
+    --bs-popover-border-color: var(--linija);
+    --bs-popover-border-radius: var(--radius);
+    --bs-popover-inner-border-radius: calc(var(--radius) - 1px);
+    --bs-popover-box-shadow: var(--senka-plutajuce);
+    --bs-popover-font-size: var(--fs-sm);
+    --bs-popover-header-bg: var(--list);
+    --bs-popover-header-color: var(--grafit);
+    --bs-popover-body-color: var(--grafit);
+    font-family: var(--font-tekst);
+    box-shadow: var(--bs-popover-box-shadow);
+}
+.popover-header { font-family: var(--font-natpis); font-weight: 700; border-bottom: 1px solid var(--linija); }
+
+/* --- Širine kolona (umesto inline style="width: X%") ------------------- */
+.th-w-1  { width: 1%; }
+.th-w-4  { width: 4%; }
+.th-w-5  { width: 5%; }
+.th-w-8  { width: 8%; }
+.th-w-10 { width: 10%; }
+.th-w-15 { width: 15%; }
+.th-w-20 { width: 20%; }
+.th-w-25 { width: 25%; }
+
+/* --- Pregled slika (podešavanja: logo, potpis, pečat) ------------------ */
+.preview-img-sm { max-height: 60px;  width: auto; }
+.preview-img-md { max-height: 80px;  width: auto; }
+.preview-img-lg { max-height: 100px; width: auto; }
+
+/* --- Grupe polja fiksne širine (filteri datuma) ------------------------ */
+.input-group-170 { width: 170px; max-width: 100%; }
+.input-group-200 { width: 200px; max-width: 100%; }
+
+/* --- Kolona sa akcijama u tabeli --------------------------------------- */
+.actions-column {
+    white-space: nowrap;
+    min-width: 150px;
+}
+.table > tbody > tr > td.actions-column { text-align: right; }
+
+.action-btn {
+    --bs-btn-padding-x: 0.375rem;
+    --bs-btn-padding-y: 0.125rem;
+    min-width: 1.875rem;
+    margin-right: 2px;
+}
+.action-btn:last-child { margin-right: 0; }
+
+/* --- Stanja interakcije ------------------------------------------------ */
+.cursor-pointer {
+    cursor: pointer;
+    transition: color var(--prelaz);
+}
+.cursor-pointer:hover { color: var(--povez-tamni) !important; }   /* ikone nose text-* sa !important */
+
+.clickable-row { cursor: pointer; }
+
+.nowrap { white-space: nowrap; }
+
+/* Uređiva ćelija u knjizi izvoda (klik prebacuje stranu) — preko unutrašnje
+   senke ćelije, da bi pobedila hover reda */
+.js-strana { cursor: pointer; }
+.table > tbody > tr > td.strana-celija[style*="cursor"]:hover,
+.table > tbody > tr > td.js-strana:hover { --bs-table-bg-state: var(--povez-svetli); }
+
+/* Veliki broj na stranama grešaka (400/403/404/500) */
+.display-1 {
+    font-family: var(--font-natpis);
+    font-weight: 700;
+    color: var(--siva-svetla);
+}
+
+
+/* ============================================================================
+   16. RESPONSIVE (samo delovi komponenti; okvir strane je u shell.css)
+   Na 375px ništa ne sme da izađe van ekrana osim tabela u .table-responsive.
+   ============================================================================ */
+@media (max-width: 768px) {
+    .page-header { align-items: flex-start; }
+    .page-header__actions { width: 100%; }
+
+    /* "card bg-light" zaglavlja strana: naslov + dugmad u jednom d-flex redu */
+    .card-body > .d-flex.justify-content-between { flex-wrap: wrap; gap: var(--sp-3); }
+
+    .etiketa { display: flex; }
+
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate { text-align: left; justify-content: flex-start; }
+}
+
+@media (max-width: 576px) {
+    .page-header__title { font-size: var(--fs-lg); }
+
+    .btn-group { flex-wrap: wrap; }
+
+    .card-header form.d-flex { flex-wrap: wrap; gap: var(--sp-2); }
+    /* filteri datuma u zaglavlju kartice imaju inline širinu (170px) —
+       !important je jedini način da se nadjača inline style */
+    .card-header .input-group[style*="width"],
+    .input-group-170,
+    .input-group-200 { width: 100% !important; margin-right: 0 !important; }
+
+    .dataTables_wrapper .dataTables_filter label { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1); width: 100%; }
+    .dataTables_wrapper .dataTables_filter input { width: 100%; margin-left: 0; }
+
+    .stat-strip__item { flex-basis: 50%; }
+
+    .modal-footer { flex-wrap: wrap; }
+
+    .actions-column { min-width: 0; }
+}
+
+
+/* ============================================================================
+   17. DOPUNE POSLE FAZE 3
+   ============================================================================ */
+
+/* Zaglavlja kolona koja ne smeju da se lome ni u gustoj tabeli (ID, Akcije) */
+.table.table-compact > thead > tr > th.nowrap,
+.table.table-compact > thead > tr > th.text-nowrap { white-space: nowrap; }
+
+/* Na telefonu duge vrednosti etikete (npr. naziv projekta) prelaze u novi red */
+@media (max-width: 576px) {
+    .etiketa__polje { white-space: normal; }
+}

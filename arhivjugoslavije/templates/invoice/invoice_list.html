@@ -5,19 +5,18 @@
 
     {# Page header #}
     <header class="page-header">
-        <h2 class="page-header__title">
-            <i class="fas fa-file-invoice page-header__icon"></i>
-            {{ legend }}
-        </h2>
+        <div>
+            <h1 class="page-header__title">{{ legend }}</h1>
+        </div>
         <div class="page-header__actions">
             <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-1"></i> Nazad
+                Nazad
             </a>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSupplierInvoiceModal">
-                <i class="fas fa-file-import me-1"></i> Nova ulazna faktura
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#createSupplierInvoiceModal">
+                Nova ulazna faktura
             </button>
             <a href="{{ url_for('invoices.create_customer_invoice') }}" class="btn btn-primary">
-                <i class="fas fa-file-export me-1"></i> Nova izlazna faktura
+                Nova izlazna faktura
             </a>
         </div>
     </header>
@@ -25,11 +24,11 @@
     {# Filter toolbar #}
     <div class="page-toolbar">
         <div class="d-flex gap-2 flex-wrap">
-            <button class="btn btn-outline-primary btn-sm filter-btn" data-filter="incoming">
-                <i class="fas fa-file-import me-1"></i> Ulazne fakture
+            <button class="btn btn-outline-secondary btn-sm filter-btn" data-filter="incoming">
+                Ulazne fakture
             </button>
-            <button class="btn btn-outline-primary btn-sm filter-btn" data-filter="outgoing">
-                <i class="fas fa-file-export me-1"></i> Izlazne fakture
+            <button class="btn btn-outline-secondary btn-sm filter-btn" data-filter="outgoing">
+                Izlazne fakture
             </button>
         </div>
     </div>
@@ -37,11 +36,10 @@
     {# List card #}
     <div class="list-card">
         <div class="list-card__header">
-            <i class="fas fa-list"></i>
             Sve fakture
         </div>
         <div class="table-responsive">
-            <table id="invoicesTable" class="table table-compact table-striped table-hover mb-0">
+            <table id="invoicesTable" class="table table-compact table-hover mb-0">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -50,7 +48,7 @@
                         <th>Promet</th>
                         <th>Dospeće</th>
                         <th>Partner</th>
-                        <th class="text-end">Iznos</th>
+                        <th class="iznos">Iznos</th>
                         <th>Valuta</th>
                         <th class="text-center">Status</th>
                         <th class="text-center">Tip</th>
@@ -66,7 +64,7 @@
                         <td>{{ invoice.service_date.strftime('%d.%m.%Y') }}</td>
                         <td>{% if invoice.payment_due_date %}{{ invoice.payment_due_date.strftime('%d.%m.%Y') }}{% endif %}</td>
                         <td>{{ invoice.partner.name }}</td>
-                        <td class="text-end">{{ invoice.total_amount | format_number }}</td>
+                        <td class="iznos">{{ invoice.total_amount | format_number }}</td>
                         <td>{{ invoice.currency }}</td>
                         <td class="text-center">
                             <span class="status-pill-group">
@@ -103,7 +101,7 @@
                             {% endif %}
                         </td>
                         <td class="text-center text-nowrap">
-                            <a href="{{ url_for('invoices.edit_customer_invoice', invoice_id=invoice.id) }}" class="btn btn-outline-primary btn-sm edit-invoice" data-invoice-id="{{ invoice.id }}">
+                            <a href="{{ url_for('invoices.edit_customer_invoice', invoice_id=invoice.id) }}" class="btn btn-outline-primary btn-sm edit-invoice" data-invoice-id="{{ invoice.id }}"{% if (invoice.status == 'nacrt' and not invoice.incoming) or (not invoice.paid and invoice.incoming) %} title="Izmeni" aria-label="Izmeni"{% else %} title="Pregled" aria-label="Pregled"{% endif %}>
                                 {% if invoice.status == 'nacrt' and not invoice.incoming %}
                                     <i class="fas fa-edit"></i>
                                 {% elif not invoice.paid and invoice.incoming %}
@@ -113,12 +111,12 @@
                                 {% endif %}
                             </a>
                             {% if not invoice.incoming %}
-                                <a href="{{ url_for('invoices.generate_invoice_pdf_route', invoice_id=invoice.id) }}" class="btn btn-outline-secondary btn-sm view-invoice" data-invoice-id="{{ invoice.id }}" target="_blank">
+                                <a href="{{ url_for('invoices.generate_invoice_pdf_route', invoice_id=invoice.id) }}" class="btn btn-outline-secondary btn-sm view-invoice" data-invoice-id="{{ invoice.id }}" target="_blank" title="PDF" aria-label="PDF">
                                     <i class="fas fa-file-pdf"></i>
                                 </a>
                             {% else %}
                                 {% if not invoice.paid %}
-                                    <a href="" class="btn btn-outline-danger btn-sm delete-invoice" data-invoice-id="{{ invoice.id }}" data-bs-toggle="modal" data-bs-target="#deleteInvoiceModal">
+                                    <a href="" class="btn btn-outline-danger btn-sm delete-invoice" data-invoice-id="{{ invoice.id }}" data-bs-toggle="modal" data-bs-target="#deleteInvoiceModal" title="Obriši" aria-label="Obriši">
                                         <i class="fas fa-trash"></i>
                                     </a>
                                 {% endif %}

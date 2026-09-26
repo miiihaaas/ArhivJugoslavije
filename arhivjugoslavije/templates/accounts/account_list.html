@@ -5,14 +5,11 @@
 
     {# Page header #}
     <header class="page-header">
-        <h2 class="page-header__title">
-            <i class="fas fa-list-ol page-header__icon"></i>
-            Pregled konta
-        </h2>
+        <div>
+            <h1 class="page-header__title">Pregled konta</h1>
+        </div>
         <div class="page-header__actions">
-            <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-1"></i> Nazad
-            </a>
+            <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary">Nazad</a>
         </div>
     </header>
 
@@ -21,18 +18,16 @@
         <div class="col-lg-6">
             <div class="list-card h-100">
                 <div class="list-card__header d-flex justify-content-between align-items-center">
-                    <span><i class="fas fa-list-ol"></i> Konta nivoa 4</span>
-                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAccount4Modal">
-                        <i class="fas fa-plus me-1"></i> Dodaj konto 4
-                    </button>
+                    <span>Konta nivoa 4</span>
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAccount4Modal">Dodaj konto 4</button>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-compact table-striped table-hover mb-0" id="accounts4Table">
+                    <table class="table table-compact table-hover mb-0" id="accounts4Table">
                         <thead>
                             <tr>
-                                <th><i class="fas fa-hashtag me-1"></i>Konto</th>
-                                <th><i class="fas fa-font me-1"></i>Naziv</th>
-                                <th class="text-center th-w-1 no-sort"><i class="fas fa-cogs me-1"></i>Akcije</th>
+                                <th>Konto</th>
+                                <th>Naziv</th>
+                                <th class="text-center text-nowrap th-w-1 no-sort">Akcije</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -43,6 +38,7 @@
                                 <td class="text-center text-nowrap">
                                     <button type="button" class="btn btn-sm btn-outline-primary"
                                             data-bs-toggle="modal" data-bs-target="#editAccount4Modal"
+                                            title="Izmeni konto" aria-label="Izmeni konto"
                                             data-number="{{ account.number }}"
                                             data-name="{{ account.name }}">
                                         <i class="fas fa-edit"></i>
@@ -64,19 +60,17 @@
         <div class="col-lg-6">
             <div class="list-card h-100">
                 <div class="list-card__header d-flex justify-content-between align-items-center">
-                    <span><i class="fas fa-list-ol"></i> Konta nivoa 6</span>
-                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAccount6Modal">
-                        <i class="fas fa-plus me-1"></i> Dodaj konto 6
-                    </button>
+                    <span>Konta nivoa 6</span>
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAccount6Modal">Dodaj konto 6</button>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-compact table-striped table-hover mb-0" id="accounts6Table">
+                    <table class="table table-compact table-hover mb-0" id="accounts6Table">
                         <thead>
                             <tr>
-                                <th><i class="fas fa-hashtag me-1"></i>Konto</th>
-                                <th><i class="fas fa-font me-1"></i>Naziv</th>
-                                <th><i class="fas fa-level-up-alt me-1"></i>Konto 4</th>
-                                <th class="text-center th-w-1 no-sort"><i class="fas fa-cogs me-1"></i>Akcije</th>
+                                <th>Konto</th>
+                                <th>Naziv</th>
+                                <th>Konto 4</th>
+                                <th class="text-center text-nowrap th-w-1 no-sort">Akcije</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -88,6 +82,7 @@
                                 <td class="text-center text-nowrap">
                                     <button type="button" class="btn btn-sm btn-outline-primary"
                                             data-bs-toggle="modal" data-bs-target="#editAccount6Modal"
+                                            title="Izmeni konto" aria-label="Izmeni konto"
                                             data-number="{{ account.number }}"
                                             data-name="{{ account.name }}"
                                             data-account-level-4-number="{{ account.account_level_4_number }}">

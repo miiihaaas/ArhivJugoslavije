@@ -1,12 +1,12 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="container text-center pt-40">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <h1 class="display-1">400</h1>
-            <h2>Neispravan zahtev</h2>
-            <p class="lead">Vaš zahtev nije mogao biti obrađen. Molimo vas proverite unete podatke i pokušajte ponovo.</p>
-            <a href="{{ url_for('main.home') }}" class="btn btn-primary mt-4">Vratite se na početnu stranu</a>
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-7">
+            <p class="display-1 mb-2">400</p>
+            <h1 class="page-header__title mb-3">Neispravan zahtev</h1>
+            <p class="mb-4">Zahtev nije mogao da se obradi jer poslati podaci nisu u očekivanom obliku. Vratite se na prethodnu stranu, proverite unete podatke i pokušajte ponovo.</p>
+            <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary">Nazad na početnu</a>
         </div>
     </div>
 </div>

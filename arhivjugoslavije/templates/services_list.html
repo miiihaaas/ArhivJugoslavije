@@ -5,22 +5,21 @@
 
     {# Page header #}
     <header class="page-header">
-        <h2 class="page-header__title">
-            <i class="fas fa-cogs page-header__icon"></i>
-            {{ legend }}
-        </h2>
+        <div>
+            <h1 class="page-header__title">{{ legend }}</h1>
+        </div>
         <div class="page-header__actions">
             <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-1"></i> Nazad
+                Nazad
             </a>
             <a href="{{ url_for('services.print_services', language='sr') }}" class="btn btn-outline-primary" target="_blank">
-                <i class="fas fa-print me-1"></i> Štampaj (sr)
+                Štampaj (sr)
             </a>
             <a href="{{ url_for('services.print_services', language='en') }}" class="btn btn-outline-primary" target="_blank">
-                <i class="fas fa-print me-1"></i> Print (en)
+                Print (en)
             </a>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createServiceModal">
-                <i class="fas fa-plus me-1"></i> Kreiraj uslugu
+                Kreiraj uslugu
             </button>
         </div>
     </header>
@@ -28,21 +27,20 @@
     {# Services list #}
     <div class="list-card">
         <div class="list-card__header">
-            <i class="fas fa-list"></i>
             Lista usluga
         </div>
         <div class="table-responsive">
-            <table id="servicesTable" class="table table-compact table-striped table-hover mb-0">
+            <table id="servicesTable" class="table table-compact table-hover mb-0">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th class="text-nowrap">ID</th>
                         <th>Naziv (srp)</th>
                         <th>Naziv (eng)</th>
                         <th>Napomena</th>
                         <th>Jedinica</th>
                         <th class="text-end">Cena (RSD)</th>
                         <th class="text-end">Cena (EUR)</th>
-                        <th class="text-center th-w-1 no-sort">Akcije</th>
+                        <th class="text-center th-w-1 no-sort text-nowrap">Akcije</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -53,8 +51,8 @@
                         <td>{{ service.name_en }}</td>
                         <td>{{ service.note }}</td>
                         <td>{% if service.unit_of_measure %}{{ service.unit_of_measure.name_sr }} ({{ service.unit_of_measure.symbol }}){% endif %}</td>
-                        <td class="text-end">{{ service.price_rsd | format_number }}</td>
-                        <td class="text-end">
+                        <td class="iznos">{{ service.price_rsd | format_number }}</td>
+                        <td class="iznos">
                             {% if archive_settings and archive_settings.eur_rate and archive_settings.eur_rate > 0 %}
                                 {{ (service.price_rsd | float / archive_settings.eur_rate | float) | format_number }}
                             {% else %}
@@ -68,7 +66,8 @@
                                data-bs-target="#editServiceModal"
                                data-service-id="{{ service.id }}"
                                data-archived="{{ '1' if service.archived else '0' }}"
-                               title="Izmeni uslugu"></i>
+                               title="Izmeni uslugu"
+                               aria-label="Izmeni uslugu"></i>
                             {% if service.archived %}
                             <i class="fas fa-archive text-secondary ms-2" title="Arhivirano"></i>
                             {% endif %}
@@ -86,7 +85,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="createServiceModalLabel"><i class="fas fa-plus-circle me-2"></i>Kreiraj novu uslugu</h5>
+                <h5 class="modal-title" id="createServiceModalLabel">Kreiraj novu uslugu</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -154,10 +153,10 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i> Odustani
+                    Odustani
                 </button>
                 <button type="submit" form="createServiceForm" class="btn btn-primary">
-                    <i class="fas fa-save me-1"></i> {{ register_form.submit.label.text }}
+                    {{ register_form.submit.label.text }}
                 </button>
             </div>
         </div>
@@ -169,7 +168,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editServiceModalLabel"><i class="fas fa-edit me-2"></i>Izmeni uslugu</h5>
+                <h5 class="modal-title" id="editServiceModalLabel">Izmeni uslugu</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -222,10 +221,10 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i> Odustani
+                    Odustani
                 </button>
                 <button type="submit" form="editServiceForm" class="btn btn-primary">
-                    <i class="fas fa-save me-1"></i> {{ edit_form.submit.label.text }}
+                    {{ edit_form.submit.label.text }}
                 </button>
             </div>
         </div>

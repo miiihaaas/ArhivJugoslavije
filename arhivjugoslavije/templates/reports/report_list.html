@@ -1,78 +1,38 @@
 {% extends 'layout.html' %}
 {% block content %}
 <div class="container mt-4">
-    <!-- Zaglavlje stranice sa naslovom i dugmadima za akcije -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card bg-light">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h2 class="mb-0"><i class="fas fa-chart-bar me-2 text-danger"></i>Izveštaji</h2>
-                        <div>
-                            <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary me-2">
-                                <i class="fas fa-arrow-left me-1"></i> Nazad
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <header class="page-header">
+        <div>
+            <h1 class="page-header__title">Izveštaji</h1>
         </div>
-    </div>
-    
-    <div class="row g-4">
-        <!-- Realizacija po kontima -->
-        <div class="col-md-4">
-            <a href="{{ url_for('reports.report_1') }}" class="text-decoration-none">
-                <div class="card shortcut-card h-100">
-                    <div class="card-body text-center">
-                        <i class="fas fa-file-invoice fa-3x mb-3 text-primary"></i>
-                        <h5 class="card-title">Realizacija po kontima</h5>
-                        <p class="card-text text-muted">Pregled realizacije po kontima</p>
-                    </div>
-                </div>
-            </a>
+        <div class="page-header__actions">
+            <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary">Nazad</a>
         </div>
-        
-        <!-- Finansijski izveštaj -->
-        <div class="col-md-4">
-            <a href="#" class="text-decoration-none">
-                <div class="card shortcut-card h-100">
-                    <div class="card-body text-center">
-                        <i class="fas fa-chart-line fa-3x mb-3 text-success"></i>
-                        <h5 class="card-title">Finansijski izveštaj</h5>
-                        <p class="card-text text-muted">Pregled finansijskih pokazatelja</p>
-                    </div>
-                </div>
-            </a>
-        </div>
-        
-        <!-- Izveštaj o partnerima -->
-        <div class="col-md-4">
-            <a href="#" class="text-decoration-none">
-                <div class="card shortcut-card h-100">
-                    <div class="card-body text-center">
-                        <i class="fas fa-handshake fa-3x mb-3 text-info"></i>
-                        <h5 class="card-title">Izveštaj o partnerima</h5>
-                        <p class="card-text text-muted">Pregled poslovnih partnera</p>
-                    </div>
-                </div>
-            </a>
-        </div>
-    </div>
+    </header>
+
+    <!-- Kazalo izveštaja (isti obrazac kao na početnoj strani) -->
+    <nav class="kazalo" aria-label="Izveštaji">
+        <ol class="kazalo__lista">
+            <li class="kazalo__stavka">
+                <a class="kazalo__naslov" href="{{ url_for('reports.report_1') }}">Realizacija po kontima</a>
+                <p class="kazalo__opis">Pregled realizacije po kontima</p>
+            </li>
+            <li class="kazalo__stavka">
+                <a class="kazalo__naslov" href="#">Finansijski izveštaj</a>
+                <p class="kazalo__opis">Pregled finansijskih pokazatelja</p>
+            </li>
+            <li class="kazalo__stavka">
+                <a class="kazalo__naslov" href="#">Izveštaj o partnerima</a>
+                <p class="kazalo__opis">Pregled poslovnih partnera</p>
+            </li>
+        </ol>
+    </nav>
 
     <!-- Vreme i datum -->
-    <div class="text-center mt-5">
-        <div class="time-display">
-            <div class="time-section">
-                <i class="fas fa-clock me-2"></i>
-                <span id="current-time" class="time-text"></span>
-            </div>
-            <div class="date-section mt-2">
-                <i class="fas fa-calendar-alt me-2"></i>
-                <span id="current-date" class="date-text"></span>
-            </div>
-        </div>
-    </div>
+    <p class="home-vreme mt-4">
+        <span id="current-date" class="home-vreme__datum"></span>
+        <span id="current-time" class="home-vreme__sat"></span>
+    </p>
 </div>
 {% endblock %}
 

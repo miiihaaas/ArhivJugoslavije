@@ -1,31 +1,26 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="reset-password-container">
-    <div class="reset-card">
-        <!-- Icon and Title -->
-        <div class="text-center mb-4">
-            <div class="reset-icon">
-                <i class="fa fa-key"></i>
-            </div>
+<div class="auth-page">
+    <div class="auth-sheet">
+        <!-- Znak i naslov -->
+        <div class="auth-sheet__glava">
+            <img src="{{ url_for('static', filename='img/logo.png') }}"
+                 class="auth-sheet__logo" width="212" height="90" alt="Arhiv Jugoslavije">
             {% if is_create %}
-                <span class="auth-eyebrow">Kreiranje</span>
-                <h4 class="reset-title">Kreiranje lozinke</h4>
-                <hr class="auth-accent">
-                <p class="reset-subtitle">
+                <h1 class="auth-sheet__naslov">Kreiranje lozinke</h1>
+                <p class="auth-sheet__uvod">
                     Unesite email adresu i poslaćemo Vam link za kreiranje lozinke
                 </p>
             {% else %}
-                <span class="auth-eyebrow">Resetovanje</span>
-                <h4 class="reset-title">Resetovanje lozinke</h4>
-                <hr class="auth-accent">
-                <p class="reset-subtitle">
+                <h1 class="auth-sheet__naslov">Resetovanje lozinke</h1>
+                <p class="auth-sheet__uvod">
                     Unesite email adresu i poslaćemo Vam link za resetovanje lozinke
                 </p>
             {% endif %}
         </div>
 
-        <!-- Reset Form -->
-        <form method="POST" action="">
+        <!-- Forma za zahtev -->
+        <form method="POST" action="" class="auth-sheet__forma">
             {{ form.hidden_tag() }}
             <div class="form-group mb-4">
                 {{ form.email.label(class="form-label") }}
@@ -43,14 +38,10 @@
 
             <div class="d-grid gap-2">
                 {% if is_create %}
-                    <button class="btn btn-primary btn-cta" type="submit">
-                        <i class="fa fa-key me-2"></i>Kreiranje lozinke
-                    </button>
+                    <button class="btn btn-primary" type="submit">Kreiranje lozinke</button>
                 {% else %}
-                    {{ form.submit(class="btn btn-primary btn-cta") }}
-                    <a href="{{ url_for('users.login') }}" class="btn btn-outline-secondary">
-                        <i class="fa fa-arrow-left me-2"></i>Nazad na prijavu
-                    </a>
+                    {{ form.submit(class="btn btn-primary") }}
+                    <a href="{{ url_for('users.login') }}" class="btn btn-outline-secondary">Nazad na prijavu</a>
                 {% endif %}
             </div>
         </form>

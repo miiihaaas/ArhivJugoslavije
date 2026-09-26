@@ -1,24 +1,20 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="login-container">
-    <div class="login-card">
+<div class="auth-page">
+    <div class="auth-sheet">
         <form method="POST" action="">
             {{ form.hidden_tag() }}
 
-            <!-- Logo & Title -->
-            <div class="text-center mb-4">
+            <!-- Znak i naslov -->
+            <div class="auth-sheet__glava">
                 <img src="{{ url_for('static', filename='img/logo.png') }}"
-                     class="login-logo" alt="Logo">
-                <div class="mt-4">
-                    <span class="auth-eyebrow">Prijava</span>
-                </div>
-                <h4 class="login-title">{{ legend }}</h4>
-                <hr class="auth-accent">
-                <p class="login-subtitle">Pristup internom sistemu Arhiva Jugoslavije</p>
+                     class="auth-sheet__logo" width="212" height="90" alt="Arhiv Jugoslavije">
+                <h1 class="auth-sheet__naslov">{{ legend }}</h1>
+                <p class="auth-sheet__uvod">Pristup internom sistemu Arhiva Jugoslavije</p>
             </div>
 
-            <!-- Login Form -->
-            <div class="login-form">
+            <!-- Forma za prijavu -->
+            <div class="auth-sheet__forma">
                 <div class="form-group mb-3">
                     {{ form.email.label(class="form-label") }}
                     {% if form.email.errors %}
@@ -33,7 +29,7 @@
                     {% endif %}
                 </div>
 
-                <div class="form-group mb-4">
+                <div class="form-group mb-3">
                     {{ form.password.label(class="form-label") }}
                     {% if form.password.errors %}
                         {{ form.password(class="form-control is-invalid", placeholder="Unesite lozinku") }}
@@ -53,14 +49,12 @@
                 </div>
 
                 <div class="d-grid gap-2">
-                    {{ form.submit(class="btn btn-primary btn-cta") }}
+                    {{ form.submit(class="btn btn-primary") }}
                 </div>
 
-                <div class="text-center mt-3">
-                    <a href="{{ url_for('users.reset_request') }}" class="text-decoration-none">
-                        Zaboravili ste lozinku?
-                    </a>
-                </div>
+                <p class="auth-sheet__dno">
+                    <a href="{{ url_for('users.reset_request') }}">Zaboravili ste lozinku?</a>
+                </p>
             </div>
         </form>
     </div>

@@ -1,0 +1,213 @@
+/* ============================================================================
+   ARHIV JUGOSLAVIJE — Tokeni i osnova
+   ----------------------------------------------------------------------------
+   Pravac: "Arhivski registar". Boje su preuzete sa zvaničnog sajta
+   arhivyu.rs (bordo #771e32, grafit #686d6e, pergament #f5e9cf,
+   crvena #af252b, maslinasta siva #a09c89). Fontovi PT Sans i
+   PT Sans Narrow (sa istog sajta) — podržavaju čćžšđ, cifre su iste širine.
+
+   Redosled učitavanja: tokens.css → components.css → shell.css
+   ============================================================================ */
+
+
+/* ----------------------------------------------------------------------------
+   Fontovi (lokalno, bez zavisnosti od Google Fonts)
+---------------------------------------------------------------------------- */
+@font-face {
+    font-family: 'PT Sans';
+    src: url('../fonts/PTSans-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'PT Sans';
+    src: url('../fonts/PTSans-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'PT Sans Narrow';
+    src: url('../fonts/PTSansNarrow-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'PT Sans Narrow';
+    src: url('../fonts/PTSansNarrow-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+
+/* ----------------------------------------------------------------------------
+   Tokeni
+---------------------------------------------------------------------------- */
+:root {
+    /* Identitet */
+    --povez:          #771e32;   /* bordo — zaglavlje, primarna dugmad, linkovi */
+    --povez-tamni:    #5c1727;   /* hover / pritisnuto */
+    --povez-svetli:   #f3e8ea;   /* pozadina aktivne stavke, izbor */
+    --etiketa:        #f5e9cf;   /* SAMO etiketa dokumenta i red zbira */
+    --etiketa-ivica:  #d9c79c;
+
+    /* Neutralne */
+    --grafit:         #2e3132;   /* osnovni tekst */
+    --siva:           #686d6e;   /* sekundarni tekst, labele */
+    --siva-svetla:    #8d9192;   /* placeholder, neaktivno */
+    --linija:         #cfccc1;   /* okviri, linije tabela */
+    --linija-meka:    #e4e2db;   /* linije između redova */
+    --papir:          #f2f2ef;   /* pozadina aplikacije (hladna, ne krem) */
+    --list:           #ffffff;   /* listovi, forme, tabele */
+    --list-hover:     #f7f6f2;   /* red pod mišem */
+
+    /* Status (prigušeni, da se ne biju sa bordoom) */
+    --pecat:          #af252b;   /* greške, brisanje, negativni iznosi */
+    --pecat-svetli:   #f8e9e9;
+    --uspeh:          #3e6b4c;
+    --uspeh-svetli:   #e9f1ec;
+    --oker:           #9a6b10;
+    --oker-svetli:    #f8f0de;
+    --info:           #2e3132;
+    --info-svetli:    #eceeee;
+
+    /* Tipografija */
+    --font-tekst:     'PT Sans', 'Segoe UI', Arial, sans-serif;
+    --font-natpis:    'PT Sans Narrow', 'Arial Narrow', 'PT Sans', sans-serif;
+
+    --fs-xs:   0.8125rem;   /* 13px — pomoćni tekst, fusnote */
+    --fs-sm:   0.875rem;    /* 14px — tabele, labele */
+    --fs-base: 1rem;        /* 16px — tekst, polja */
+    --fs-lg:   1.25rem;     /* 20px — naslovi sekcija */
+    --fs-xl:   1.625rem;    /* 26px — naslov strane */
+
+    --lh-tight: 1.2;
+    --lh-base:  1.5;
+
+    /* Razmaci */
+    --sp-1: 0.25rem;
+    --sp-2: 0.5rem;
+    --sp-3: 0.75rem;
+    --sp-4: 1rem;
+    --sp-5: 1.5rem;
+    --sp-6: 2rem;
+    --sp-7: 3rem;
+
+    /* Oblik */
+    --radius:        3px;    /* listovi, polja, dugmad */
+    --radius-modal:  6px;
+    --senka-plutajuce: 0 8px 24px rgba(46, 49, 50, 0.18);   /* samo modali i padajući meniji */
+
+    --header-height: 64px;
+    --content-max:   1600px;
+
+    --prelaz: 120ms ease-out;
+
+    /* Stari nazivi — zadržani jer ih šabloni koriste u inline stilovima */
+    --color-text-light: var(--siva);
+}
+
+
+/* ----------------------------------------------------------------------------
+   Bootstrap — prevezivanje osnovnih promenljivih na tokene
+---------------------------------------------------------------------------- */
+:root {
+    --bs-body-font-family: var(--font-tekst);
+    --bs-body-font-size: var(--fs-base);
+    --bs-body-color: var(--grafit);
+    --bs-body-bg: var(--papir);
+    --bs-border-color: var(--linija);
+    --bs-border-radius: var(--radius);
+    --bs-border-radius-sm: var(--radius);
+    --bs-border-radius-lg: var(--radius);
+    --bs-link-color: var(--povez);
+    --bs-link-color-rgb: 119, 30, 50;
+    --bs-link-hover-color: var(--povez-tamni);
+    --bs-link-hover-color-rgb: 92, 23, 39;
+    --bs-primary: var(--povez);
+    --bs-primary-rgb: 119, 30, 50;
+    --bs-secondary-color: var(--siva);
+    --bs-danger: var(--pecat);
+    --bs-danger-rgb: 175, 37, 43;
+    --bs-success: var(--uspeh);
+    --bs-success-rgb: 62, 107, 76;
+    --bs-warning: var(--oker);
+    --bs-warning-rgb: 154, 107, 16;
+    --bs-focus-ring-color: rgba(119, 30, 50, 0.3);
+}
+
+
+/* ----------------------------------------------------------------------------
+   Osnova
+---------------------------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+body {
+    font-family: var(--font-tekst);
+    font-size: var(--fs-base);
+    line-height: var(--lh-base);
+    color: var(--grafit);
+    background-color: var(--papir);
+    font-variant-numeric: tabular-nums;
+}
+
+h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5, h6, .h6, legend {
+    font-family: var(--font-natpis);
+    font-weight: 700;
+    line-height: var(--lh-tight);
+    color: var(--grafit);
+    letter-spacing: 0;
+    margin: 0 0 var(--sp-3);
+}
+
+h1, .h1 { font-size: var(--fs-xl); }
+h2, .h2 { font-size: var(--fs-xl); }
+h3, .h3 { font-size: var(--fs-lg); }
+h4, .h4 { font-size: 1.125rem; }
+h5, .h5 { font-size: var(--fs-base); }
+h6, .h6 { font-size: var(--fs-sm); }
+
+legend {
+    font-size: var(--fs-lg);
+    padding: 0;
+}
+
+small, .small { font-size: var(--fs-xs); }
+
+p { margin: 0 0 var(--sp-3); }
+
+a {
+    color: var(--povez);
+    text-decoration: none;
+    transition: color var(--prelaz);
+}
+a:hover { color: var(--povez-tamni); text-decoration: underline; text-underline-offset: 2px; }
+
+hr { border: 0; border-top: 1px solid var(--linija); opacity: 1; margin: var(--sp-4) 0; }
+
+::selection { background: var(--povez-svetli); color: var(--grafit); }
+
+/* Vidljiv fokus sa tastature — na svim interaktivnim elementima */
+:focus-visible {
+    outline: 2px solid var(--povez);
+    outline-offset: 2px;
+}
+
+.text-muted, .text-secondary { color: var(--siva) !important; }
+.text-danger  { color: var(--pecat) !important; }
+.text-success { color: var(--uspeh) !important; }
+.text-warning { color: var(--oker) !important; }
+.text-primary { color: var(--povez) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
