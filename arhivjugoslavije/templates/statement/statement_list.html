@@ -330,7 +330,7 @@
                         <td class="small text-end">{{ statement.total_debit | format_number }}</td>
                         <td class="small text-end">{{ statement.total_credit | format_number }}</td>
                         <td class="small text-end">{{ statement.final_balance | format_number }}</td>
-                        <td class="small text-center">![x/{{ statement.statement_items|length }}]!</td>
+                        <td class="small text-center">{{ statement.statement_items|length }}</td>
                         <td class="text-center text-nowrap">
                             <a href="{{ url_for('statement.statement_details', statement_id=statement.id) }}" class="btn btn-sm btn-outline-primary" title="Detalji" aria-label="Detalji">
                                 <i class="fas fa-eye"></i>

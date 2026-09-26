@@ -90,7 +90,7 @@
                                 <button class="btn btn-outline-secondary btn-sm edit-account" data-account-id="{{ account.id }}" data-account-number="{{ account.account_level_4_number }}" data-amount-1="{{ account.amount_1 }}" data-amount-2="{{ account.amount_2 }}" data-note="{{ account.note }}" data-bs-toggle="modal" data-bs-target="#editAccountModal" title="Izmeni" aria-label="Izmeni">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteAccountModal" data-account-id="{{ account.id }}" title="Obriši" aria-label="Obriši">
+                                <button class="btn btn-outline-danger btn-sm delete-account" data-bs-toggle="modal" data-bs-target="#deleteAccountModal" data-account-id="{{ account.id }}" title="Obriši" aria-label="Obriši">
                                     <i class="fas fa-trash"></i>
                                 </button>
                                 {% else %}
@@ -256,14 +256,18 @@
             $('#edit_note').val(note);
             
             var form = document.getElementById('editAccountForm');
-            form.action = form.action.replace('/0', '/' + accountId);
+            // Polazni URL (sa /0) čuva se u data atributu, da i drugi klik bez osvežavanja strane pogodi pravo konto
+            if (!form.dataset.baseAction) { form.dataset.baseAction = form.getAttribute('action'); }
+            form.action = form.dataset.baseAction.replace(/\/0$/, '/' + accountId);
         });
         
         // Postavljanje ID-a konta za brisanje
         $('.delete-account').on('click', function() {
             var accountId = $(this).data('account-id');
             var form = document.getElementById('deleteAccountForm');
-            form.action = form.action.replace('/0', '/' + accountId);
+            // Polazni URL (sa /0) čuva se u data atributu, da i drugi klik bez osvežavanja strane pogodi pravo konto
+            if (!form.dataset.baseAction) { form.dataset.baseAction = form.getAttribute('action'); }
+            form.action = form.dataset.baseAction.replace(/\/0$/, '/' + accountId);
         });
     });
 </script>
