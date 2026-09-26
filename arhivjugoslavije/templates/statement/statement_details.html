@@ -183,10 +183,10 @@
                                         </div>
                                     </td>
                                     <td class="bg-light">
-                                        <textarea name="public_procurement_{{ item.id }}" class="form-control form-control-sm" rows="3" placeholder="Javna nabavka" {% if not current_user.is_authenticated %}disabled{% endif %}>{{ item.public_procurement }}</textarea>
+                                        <textarea name="public_procurement_{{ item.id }}" class="form-control form-control-sm" rows="3" placeholder="Javna nabavka" {% if not current_user.is_authenticated %}disabled{% endif %}>{{ item.public_procurement or '' }}</textarea>
                                     </td>
                                     <td class="bg-light">
-                                        <textarea name="note_{{ item.id }}" class="form-control form-control-sm" rows="3" placeholder="Beleška" {% if not current_user.is_authenticated %}disabled{% endif %}>{{ item.note }}</textarea>
+                                        <textarea name="note_{{ item.id }}" class="form-control form-control-sm" rows="3" placeholder="Beleška" {% if not current_user.is_authenticated %}disabled{% endif %}>{{ item.note or '' }}</textarea>
                                     </td>
                                     <td class="bg-light text-center">
                                         <div class="form-check form-switch d-flex justify-content-center">

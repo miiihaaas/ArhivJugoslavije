@@ -399,10 +399,10 @@ def statement_details(statement_id):
                     item.project_id = int(project_id) if project_id else None
 
                 if f'public_procurement_{item_id}' in request.form:
-                    item.public_procurement = request.form.get(f'public_procurement_{item_id}')
+                    item.public_procurement = request.form.get(f'public_procurement_{item_id}', '').strip() or None
 
                 if f'note_{item_id}' in request.form:
-                    item.note = request.form.get(f'note_{item_id}')
+                    item.note = request.form.get(f'note_{item_id}', '').strip() or None
 
                 # Checkbox za knjiženje u projekat. Kad se projekat tek sad dodeljuje
                 # (prelaz None -> non-None), automatski uključi flag bez obzira na switch,
