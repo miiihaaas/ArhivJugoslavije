@@ -55,3 +55,11 @@ arhivjugoslavije/static/uploads/
 
 /graphify-out/
 .graphify_*
+
+# Lokalni dokumenti klijenta (skenovi planova i sl.)
+/doc/
+
+# Bankovni izvodi i pomoćne skripte u korenu projekta (lokalno testiranje)
+/*.xml
+/check_accounts.py
+/exit()
