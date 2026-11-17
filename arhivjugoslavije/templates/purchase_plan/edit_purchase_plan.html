@@ -20,6 +20,20 @@
         </div>
     </header>
 
+    <!-- Izvori finansiranja: svaki izvor ima svoj plan po kontima nivoa 4 -->
+    <ul class="nav nav-tabs mb-3">
+        {% for source in funding_sources %}
+        <li class="nav-item">
+            <a class="nav-link{% if source.code == selected_source %} active{% endif %}"
+               {% if source.code == selected_source %}aria-current="page"{% endif %}
+               href="{{ url_for('purchase_plan.edit_purchase_plan', purchase_plan_id=purchase_plan.id, izvor=source.code) }}">
+                {{ source.label }}
+                <span class="text-muted small ms-1">{{ source_totals[source.code] | format_number }}</span>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+
     <!-- Informacije o planu nabavke -->
     <div class="row mb-4">
         <div class="col-12">
@@ -38,7 +52,7 @@
                         <div class="col-md-3">
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Broj konta:</label>
-                                <p class="fs-5">{{ purchase_plan.purchase_plan_accounts|length }}</p>
+                                <p class="fs-5">{{ plan_accounts|length }}</p>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -78,7 +92,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for account in purchase_plan.purchase_plan_accounts %}
+                        {% for account in plan_accounts %}
                         <tr>
                             <td>{{ account.account_level_4_number }}</td>
                             <td>{{ account.account_level_4.name }}</td>
@@ -112,10 +126,11 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAccountModalLabel">Dodaj konto u plan nabavke</h5>
+                <h5 class="modal-title" id="addAccountModalLabel">Dodaj konto u plan nabavke - izvor {{ selected_source }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{{ url_for('purchase_plan.add_account', purchase_plan_id=purchase_plan.id) }}" method="POST">
+                <input type="hidden" name="source" value="{{ selected_source }}">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="account_level_4_number" class="form-label">Konto *</label>
@@ -161,7 +176,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editAccountModalLabel">Izmeni konto u planu nabavke</h5>
+                <h5 class="modal-title" id="editAccountModalLabel">Izmeni konto u planu nabavke - izvor {{ selected_source }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="editAccountForm" action="{{ url_for('purchase_plan.edit_account', purchase_plan_id=purchase_plan.id, account_id=0) }}" method="POST">

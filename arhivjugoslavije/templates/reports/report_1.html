@@ -4,13 +4,21 @@
     /* Red konta nivoa 4 - klikom se otvaraju/zatvaraju konta nivoa 6 */
     #reportTable tr.account-row { cursor: pointer; }
     #reportTable tr.account-row > td { font-weight: 700; }
-    #reportTable tr.account-row .toggle-icon { width: 1rem; color: var(--siva); }
-    #reportTable tr.account-row.expanded .toggle-icon { transform: rotate(90deg); }
-    /* Red konta nivoa 6 - uvučen, sitniji i prigušen */
+    #reportTable .toggle-icon { width: 1rem; color: var(--siva); }
+    #reportTable tr.expanded > td:first-child .toggle-icon { transform: rotate(90deg); }
+    /* Red konta nivoa 6 - uvučen, sitniji i prigušen; klikom se otvaraju dobavljači */
     #reportTable tr.child-row > td { font-size: var(--fs-xs); color: var(--siva); padding-top: var(--sp-1); padding-bottom: var(--sp-1); }
-    #reportTable tr.child-row > td:first-child { padding-left: calc(1rem + var(--sp-5)); }
+    #reportTable tr.child-row > td:first-child { padding-left: var(--sp-5); }
+    #reportTable tr.child-row.has-payees { cursor: pointer; }
+    /* Red dobavljača (primaoca) ispod konta nivoa 6 */
+    #reportTable tr.payee-row > td { font-size: var(--fs-xs); font-style: italic; padding-top: 0; padding-bottom: 0; }
+    #reportTable tr.payee-row > td:first-child { padding-left: calc(1rem + var(--sp-5) * 2); }
+    /* Grupe kolona po izvoru razdvojene linijom */
+    #reportTable .grupa-start { border-left: 1px solid var(--bs-border-color); }
+    #reportTable thead th { white-space: nowrap; }
+    #reportTable td.konto { min-width: 18rem; }
 </style>
-<div class="container mt-4">
+<div class="container-fluid mt-4 px-4">
     <header class="page-header">
         <div>
             <h1 class="page-header__title">Realizacija po kontima</h1>
@@ -32,25 +40,50 @@
         </select>
     </div>
 
-    <!-- Tabela sa podacima: konta nivoa 4 sa kontima nivoa 6 ispod (sklopivo) -->
+    {% macro iznosi(row, level) %}
+        {# level: 4 = konto nivoa 4 (plan, potrošeno, saldo); 6 = konto nivoa 6 i dobavljač (samo potrošeno) #}
+        {% for source in funding_sources %}
+        {% set code = source.code %}
+        <td class="iznos grupa-start">{% if level == 4 %}{{ row['planned_' ~ code] | format_currency }}{% endif %}</td>
+        {% if code == '01' %}
+        <td class="iznos">{% if level != 'payee' %}{{ row.budget_received | format_currency }}{% endif %}</td>
+        {% endif %}
+        <td class="iznos">{{ row['spent_' ~ code] | format_currency }}</td>
+        <td class="iznos{% if level == 4 and row['balance_' ~ code] < 0 %} iznos-negativan text-danger{% endif %}">{% if level == 4 %}{{ row['balance_' ~ code] | format_currency }}{% endif %}</td>
+        {% endfor %}
+        <td class="iznos grupa-start">{% if level == 4 %}{{ row.planned_total | format_currency }}{% endif %}</td>
+        <td class="iznos">{{ row.spent_total | format_currency }}</td>
+        <td class="iznos{% if level == 4 and row.balance_total < 0 %} iznos-negativan text-danger{% endif %}">{% if level == 4 %}{{ row.balance_total | format_currency }}{% endif %}</td>
+    {% endmacro %}
+
+    <!-- Tabela: konta nivoa 4 > konta nivoa 6 > dobavljači (sklopivo); izvori 01, 04 i 13 jedan pored drugog -->
     <div class="list-card">
         <div class="table-responsive">
             <table id="reportTable" class="table table-compact table-hover mb-0">
                 <thead>
                     <tr>
-                        <th>Konto</th>
-                        <th class="text-end">Planirano</th>
-                        <th class="text-end">Budžet doznačeno</th>
-                        <th class="text-end">Budžet potrošeno</th>
-                        <th class="text-end">Saldo Budžeta</th>
-                        <th class="text-end">Sopstveni potrošeno</th>
-                        <th class="text-end">Ukupan trošak</th>
+                        <th rowspan="2" class="align-bottom">Konto</th>
+                        {% for source in funding_sources %}
+                        <th colspan="{{ 4 if source.code == '01' else 3 }}" class="text-center grupa-start" title="{{ source.label }}">{{ source.label }}</th>
+                        {% endfor %}
+                        <th colspan="3" class="text-center grupa-start">Ukupno</th>
+                    </tr>
+                    <tr>
+                        {% for source in funding_sources %}
+                        <th class="text-end grupa-start">Plan</th>
+                        {% if source.code == '01' %}<th class="text-end">Doznačeno</th>{% endif %}
+                        <th class="text-end">Potrošeno</th>
+                        <th class="text-end">Saldo</th>
+                        {% endfor %}
+                        <th class="text-end grupa-start">Plan</th>
+                        <th class="text-end">Potrošeno</th>
+                        <th class="text-end">Saldo</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for account in accounts %}
                     <tr class="account-row" data-account="{{ account.account_number }}" data-year="{{ account.year }}">
-                        <td>
+                        <td class="konto">
                             {% if account.children %}
                             <i class="fas fa-chevron-right toggle-icon text-muted me-1"></i>
                             {% else %}
@@ -61,51 +94,56 @@
                             <span class="badge bg-warning text-dark ms-1" title="Konto nije u planu nabavke za {{ account.year }}. godinu">van plana</span>
                             {% endif %}
                         </td>
-                        <td class="iznos">{{ account.planned | format_currency }}</td>
-                        <td class="iznos">{{ account.budget_received | format_currency }}</td>
-                        <td class="iznos">{{ account.budget_spent | format_currency }}</td>
-                        <td class="iznos{% if account.budget_balance < 0 %} iznos-negativan text-danger{% endif %}">{{ account.budget_balance | format_currency }}</td>
-                        <td class="iznos">{{ account.own_spent | format_currency }}</td>
-                        <td class="iznos">{{ account.total_expense | format_currency }}</td>
+                        {{ iznosi(account, 4) }}
                     </tr>
                     {% for child in account.children %}
-                    <tr class="child-row d-none" data-parent="{{ account.account_number }}">
-                        <td>{{ child.account_number }}{% if child.account_name %} - {{ child.account_name }}{% endif %}</td>
-                        <td></td>
-                        <td class="iznos">{{ child.budget_received | format_currency }}</td>
-                        <td class="iznos">{{ child.budget_spent | format_currency }}</td>
-                        <td></td>
-                        <td class="iznos">{{ child.own_spent | format_currency }}</td>
-                        <td class="iznos">{{ child.total_expense | format_currency }}</td>
+                    <tr class="child-row d-none{% if child.payees %} has-payees{% endif %}" data-parent="{{ account.account_number }}" data-account6="{{ child.account_number }}">
+                        <td class="konto">
+                            {% if child.payees %}
+                            <i class="fas fa-chevron-right toggle-icon text-muted me-1"></i>
+                            {% else %}
+                            <i class="fas fa-fw toggle-icon me-1"></i>
+                            {% endif %}
+                            {{ child.account_number }}{% if child.account_name %} - {{ child.account_name }}{% endif %}
+                        </td>
+                        {{ iznosi(child, 6) }}
                     </tr>
+                    {% for payee in child.payees %}
+                    <tr class="payee-row d-none" data-parent="{{ account.account_number }}" data-parent6="{{ child.account_number }}">
+                        <td class="konto" title="{% if payee.is_partner %}Partner{% else %}Primalac sa izvoda (partner nije dodeljen){% endif %}">
+                            {{ payee.name }} <span class="text-muted">({{ payee.count }})</span>
+                        </td>
+                        {{ iznosi(payee, 'payee') }}
+                    </tr>
+                    {% endfor %}
                     {% endfor %}
                     {% else %}
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-3">Nema podataka za odabranu godinu.</td>
+                        <td colspan="15" class="text-center text-muted py-3">Nema podataka za odabranu godinu.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
                 <tfoot>
                     <tr>
                         <td>UKUPNO</td>
-                        <td class="iznos">{{ totals.planned | format_currency }}</td>
-                        <td class="iznos">{{ totals.budget_received | format_currency }}</td>
-                        <td class="iznos">{{ totals.budget_spent | format_currency }}</td>
-                        <td class="iznos{% if totals.budget_balance < 0 %} iznos-negativan text-danger{% endif %}">{{ totals.budget_balance | format_currency }}</td>
-                        <td class="iznos">{{ totals.own_spent | format_currency }}</td>
-                        <td class="iznos">{{ totals.total_expense | format_currency }}</td>
+                        {{ iznosi(totals, 4) }}
                     </tr>
                 </tfoot>
             </table>
         </div>
     </div>
 
+    <div class="small text-muted mt-2">
+        Plan je zbir redovne i programske delatnosti iz plana nabavke. Potrošeno su isplate sa računa izvora.
+        Klikom na konto nivoa 6 prikazuju se dobavljači (u zagradi broj isplata); gde partner nije dodeljen, prikazuje se naziv primaoca sa izvoda.
+    </div>
+
     <!-- Napomena o isplatama bez konta, koje nisu obuhvaćene izveštajem -->
     {% if unassigned %}
-    <div class="small text-muted mt-2">
+    <div class="small text-muted mt-1">
         Isplate bez konta (nisu u izveštaju):
         {% for entry in unassigned %}
-        {{ entry.label }} {{ entry.count }} kom., ukupno {{ entry.amount | format_currency }}{% if not loop.last %}; {% endif %}
+        {{ entry.label }}: {{ entry.count }} kom., ukupno {{ entry.amount | format_currency }}{% if not loop.last %}; {% endif %}
         {% endfor %}
     </div>
     {% endif %}
@@ -115,30 +153,48 @@
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Otvaranje/zatvaranje konta nivoa 6 ispod jednog konta nivoa 4
+        var $table = $('#reportTable');
+
+        // Otvaranje/zatvaranje konta nivoa 6 ispod konta nivoa 4; zatvaranjem se skrivaju i dobavljači
         function setExpanded($row, expanded) {
+            var account = $row.data('account');
             $row.toggleClass('expanded', expanded);
-            $('#reportTable tr.child-row[data-parent="' + $row.data('account') + '"]').toggleClass('d-none', !expanded);
+            $table.find('tr.child-row[data-parent="' + account + '"]').toggleClass('d-none', !expanded);
+            if (!expanded) {
+                $table.find('tr.child-row[data-parent="' + account + '"]').removeClass('expanded');
+                $table.find('tr.payee-row[data-parent="' + account + '"]').addClass('d-none');
+            }
+        }
+
+        // Otvaranje/zatvaranje dobavljača ispod konta nivoa 6
+        function setPayeesExpanded($row, expanded) {
+            $row.toggleClass('expanded', expanded);
+            $table.find('tr.payee-row[data-parent6="' + $row.data('account6') + '"]').toggleClass('d-none', !expanded);
         }
 
         // Ažuriranje natpisa dugmeta u zavisnosti od toga da li su sva konta otvorena
         function updateToggleAllButton() {
-            var $rows = $('#reportTable tr.account-row');
+            var $rows = $table.find('tr.account-row');
             var allExpanded = $rows.length > 0 && $rows.filter('.expanded').length === $rows.length;
             $('#toggleAll span').text(allExpanded ? 'Skupi sve' : 'Proširi sve');
-            $('#toggleAll i').toggleClass('fa-angle-double-down', !allExpanded).toggleClass('fa-angle-double-up', allExpanded);
             return allExpanded;
         }
 
-        $('#reportTable').on('click', 'tr.account-row', function() {
+        $table.on('click', 'tr.account-row', function() {
             var $row = $(this);
             setExpanded($row, !$row.hasClass('expanded'));
             updateToggleAllButton();
         });
 
+        $table.on('click', 'tr.child-row.has-payees', function() {
+            var $row = $(this);
+            setPayeesExpanded($row, !$row.hasClass('expanded'));
+        });
+
+        // "Proširi sve" otvara konta nivoa 6; dobavljači se otvaraju pojedinačno
         $('#toggleAll').on('click', function() {
             var expand = !updateToggleAllButton();
-            $('#reportTable tr.account-row').each(function() {
+            $table.find('tr.account-row').each(function() {
                 setExpanded($(this), expand);
             });
             updateToggleAllButton();

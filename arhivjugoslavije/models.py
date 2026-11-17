@@ -177,6 +177,16 @@ class ProjectAccount(db.Model):
         return f"ProjectAccount(project_id: '{self.project_id}', account: '{self.account_level_6_number}', amount: '{self.amount}')"
 
 
+# Izvori finansiranja iz finansijskog plana i tip bankovnog računa sa kog se prati potrošnja svakog izvora
+FUNDING_SOURCES = [
+    {'code': '01', 'label': 'Izvor 01 - Budžet', 'account_type': 'budget'},
+    {'code': '04', 'label': 'Izvor 04 - Sopstveni prihodi', 'account_type': 'own'},
+    {'code': '13', 'label': 'Izvor 13 - Neraspoređeni višak prihoda', 'account_type': 'other'},
+]
+FUNDING_SOURCE_CODES = [source['code'] for source in FUNDING_SOURCES]
+SOURCE_BY_ACCOUNT_TYPE = {source['account_type']: source['code'] for source in FUNDING_SOURCES}
+
+
 class PurchasePlan(db.Model):
     __tablename__ = 'purchase_plan'
     id = db.Column(db.Integer, primary_key=True)
@@ -206,10 +216,11 @@ class PurchasePlanAccount(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     purchase_plan_id = db.Column(db.Integer, db.ForeignKey('purchase_plan.id'), nullable=False)
     account_level_4_number = db.Column(db.String(4), nullable=False)
-    amount_1 = db.Column(db.Numeric(12, 2), nullable=True)
-    amount_2 = db.Column(db.Numeric(12, 2), nullable=True)
+    source = db.Column(db.String(2), nullable=False, default='01', server_default='01') #! izvor finansiranja: 01, 04, 13 (FUNDING_SOURCES)
+    amount_1 = db.Column(db.Numeric(12, 2), nullable=True) #? redovna delatnost
+    amount_2 = db.Column(db.Numeric(12, 2), nullable=True) #? programska delatnost
     note = db.Column(db.Text, nullable=True)
-    
+
     # Kreiramo indeks umesto stranog ključa
     __table_args__ = (
         db.Index('idx_account_level_4_number', 'account_level_4_number'),
@@ -217,7 +228,7 @@ class PurchasePlanAccount(db.Model):
     )
     
     def __repr__(self):
-        return f"PurchasePlanAccount(purchase_plan_id: '{self.purchase_plan_id}', account: '{self.account_level_4_number}', amount_1: '{self.amount_1}', amount_2: '{self.amount_2}', note: '{self.note}')"
+        return f"PurchasePlanAccount(purchase_plan_id: '{self.purchase_plan_id}', account: '{self.account_level_4_number}', source: '{self.source}', amount_1: '{self.amount_1}', amount_2: '{self.amount_2}', note: '{self.note}')"
 
 
 class UnitOfMeasure(db.Model):
