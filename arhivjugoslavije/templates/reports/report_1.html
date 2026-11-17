@@ -9,6 +9,12 @@
     /* Red konta nivoa 6 - uvučen, sitniji i prigušen */
     #reportTable tr.child-row > td { font-size: var(--fs-xs); color: var(--siva); padding-top: var(--sp-1); padding-bottom: var(--sp-1); }
     #reportTable tr.child-row > td:first-child { padding-left: calc(1rem + var(--sp-5)); }
+    /* Red konta nivoa 6 sa partnerima ispod - podebljan kao podzbir */
+    #reportTable tr.child-row.has-partners > td { font-weight: 700; color: inherit; }
+    /* Red partnera (dobavljača) ispod konta nivoa 6 - dodatno uvučen */
+    #reportTable tr.partner-row > td { font-size: var(--fs-xs); padding-top: 0; padding-bottom: 0; border-top: 0; }
+    #reportTable tr.partner-row > td:first-child { padding-left: calc(1rem + var(--sp-5) + var(--sp-5)); }
+    #reportTable tr.partner-row .partner-count { color: var(--siva); }
 </style>
 <div class="container mt-4">
     <header class="page-header">
@@ -69,7 +75,7 @@
                         <td class="iznos">{{ account.total_expense | format_currency }}</td>
                     </tr>
                     {% for child in account.children %}
-                    <tr class="child-row d-none" data-parent="{{ account.account_number }}">
+                    <tr class="child-row d-none{% if child.partners %} has-partners{% endif %}" data-parent="{{ account.account_number }}">
                         <td>{{ child.account_number }}{% if child.account_name %} - {{ child.account_name }}{% endif %}</td>
                         <td></td>
                         <td class="iznos">{{ child.budget_received | format_currency }}</td>
@@ -78,6 +84,24 @@
                         <td class="iznos">{{ child.own_spent | format_currency }}</td>
                         <td class="iznos">{{ child.total_expense | format_currency }}</td>
                     </tr>
+                    {% for partner in child.partners %}
+                    <tr class="partner-row d-none" data-parent="{{ account.account_number }}">
+                        <td>
+                            {% if partner.linked %}
+                            <a href="{{ url_for('partner.partner_card', partner_id=partner.partner_id) }}" title="Kartica partnera">{{ partner.name }}</a>
+                            {% else %}
+                            <span title="Stavka izvoda nije povezana sa partnerom - prikazan je primalac iz izvoda">{{ partner.name }} *</span>
+                            {% endif %}
+                            <span class="partner-count">({{ partner.item_count }} kom.)</span>
+                        </td>
+                        <td></td>
+                        <td></td>
+                        <td class="iznos">{{ partner.budget_spent | format_currency }}</td>
+                        <td></td>
+                        <td class="iznos">{{ partner.own_spent | format_currency }}</td>
+                        <td class="iznos">{{ partner.total_expense | format_currency }}</td>
+                    </tr>
+                    {% endfor %}
                     {% endfor %}
                     {% else %}
                     <tr>
@@ -100,6 +124,13 @@
         </div>
     </div>
 
+    {% if accounts %}
+    <div class="small text-muted mt-2">
+        Klikom na konto nivoa 4 otvaraju se konta nivoa 6 i partneri kojima je isplaćeno sa svakog konta.
+        Oznaka * znači da stavka izvoda nije povezana sa partnerom, pa je prikazan primalac iz izvoda.
+    </div>
+    {% endif %}
+
     <!-- Napomena o isplatama bez konta, koje nisu obuhvaćene izveštajem -->
     {% if unassigned %}
     <div class="small text-muted mt-2">
@@ -118,7 +149,8 @@
         // Otvaranje/zatvaranje konta nivoa 6 ispod jednog konta nivoa 4
         function setExpanded($row, expanded) {
             $row.toggleClass('expanded', expanded);
-            $('#reportTable tr.child-row[data-parent="' + $row.data('account') + '"]').toggleClass('d-none', !expanded);
+            $('#reportTable').find('tr.child-row, tr.partner-row')
+                .filter('[data-parent="' + $row.data('account') + '"]').toggleClass('d-none', !expanded);
         }
 
         // Ažuriranje natpisa dugmeta u zavisnosti od toga da li su sva konta otvorena

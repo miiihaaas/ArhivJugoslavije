@@ -4,7 +4,7 @@ from sqlalchemy import func, and_, or_
 from decimal import Decimal
 from datetime import date
 from arhivjugoslavije import db
-from arhivjugoslavije.models import PurchasePlan, PurchasePlanAccount, AccountLevel4, AccountLevel6, StatementItem, BankAccount, BankStatement
+from arhivjugoslavije.models import PurchasePlan, PurchasePlanAccount, AccountLevel4, AccountLevel6, StatementItem, BankAccount, BankStatement, Partner
 
 reports = Blueprint('reports', __name__)
 
@@ -114,6 +114,12 @@ def report_1():
 
         for child in level_6.values():
             child['total_expense'] = child['budget_spent'] + child['own_spent']
+            child['partners'] = []
+
+        # Isplate po kontu nivoa 6 i partneru (dobavljaču) - prikazuju se ispod konta nivoa 6
+        for account_number, partners in _payments_by_partner(year_start, year_end).items():
+            if account_number in level_6:
+                level_6[account_number]['partners'] = partners
 
         # Konta nivoa 4 iz plana; konta nivoa 6 se vezuju po prefiksu broja (kao ranije LIKE 'xxxx%')
         used_children = set()
@@ -163,6 +169,65 @@ def report_1():
                             totals=totals,
                             unassigned=unassigned,
                             selected_year=selected_year)
+
+
+def _payments_by_partner(year_start, year_end):
+    """Isplate odabrane godine po kontu nivoa 6 i partneru: {konto: [partneri sortirani po iznosu]}.
+
+    Stavka bez povezanog partnera grupiše se po primaocu iz izvoda (tekst iz XML-a),
+    a stavka bez oba pod "Bez primaoca", da zbir partnera uvek bude jednak isplatama konta.
+    """
+    rows = db.session.query(
+        StatementItem.account_level_6_number,
+        StatementItem.partner_id,
+        Partner.name.label('partner_name'),
+        StatementItem.recipient,
+        BankAccount.account_type,
+        func.count(StatementItem.id).label('item_count'),
+        func.sum(StatementItem.amount).label('amount')
+    ).join(
+        BankStatement, BankStatement.id == StatementItem.bank_statement_id
+    ).join(
+        BankAccount, BankAccount.id == BankStatement.bank_account_id
+    ).outerjoin(
+        Partner, Partner.id == StatementItem.partner_id
+    ).filter(
+        BankStatement.date.between(year_start, year_end),
+        BankAccount.account_type.in_(['budget', 'own', 'other']),
+        StatementItem.is_debit.is_(True),
+        StatementItem.account_level_6_number.isnot(None)
+    ).group_by(
+        StatementItem.account_level_6_number,
+        StatementItem.partner_id,
+        Partner.name,
+        StatementItem.recipient,
+        BankAccount.account_type
+    ).all()
+
+    result = {}
+    for row in rows:
+        if row.partner_id:
+            key, name, linked = ('p', row.partner_id), row.partner_name, True
+        elif row.recipient and row.recipient.strip():
+            recipient = ' '.join(row.recipient.split())
+            key, name, linked = ('r', recipient.lower()), recipient, False
+        else:
+            key, name, linked = ('n',), 'Bez primaoca', False
+
+        partners = result.setdefault(row.account_level_6_number, {})
+        partner = partners.setdefault(key, dict(
+            _empty_amounts(), partner_id=row.partner_id, name=name, linked=linked, item_count=0
+        ))
+        column = 'budget_spent' if row.account_type == 'budget' else 'own_spent'
+        amount = row.amount or Decimal('0.00')
+        partner[column] += amount
+        partner['total_expense'] += amount
+        partner['item_count'] += row.item_count
+
+    return {
+        account_number: sorted(partners.values(), key=lambda p: (-p['total_expense'], p['name'].lower()))
+        for account_number, partners in result.items()
+    }
 
 
 def _empty_amounts():
