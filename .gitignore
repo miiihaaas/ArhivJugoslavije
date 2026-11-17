@@ -63,3 +63,6 @@ arhivjugoslavije/static/uploads/
 /*.xml
 /check_accounts.py
 /exit()
+
+# Radne kopije Claude Code sesija
+/.claude/worktrees/
