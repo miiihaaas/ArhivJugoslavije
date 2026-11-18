@@ -206,7 +206,16 @@ class PurchasePlan(db.Model):
                 if account.amount_2:
                     total += account.amount_2
         return total
-    
+
+    def amount_for_source(self, source):
+        """Ukupan iznos plana (redovna + programska delatnost) za jedan izvor finansiranja"""
+        return sum(((account.amount_1 or 0) + (account.amount_2 or 0)
+                    for account in self.purchase_plan_accounts if account.source == source), 0)
+
+    def accounts_for_source(self, source):
+        """Broj konta u planu za jedan izvor finansiranja"""
+        return len([account for account in self.purchase_plan_accounts if account.source == source])
+
     def __repr__(self):
         return f"PurchasePlan(year: '{self.year}', amount: '{self.amount}')"
 

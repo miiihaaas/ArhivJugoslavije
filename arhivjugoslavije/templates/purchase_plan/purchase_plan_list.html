@@ -29,7 +29,10 @@
                     <th>ID</th>
                     <th>Godina</th>
                     <th>Broj konta</th>
-                    <th class="text-end">Iznos</th>
+                    {% for source in funding_sources %}
+                    <th class="text-end" title="{{ source.label }}">Izvor {{ source.code }}</th>
+                    {% endfor %}
+                    <th class="text-end">Ukupno</th>
                     <th>Akcije</th>
                 </tr>
             </thead>
@@ -39,6 +42,13 @@
                     <td>{{ plan.id }}</td>
                     <td>{{ plan.year }}</td>
                     <td>{{ plan.purchase_plan_accounts|length }}</td>
+                    {% for source in funding_sources %}
+                    <td class="iznos">
+                        {# Klik vodi na karticu tog izvora u planu #}
+                        <a href="{{ url_for('purchase_plan.edit_purchase_plan', purchase_plan_id=plan.id, izvor=source.code) }}"
+                           title="{{ source.label }}: {{ plan.accounts_for_source(source.code) }} konta">{{ plan.amount_for_source(source.code) | format_number }}</a>
+                    </td>
+                    {% endfor %}
                     <td class="iznos">{{ plan.amount | format_number }}</td>
                     <td>
                         {% set readonly = plan.year < current_year %}
@@ -75,7 +85,16 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="year" class="form-label">Godina *</label>
-                        <input type="number" class="form-control" id="year" name="year" min="2000" max="2100" required>
+                        <input type="number" class="form-control" id="year" name="year" min="2000" max="2100" value="{{ current_year }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="source" class="form-label">Izvor finansiranja *</label>
+                        <select class="form-select" id="source" name="source" required>
+                            {% for source in funding_sources %}
+                            <option value="{{ source.code }}">{{ source.label }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Za jednu godinu postoji jedan plan nabavke sa karticama za izvore 01, 04 i 13. Ako plan za godinu već postoji, otvara se kartica izabranog izvora.</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -127,11 +146,13 @@
             table.column(1).search(year).draw();
         });
         
-        // Postavljanje ID-a plana nabavke za brisanje
-        $('.delete-plan').on('click', function() {
+        // Postavljanje ID-a plana nabavke za brisanje. Delegirano preko tabele, da radi i za redove
+        // na ostalim stranama DataTables-a; polazni URL (sa /0) se čuva da i drugi klik pogodi pravi plan.
+        $('#planTable').on('click', '.delete-plan', function() {
             var planId = $(this).data('plan-id');
             var form = document.getElementById('deletePlanForm');
-            form.action = form.action.replace('/0', '/' + planId);
+            if (!form.dataset.baseAction) { form.dataset.baseAction = form.getAttribute('action'); }
+            form.action = form.dataset.baseAction.replace(/\/0$/, '/' + planId);
         });
     });
 </script>

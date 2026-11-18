@@ -254,8 +254,10 @@
             "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Prikaži sve"]]
         });
         
-        // Popunjavanje forme za izmenu konta
-        $('.edit-account').on('click', function() {
+        // Popunjavanje forme za izmenu konta. Događaj je delegiran preko tabele: DataTables na početku
+        // prikazuje samo prvu stranu, pa direktno vezivanje ne bi obuhvatilo konta na ostalim stranama
+        // (modal bi se otvarao sa prvim kontom iz liste i slao izmenu na pogrešnu adresu).
+        $('#accountsTable').on('click', '.edit-account', function() {
             var accountId = $(this).data('account-id');
             var accountNumber = $(this).data('account-number');
             var amount1 = $(this).data('amount-1');
@@ -273,8 +275,8 @@
             form.action = form.dataset.baseAction.replace(/\/0$/, '/' + accountId);
         });
         
-        // Postavljanje ID-a konta za brisanje
-        $('.delete-account').on('click', function() {
+        // Postavljanje ID-a konta za brisanje (delegirano, iz istog razloga kao izmena)
+        $('#accountsTable').on('click', '.delete-account', function() {
             var accountId = $(this).data('account-id');
             var form = document.getElementById('deleteAccountForm');
             // Polazni URL (sa /0) čuva se u data atributu, da i drugi klik bez osvežavanja strane pogodi pravo konto
